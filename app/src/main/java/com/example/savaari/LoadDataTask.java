@@ -6,8 +6,12 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -63,8 +67,6 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
 
     boolean login(String urlAddress, String username, String password) {
 
-        URL wikiRequest;
-        HttpURLConnection connection = null;
         Scanner scanner = null;
 
         try {
@@ -72,38 +74,41 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
             jsonParam.put("username", username);
             jsonParam.put("password", password);
 
-            wikiRequest = new URL(urlAddress);
-
-            assert wikiRequest != null;
-            connection = (HttpURLConnection) wikiRequest.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            connection.setRequestProperty("Accept","application/json");
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
+            URL url = new URL(urlAddress);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Accept","application/json");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
 
             Log.i("JSON", jsonParam.toString());
 
-            DataOutputStream os = new DataOutputStream(connection.getOutputStream());
+            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
             os.writeBytes(jsonParam.toString());
+
             os.flush();
             os.close();
 
-            /*
-            scanner = new Scanner(wikiRequest.openStream());
+            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+            Log.i("MSG" , conn.getResponseMessage());
 
-            assert scanner != null;
+            try {
+                scanner = new Scanner(conn.getInputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             String response = scanner.useDelimiter("\\Z").next();
             //JSONObject json = java.text.MessageFormat.parseJson(response);
 
-            Log.d("IMP MSG: ", response);
-            scanner.close();*/
+            Log.d("HEREEE: ", response);
+            scanner.close();
+            conn.disconnect();
         }
         catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-
 
         return true;
     }
@@ -113,7 +118,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
 
         if (strings[0].equals("signup")) {
             try {
-                if (signup("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
+                if (signup("http://186d53a20a06.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
                     return true;
                 }
             } catch (JSONException e) {
@@ -121,7 +126,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
             }
         }
          else {
-            return login("http://86e3f26e888a.ngrok.io/login", strings[1], strings[2]);
+            return login("http://186d53a20a06.ngrok.io/login", strings[1], strings[2]);
         }
 
         return false;
