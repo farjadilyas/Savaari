@@ -2,7 +2,6 @@ package com.example.savaari.login;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,14 +17,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.MyInterface;
+import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 
@@ -39,10 +37,17 @@ public class LoginActivity extends Util {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        new LoadDataTask(new MyInterface() {
+        new LoadDataTask(new OnAuthenticationListener() {
             @Override
-            public void myMethod(boolean result) {
+            public void authenticationStatus(boolean result) {
                 loadingProgressBar.setVisibility(View.GONE);
+
+                if (result) {
+                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
+                }
             }
         }).execute("login", username, password);
     }

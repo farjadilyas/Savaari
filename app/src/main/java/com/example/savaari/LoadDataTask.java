@@ -6,24 +6,19 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
 public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
 
     // Declare any reference to UI objects from UI controller
-    private MyInterface mListener;
+    private OnAuthenticationListener onAuthenticationListener;
 
-    public LoadDataTask(MyInterface mListener) { // Can pass references to UI objects
-        this.mListener = mListener;
+    public LoadDataTask(OnAuthenticationListener mListener) { // Can pass references to UI objects
+        this.onAuthenticationListener = mListener;
     }
 
     boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException {
@@ -65,9 +60,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         }
     }
 
-    boolean login(String urlAddress, String username, String password) {
+    boolean login(String urlAddress, String username, String password) throws JSONException {
 
         Scanner scanner = null;
+
+        JSONObject results;
 
         try {
             JSONObject jsonParam = new JSONObject();
@@ -99,7 +96,8 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
                 e.printStackTrace();
             }
             String response = scanner.useDelimiter("\\Z").next();
-            //JSONObject json = java.text.MessageFormat.parseJson(response);
+
+            results = new JSONObject(response);
 
             Log.d("HEREEE: ", response);
             scanner.close();
@@ -110,23 +108,23 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
             return false;
         }
 
-        return true;
+        return ((int) results.get("USER_ID") != -1);
     }
 
     @Override
     protected Boolean doInBackground(String... strings) {
 
-        if (strings[0].equals("signup")) {
-            try {
+        try {
+            if (strings[0].equals("signup")) {
                 if (signup("http://186d53a20a06.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
                     return true;
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            } else {
+                return login("http://186d53a20a06.ngrok.io/login", strings[1], strings[2]);
             }
         }
-         else {
-            return login("http://186d53a20a06.ngrok.io/login", strings[1], strings[2]);
+         catch (JSONException e) {
+            e.printStackTrace();
         }
 
         return false;
@@ -135,7 +133,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
     @Override
     protected void onPostExecute(Boolean aBoolean) {
         Log.d("IMP RES: ", String.valueOf(aBoolean));
-        mListener.myMethod(aBoolean);
+        onAuthenticationListener.authenticationStatus(aBoolean);
         super.onPostExecute(aBoolean);
     }
 }

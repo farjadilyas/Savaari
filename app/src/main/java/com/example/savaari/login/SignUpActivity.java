@@ -2,7 +2,6 @@ package com.example.savaari.login;
 
 import android.app.Activity;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NavUtils;
@@ -29,7 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.MyInterface;
+import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
@@ -41,10 +40,14 @@ public class SignUpActivity extends Util {
     {
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        AsyncTask<String, Void, Boolean> result = new LoadDataTask(new MyInterface() {
+        AsyncTask<String, Void, Boolean> result = new LoadDataTask(new OnAuthenticationListener() {
             @Override
-            public void myMethod(boolean result) {
+            public void authenticationStatus(boolean result) {
                 loadingProgressBar.setVisibility(View.GONE);
+                if (result) {
+                    Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
+                    NavUtils.navigateUpFromSameTask(SignUpActivity.this);
+                }
             }
         }).execute("signup", nickname, username, password);
     }
