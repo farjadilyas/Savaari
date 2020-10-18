@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="color_transparent">#00FFFFFF</color>
+    <color name = "app_color">#87CEFA</color>
+
+    <color name="BlackThemePrimary">#FF000000</color>
+    <color name = "BlackThemeSecondary">#15FFFFFF</color>
+
+    <color name="DarkRedThemePrimary">#FF2559</color>
+    <color name = "DarkRedThemeSecondary">#15FFFFFF</color>
+
+    <color name="RedThemePrimary">#FF2559</color>
+    <color name="RedThemeSecondary">#FFFFFF</color>
+
+    <color name="BlueThemePrimary">#1757B7</color>
+    <color name = "BlueThemeSecondary">#FFFFFF</color>
+
+    <color name="DarkBlueThemePrimary">#1757B7</color>
+    <color name = "DarkBlueThemeSecondary">#15FFFFFF</color>
+
+    <color name = "neutralGray">#7F8086</color>
+</resources>

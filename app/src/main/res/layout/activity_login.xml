@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundColor"
+    android:elevation="4dp"
+    android:foregroundTint="?attr/backgroundColor"
+    android:foregroundTintMode="src_over"
+    tools:context=".login.LoginActivity">
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="96dp"
+        android:layout_marginEnd="24dp"
+        android:hint="@string/prompt_email"
+        android:inputType="textEmailAddress"
+        android:padding="18dp"
+        android:selectAllOnFocus="true"
+        android:textColor="?attr/textColor"
+        android:textColorHint="?attr/lightTextColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:hint="@string/prompt_password"
+        android:imeActionLabel="@string/action_sign_in"
+        android:imeOptions="actionDone"
+        android:inputType="textPassword"
+        android:padding="18dp"
+        android:selectAllOnFocus="true"
+        android:textColor="?attr/textColor"
+        android:textColorHighlight="?attr/textColor"
+        android:textColorHint="?attr/lightTextColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/username" />
+
+    <Button
+        android:id="@+id/login"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="64dp"
+        android:autoText="true"
+        android:background="@drawable/login_btn"
+        android:elegantTextHeight="true"
+        android:elevation="12dp"
+        android:enabled="false"
+        android:text="@string/action_sign_in"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+        android:textColor="?attr/negativeTextColor"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/password"
+        app:layout_constraintVertical_bias="0.2" />
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="72dp"
+        android:layout_marginEnd="32dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/password"
+        app:layout_constraintStart_toStartOf="@+id/password"
+        app:layout_constraintTop_toBottomOf="@+id/newAccountBTN" />
+
+    <Button
+        android:id="@+id/forgotPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/transparent_btn"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="true"
+        android:text="@string/forgot_password"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textColor="?attr/textColor"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/login"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/newAccountBTN"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:width="0dp"
+        android:autoText="true"
+        android:background="@drawable/transparent_rounded_btn"
+        android:elegantTextHeight="true"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="true"
+        android:text="@string/create_new_account"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+        android:textColor="?attr/foregroundColor"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/forgotPasswordBanner"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?attr/foregroundColor"
+        android:backgroundTint="?attr/foregroundColor"
+        android:elevation="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="168dp"
+            android:layout_height="145dp"
+            android:layout_marginTop="72dp"
+            android:foregroundTint="?attr/negativeTextColor"
+            android:tint="?attr/negativeTextColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/lock" />
+
+        <Button
+            android:id="@+id/backFromBanner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/negative_button"
+            android:elevation="10dp"
+            android:padding="12dp"
+            android:text="@string/got_it"
+            android:textAllCaps="false"
+            android:textColor="?attr/textColor"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
+
+        <FrameLayout
+            android:id="@+id/frameLayout"
+            android:layout_width="408dp"
+            android:layout_height="261dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView3">
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/recoveryEmailBanner"
+                android:layout_width="match_parent"
+                android:layout_height="172dp"
+                android:layout_marginTop="48dp"
+                android:elevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/imageView3">
+
+                <EditText
+                    android:id="@+id/recoveryEmail"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="32dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="32dp"
+                    android:background="?attr/backgroundColor"
+                    android:ems="10"
+                    android:inputType="textEmailAddress"
+                    android:padding="4dp"
+                    android:paddingStart="16dp"
+                    android:textColor="?attr/textColor"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/enterRecoveryEmail" />
+
+                <TextView
+                    android:id="@+id/enterRecoveryEmail"
+                    style="@style/h3Text"
+                    android:layout_width="319dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="32dp"
+                    android:ems="10"
+                    android:text="@string/enter_email"
+                    android:textAlignment="textStart"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/emailSentPanel"
+                android:layout_width="match_parent"
+                android:layout_height="172dp"
+                android:layout_marginTop="48dp"
+                android:background="?attr/foregroundColor"
+                android:elevation="40dp"
+                android:outlineProvider="none"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/imageView3">
+
+                <TextView
+                    android:id="@+id/textView5"
+                    style="@style/h3Text"
+                    android:layout_width="296dp"
+                    android:layout_height="62dp"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/pass_reset_second"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView4" />
+
+                <TextView
+                    android:id="@+id/textView4"
+                    style="@style/h2Text"
+                    android:layout_width="313dp"
+                    android:layout_height="47dp"
+                    android:text="@string/pass_reset_first"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/emailSentPanel" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </FrameLayout>
+
+        <ProgressBar
+            android:id="@+id/recoveryProgressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/backFromBanner"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/frameLayout" />
+
+        <ImageButton
+            android:id="@+id/closeBanner"
+            android:layout_width="45dp"
+            android:layout_height="47dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:adjustViewBounds="true"
+            android:background="?attr/foregroundColor"
+            android:scaleType="centerInside"
+            android:scaleX="1.4"
+            android:scaleY="1.4"
+            android:tint="?attr/backgroundColor"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/close_24px"
+            tools:srcCompat="@drawable/close_24px" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

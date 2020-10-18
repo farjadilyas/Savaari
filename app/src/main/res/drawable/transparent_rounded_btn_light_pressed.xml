@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/foregroundColor"
+    android:enterFadeDuration="1400"
+    android:exitFadeDuration="1500">
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:width="0.5dp" android:color="?attr/foregroundColor" />
+            <solid android:color="?attr/foregroundColor" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+</ripple>

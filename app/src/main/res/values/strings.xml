@@ -1,0 +1,130 @@
+<resources>
+    <string name="app_name">savaari</string>
+    <string name="app_title">savaari</string>
+    <string name="preference_file_key">com.example.savaari.fileprefkey</string>
+    <string name="preference_theme_var">themeVar</string>
+
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="prompt_nickname">Nickname</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_up">Sign up</string>
+    <string name="account_exists">Have an account? Log In</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="create_new_account">Create a new account</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="invalid_username">Not a valid email address</string>
+    <string name="invalid_password1">Password must be >8 characters</string>
+    <string name="invalid_password2">Password must contain numbers</string>
+    <string name="invalid_password3">Password must be >8 characters and have numbers</string>
+    <string name="invalid_password4">Password must contain uppercase letters</string>
+    <string name="invalid_password5">Password must be >8 characters and uppercase letters</string>
+    <string name="invalid_password6">Password must be numbers and uppercase letters</string>
+    <string name="invalid_password7">Password must be >8 characters, have numbers, uppercase letters</string>
+    <string name="invalid_nickname">Nickname can not be empty</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="signup_failed">Sign up failed</string>
+    <string name="title_activity_sign_up">SignUpActivity</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="title_activity_task">TaskActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="sign_up_success">Sign up successful!</string>
+    <string name="verify_account">A link has been sent to your email address for verification</string>
+
+    <string name="enter_email">Enter your email address</string>
+    <string name="pass_reset_btn_text">Send recovery email</string>
+    <string name="pass_reset_first">We sent you an email</string>
+    <string name="pass_reset_second">Click on the link to reset your password</string>
+    <string name="error_pass_reset_email">Couldn\'t send email. Try again</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+
+    <!-- General phrases -->
+
+    <string name="got_it">GOT IT!</string>
+
+
+    <!-- TASK ACTIVITY -->
+
+    <string-array name="taskNavDrawer">
+        <item name="navInbox">Inbox</item>
+        <item name="navToday">Today</item>
+        <item name="navUpcoming">Upcoming</item>
+        <item name="navProjects">Projects</item>
+        <item name="navSettings">Settings</item>
+    </string-array>
+
+    <string name="navInbox">Inbox</string>
+    <string name="navToday">Today</string>
+    <string name="navUpcoming">Upcoming</string>
+    <string name="navProjects">Projects</string>
+    <string name="navSettings">Settings</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="add_a_task">Add a task</string>
+
+    <string name="cd_send_task">Type and add task</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+
+    <!-- Edit Task before adding -->
+    <string name="set_date">Set date</string>
+    <string name="set_time">Set time</string>
+    <string name="enable_alarm">Enable alarm</string>
+    <string name="enable_notification">Enable notification</string>
+
+    <string name="notification_enabled">Notification set</string>
+    <string name="alarm_enabled">Alarm set</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string name="no_more_tasks">Relax! No pending tasks</string>
+
+
+    <!-- ==================Settings Section ============== -->
+
+    <!-- Theme Setting-->
+
+    <string name="sync_theme">Sync theme</string>
+    <string name="sync_theme_enabled">Sync your theme across devices</string>
+    <string name="sync_theme_disabled">Set the theme for this device only</string>
+
+    <string name="auto_dark_theme">Auto dark theme</string>
+    <string name="auto_dark_theme_enabled">Sync with your device\'s dark theme</string>
+    <string name="auto_dark_theme_disabled">Always use the selected theme</string>
+
+    <string name="black_theme">Black Theme</string>
+    <string name="red_theme">ToDo Original (Light)</string>
+    <string name="blue_theme">Blue Theme</string>
+    <string name="dark_red_theme">ToDo Original (Dark)</string>
+    <string name="dark_blue_theme">Dark Blue Theme</string>
+
+
+</resources>

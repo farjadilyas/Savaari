@@ -1,0 +1,112 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="BlackTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FF121212</item>
+        <item name="foregroundColor">#000000</item>
+        <item name="deselectedForegroundColor">#A9A9A9</item>
+        <item name="textColor">#FFFFFF</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#000000</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#949494</item>
+        <item name = "foregroundItemColor">#15FFFFFF</item>
+    </style>
+
+    <style name="RedTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FFFFFF</item>
+        <item name="foregroundColor">#FF2559</item>
+        <item name="deselectedForegroundColor">#FF6961</item>
+        <item name="textColor">#000000</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#FFFFFF</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#FFCCCB</item>
+        <item name = "foregroundItemColor">#FFFFFF</item>
+    </style>
+
+    <style name="DimRedTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FF121212</item>
+        <item name="foregroundColor">#FF2559</item>
+        <item name="deselectedForegroundColor">#FF6961</item>
+        <item name="textColor">#FFFFFF</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#FFFFFF</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#15FFFFFF</item>
+        <item name = "foregroundItemColor">#15FFFFFF</item>
+    </style>
+
+    <style name="DarkBlueTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FF121212</item>
+        <item name="foregroundColor">#1757B7</item>
+        <item name="deselectedForegroundColor">#58CCED</item>
+        <item name="textColor">#FFFFFF</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#FFFFFF</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#0DFFFFFF</item>
+        <item name = "foregroundItemColor">#15FFFFFF</item>
+    </style>
+
+
+
+    <style name="TodoTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FFFFFF</item>
+        <item name="foregroundColor">#1757B7</item>
+        <item name="deselectedForegroundColor">#58CCED</item>
+        <item name="textColor">#000000</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#FFFFFF</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#87CEFA</item>
+        <item name = "foregroundItemColor">#FFFFFF</item>
+    </style>
+
+    <style name="BlueTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="splashBackgroundColor">#382B73</item>
+        <item name="backgroundColor">#FFFFFF</item>
+        <item name="foregroundColor">#8E24AA</item>
+        <item name="deselectedForegroundColor">#58CCED</item>
+        <item name="textColor">#000000</item>
+        <item name="lightTextColor">#9C9C9C</item>
+        <item name="negativeTextColor">#FFFFFF</item>
+        <item name = "android:statusBarColor">@android:color/transparent</item>
+        <item name = "lightForegroundColor">#87CEFA</item>
+        <item name = "foregroundItemColor">#FFFFFF</item>
+    </style>
+    <!-- 87CEFA -->
+
+    <style name="RedTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name = "h3Text">
+        <item name = "android:textSize">22sp</item>
+        <item name = "android:textAlignment">center</item>
+        <item name = "android:textAppearance">@style/TextAppearance.AppCompat.Body2</item>
+    </style>
+
+    <style name = "h2Text" parent = "h3Text">
+        <item name = "android:textSize">30sp</item>
+        <item name = "android:textStyle">bold</item>
+    </style>
+
+    <style name="RedTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="RedTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="ToolbarMenuIcon" parent="AppTheme">
+        <item name="android:colorControlNormal">?attr/negativeTextColor</item>
+    </style>
+
+</resources>

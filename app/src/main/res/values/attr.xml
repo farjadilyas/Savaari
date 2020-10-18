@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name = "foregroundColor" format = "color"/>
+    <attr name = "deselectedForegroundColor" format = "color"/>
+    <attr name = "splashBackgroundColor" format = "color"/>
+    <attr name = "backgroundColor" format = "color"/>
+    <attr name = "textColor" format = "color"/>
+    <attr name = "negativeTextColor" format = "color" />
+    <attr name = "lightTextColor" format="color"/>
+    <attr name = "lightForegroundColor" format = "color"/>
+    <attr name = "flatGray" format = "color"/>
+    <attr name = "foregroundItemColor" format="color"/>
+</resources>

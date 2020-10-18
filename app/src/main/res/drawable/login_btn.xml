@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Color when the row is selected -->
+    <item  android:state_enabled="true" android:drawable="@drawable/login_enable_btn" />
+
+    <!-- Standard background color -->
+    <item android:state_enabled="false" android:drawable="@drawable/login_disable_btn"/>
+</selector>
