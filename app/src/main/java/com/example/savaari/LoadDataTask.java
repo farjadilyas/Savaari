@@ -62,7 +62,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         }
     }
 
-    boolean signin(String urlAddress, String username, String password) {
+    boolean login(String urlAddress, String username, String password) {
         String requestURL = urlAddress;
         URL wikiRequest = null;
         try {
@@ -99,30 +99,20 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         return true;
     }
 
-    boolean login(String urlAddress, String username, String password) {
-        return true;
-    }
-
     @Override
     protected Boolean doInBackground(String... strings) {
 
-        switch (strings[0]) {
-            case "signup":
-                try {
-                    if (signup("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
-                        return true;
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            case "signin":
-                if (signin("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2])) {
+        if (strings[0].equals("signup")) {
+            try {
+                if (signup("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
                     return true;
                 }
-            case "login":
-                if (login("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2])) {
-                    return true;
-                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+         else {
+            return login("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2]);
         }
 
         return false;
