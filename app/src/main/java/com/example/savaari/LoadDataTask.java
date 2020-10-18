@@ -44,7 +44,6 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
 
             Log.i("JSON", jsonParam.toString());
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
             os.writeBytes(jsonParam.toString());
 
             os.flush();
@@ -69,26 +68,42 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         Scanner scanner = null;
 
         try {
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("username", username);
+            jsonParam.put("password", password);
+
             wikiRequest = new URL(urlAddress);
 
             assert wikiRequest != null;
             connection = (HttpURLConnection) wikiRequest.openConnection();
-
-            assert connection != null;
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            connection.setRequestProperty("Accept","application/json");
             connection.setDoOutput(true);
+            connection.setDoInput(true);
 
+            Log.i("JSON", jsonParam.toString());
+
+            DataOutputStream os = new DataOutputStream(connection.getOutputStream());
+            os.writeBytes(jsonParam.toString());
+            os.flush();
+            os.close();
+
+            /*
             scanner = new Scanner(wikiRequest.openStream());
+
+            assert scanner != null;
+            String response = scanner.useDelimiter("\\Z").next();
+            //JSONObject json = java.text.MessageFormat.parseJson(response);
+
+            Log.d("IMP MSG: ", response);
+            scanner.close();*/
         }
         catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-        assert scanner != null;
-        String response = scanner.useDelimiter("\\Z").next();
-        //JSONObject json = java.text.MessageFormat.parseJson(response);
 
-        Log.d("IMP MSG: ", response);
-        scanner.close();
 
         return true;
     }
@@ -106,7 +121,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
             }
         }
          else {
-            return login("http://86e3f26e888a.ngrok.io/add_user", strings[1], strings[2]);
+            return login("http://86e3f26e888a.ngrok.io/login", strings[1], strings[2]);
         }
 
         return false;

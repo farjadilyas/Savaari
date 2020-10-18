@@ -2,6 +2,7 @@ package com.example.savaari.login;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,6 +24,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.example.savaari.LoadDataTask;
+import com.example.savaari.MyInterface;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 
@@ -35,6 +38,13 @@ public class LoginActivity extends Util {
     private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
+
+        new LoadDataTask(new MyInterface() {
+            @Override
+            public void myMethod(boolean result) {
+                loadingProgressBar.setVisibility(View.GONE);
+            }
+        }).execute("login", username, password);
     }
 
 
