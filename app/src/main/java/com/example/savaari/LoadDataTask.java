@@ -63,31 +63,25 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
     }
 
     boolean login(String urlAddress, String username, String password) {
-        String requestURL = urlAddress;
-        URL wikiRequest = null;
-        try {
-            wikiRequest = new URL(requestURL);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+
+        URL wikiRequest;
         HttpURLConnection connection = null;
+        Scanner scanner = null;
 
         try {
+            wikiRequest = new URL(urlAddress);
+
             assert wikiRequest != null;
             connection = (HttpURLConnection) wikiRequest.openConnection();
-        } catch (IOException e) {
-            System.out.println("Connection failed\n");
-        }
 
-        assert connection != null;
-        connection.setDoOutput(true);
+            assert connection != null;
+            connection.setDoOutput(true);
 
-
-        Scanner scanner = null;
-        try {
             scanner = new Scanner(wikiRequest.openStream());
-        } catch (IOException e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
         assert scanner != null;
         String response = scanner.useDelimiter("\\Z").next();
