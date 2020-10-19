@@ -3,6 +3,7 @@
     package="com.example.savaari">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -10,9 +11,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".login.LoginActivity"></activity>
-        <activity android:name=".login.SignUpActivity"
-            android:parentActivityName=".login.LoginActivity"/>
+        <activity android:name=".ride.RideActivity"></activity>
+        <activity android:name=".login.LoginActivity" />
+        <activity
+            android:name=".login.SignUpActivity"
+            android:parentActivityName=".login.LoginActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
