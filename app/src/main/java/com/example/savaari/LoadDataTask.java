@@ -12,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
 
-public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
+public class LoadDataTask extends AsyncTask<String, Void, Integer> {
 
     // Declare any reference to UI objects from UI controller
     private OnAuthenticationListener onAuthenticationListener;
@@ -60,7 +60,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         }
     }
 
-    boolean login(String urlAddress, String username, String password) throws JSONException {
+    Integer login(String urlAddress, String username, String password) throws JSONException {
 
         Scanner scanner = null;
 
@@ -105,19 +105,19 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
         }
         catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return -1;
         }
 
-        return ((int) results.get("USER_ID") != -1);
+        return (int) results.get("USER_ID");
     }
 
     @Override
-    protected Boolean doInBackground(String... strings) {
+    protected Integer doInBackground(String... strings) {
 
         try {
             if (strings[0].equals("signup")) {
                 if (signup("https://aee71b131318.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
-                    return true;
+                    return 1;
                 }
             } else {
                 return login("https://aee71b131318.ngrok.io/login", strings[1], strings[2]);
@@ -127,13 +127,13 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
             e.printStackTrace();
         }
 
-        return false;
+        return -1;
     }
 
     @Override
-    protected void onPostExecute(Boolean aBoolean) {
-        Log.d("IMP RES: ", String.valueOf(aBoolean));
-        onAuthenticationListener.authenticationStatus(aBoolean);
-        super.onPostExecute(aBoolean);
+    protected void onPostExecute(Integer integer) {
+        Log.d("IMP RES: ", String.valueOf(integer));
+        onAuthenticationListener.authenticationStatus(integer);
+        super.onPostExecute(integer);
     }
 }
