@@ -32,53 +32,17 @@ import com.example.savaari.auth.signup.SignUpActivity;
 import com.example.savaari.ride.RideActivity;
 
 public class LoginActivity extends Util {
-    public LoginActivity() {
-    }
-
-    //Method: Handles Login Request
-
-    private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
-
-        loadingProgressBar.setVisibility(View.VISIBLE);
-
-        new LoadDataTask(new OnAuthenticationListener() {
-            @Override
-            public void authenticationStatus(int USER_ID) {
-                loadingProgressBar.setVisibility(View.GONE);
-
-                SharedPreferences sharedPreferences
-                        = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
-
-                SharedPreferences.Editor myEdit
-                        = sharedPreferences.edit();
-
-                if (USER_ID == -1) {
-                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
-                    myEdit.putInt("USER_ID", -1);
-                    myEdit.commit();
-                }
-                else {
-                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
-
-                    myEdit.putInt("USER_ID", USER_ID);
-
-                    myEdit.commit();
-
-                    Intent i = new Intent(LoginActivity.this, RideActivity.class);
-                    startActivity(i);
-                    finish();
-                }
-            }
-        }).execute("login", username, password);
-    }
-
-
-    //Variables kept by the acitivity itself
 
     private LoginViewModel loginViewModel;      // input validation
+    private EditText usernameEditText, passwordEditText, recoveryEmailEditText;
+    private Button loginButton, newAccountButton, backFromBanner, forgotPasswordButton;
+    private ImageButton closeBanner;
+    private ConstraintLayout recoveryEmailBanner, forgotPasswordBanner, emailSentBanner;
+    private ProgressBar loadingProgressBar, recoveryProgressBar;
     boolean isEmailSent = false;                // forgot password transition management
-    Button backFromBanner;
-    ConstraintLayout forgotPasswordBanner, emailSentBanner;
+
+    public LoginActivity() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,28 +53,46 @@ public class LoginActivity extends Util {
         setContentView(R.layout.activity_login);
 
 
-        //Initialize all variables
+        init();
+        forgotPasswordBannerHandler();;
+        loginFormStateWatcher();
+        recoveryFormStateWatcher();
+        loginRequestHandler();
 
+        // Launches SignupActivity
+
+        newAccountButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+                Intent i = new Intent(LoginActivity.this, SignUpActivity.class);
+                startActivity(i);
+            }
+        });
+    }
+
+    private void init() {
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        final EditText usernameEditText = findViewById(R.id.username);
-        final EditText passwordEditText = findViewById(R.id.password);
-        final EditText recoveryEmailEditText = findViewById(R.id.recoveryEmail);
-        final Button loginButton = findViewById(R.id.login);
-        final Button newAccountButton = findViewById(R.id.newAccountBTN);
+        usernameEditText = findViewById(R.id.username);
+        passwordEditText = findViewById(R.id.password);
+        recoveryEmailEditText = findViewById(R.id.recoveryEmail);
+        loginButton = findViewById(R.id.login);
+        newAccountButton = findViewById(R.id.newAccountBTN);
 
-        final ImageButton closeBanner = findViewById(R.id.closeBanner);
+        closeBanner = findViewById(R.id.closeBanner);
 
         backFromBanner = findViewById(R.id.backFromBanner);
         forgotPasswordBanner = findViewById(R.id.forgotPasswordBanner);
         emailSentBanner = findViewById(R.id.emailSentPanel);
 
-        final Button forgotPasswordButton = findViewById(R.id.forgotPassword);
-        final ProgressBar loadingProgressBar = findViewById(R.id.loading);
-        final ConstraintLayout recoveryEmailBanner = findViewById(R.id.recoveryEmailBanner);
-        final ConstraintLayout forgotPasswordBanner = findViewById(R.id.forgotPasswordBanner);
-        final ProgressBar recoveryProgressBar = findViewById(R.id.recoveryProgressBar);
+        forgotPasswordButton = findViewById(R.id.forgotPassword);
+        loadingProgressBar = findViewById(R.id.loading);
+        recoveryEmailBanner = findViewById(R.id.recoveryEmailBanner);
+        forgotPasswordBanner = findViewById(R.id.forgotPasswordBanner);
+        recoveryProgressBar = findViewById(R.id.recoveryProgressBar);
 
 
         // Visibility settings for forgot password banner
@@ -118,10 +100,9 @@ public class LoginActivity extends Util {
         forgotPasswordBanner.setVisibility(View.INVISIBLE);
         emailSentBanner.setVisibility(View.INVISIBLE);
         backFromBanner.setText(R.string.pass_reset_btn_text);
+    }
 
-
-
-
+    private void forgotPasswordBannerHandler() {
         // Displays forgot password banner
 
         forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
@@ -173,42 +154,14 @@ public class LoginActivity extends Util {
                 {
                     recoveryProgressBar.setVisibility(View.VISIBLE);
 
-                    /*
-                    mAuth.sendPasswordResetEmail(recoveryEmailEditText.getText().toString()).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-
-                            recoveryProgressBar.setVisibility(View.INVISIBLE);
-
-                            if (task.isSuccessful()) {
-                                emailSentBanner.startAnimation(inFromRightAnimation(500));
-                                emailSentBanner.setVisibility(View.VISIBLE);
-                                backFromBanner.setText(R.string.got_it);
-                                isEmailSent = true;
-                            }
-                            else {
-                                Toast.makeText(LoginActivity.this, R.string.error_pass_reset_email, Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    });*/
+                    //TODO: Handle Password Reset Action
                 }
             }
         });
+    }
 
 
-        // Launches SignupActivity
-
-        newAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-
-                Intent i = new Intent(LoginActivity.this, SignUpActivity.class);
-                startActivity(i);
-            }
-        });
-
-
+    private void loginFormStateWatcher() {
         // Receives and displays input validation messages - for login page
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
@@ -227,27 +180,6 @@ public class LoginActivity extends Util {
                 }
             }
         });
-
-
-        // Receives and displays input validation messages - for password recovery banner
-
-        loginViewModel.getRecoveryFormState().observe(this, new Observer<RecoveryFormState>() {
-
-            @Override
-            public void onChanged(@Nullable RecoveryFormState recoveryFormState) {
-
-                if (recoveryFormState == null)
-                    return;
-
-                backFromBanner.setEnabled(recoveryFormState.isDataValid());
-
-                if (recoveryFormState.getRecoveryEmailError() != null) {
-                    recoveryEmailEditText.setError(getString(recoveryFormState.getRecoveryEmailError()));
-                }
-            }
-        });
-
-
 
         // Listener for login page input fields
 
@@ -269,6 +201,29 @@ public class LoginActivity extends Util {
             }
         };
 
+        usernameEditText.addTextChangedListener(afterLoginTextChangedListener);
+        passwordEditText.addTextChangedListener(afterLoginTextChangedListener);
+    }
+
+
+    private void recoveryFormStateWatcher() {
+        // Receives and displays input validation messages - for password recovery banner
+
+        loginViewModel.getRecoveryFormState().observe(this, new Observer<RecoveryFormState>() {
+
+            @Override
+            public void onChanged(@Nullable RecoveryFormState recoveryFormState) {
+
+                if (recoveryFormState == null)
+                    return;
+
+                backFromBanner.setEnabled(recoveryFormState.isDataValid());
+
+                if (recoveryFormState.getRecoveryEmailError() != null) {
+                    recoveryEmailEditText.setError(getString(recoveryFormState.getRecoveryEmailError()));
+                }
+            }
+        });
 
         // Listener for recovery page input fields
 
@@ -285,12 +240,11 @@ public class LoginActivity extends Util {
             }
         };
 
-        usernameEditText.addTextChangedListener(afterLoginTextChangedListener);
-        passwordEditText.addTextChangedListener(afterLoginTextChangedListener);
         recoveryEmailEditText.addTextChangedListener(afterRecoveryTextChangedListener);
+    }
 
 
-
+    private void loginRequestHandler() {
         // Sends login requests to loginAction()
 
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -323,6 +277,43 @@ public class LoginActivity extends Util {
 
             }
         });
+    }
+
+    //Method: Handles Login Request
+
+    private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
+
+        loadingProgressBar.setVisibility(View.VISIBLE);
+
+        new LoadDataTask(new OnAuthenticationListener() {
+            @Override
+            public void authenticationStatus(int USER_ID) {
+                loadingProgressBar.setVisibility(View.GONE);
+
+                SharedPreferences sharedPreferences
+                        = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
+
+                SharedPreferences.Editor myEdit
+                        = sharedPreferences.edit();
+
+                if (USER_ID == -1) {
+                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
+                    myEdit.putInt("USER_ID", -1);
+                    myEdit.commit();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
+
+                    myEdit.putInt("USER_ID", USER_ID);
+
+                    myEdit.commit();
+
+                    Intent i = new Intent(LoginActivity.this, RideActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            }
+        }).execute("login", username, password);
     }
 
     @Override
