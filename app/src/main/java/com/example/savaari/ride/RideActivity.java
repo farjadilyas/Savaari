@@ -1,11 +1,13 @@
 package com.example.savaari.ride;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +23,7 @@ import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
+import com.example.savaari.services.LocationUpdateService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -63,7 +66,8 @@ public class RideActivity extends Util implements OnMapReadyCallback {
 
     private ImageView centerGPSButton;
 
-
+    // --------------------------------------------------------------------------------
+    // --------------------[ LOCATION BACKGROUND SERVICE ]-----------------------------
     // --------------------------------------------------------------------------------
     // Nabeel Attributes
     private Location mUserLocation;
@@ -94,6 +98,41 @@ public class RideActivity extends Util implements OnMapReadyCallback {
             }
         }
     }
+    // Check if the background location service is running
+    private boolean isLocationServiceRunning()
+    {
+        // Iterating over all services to check if the service is running
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+        {
+            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
+            {
+                Log.d(TAG, "isLocationServiceRunning: location service is running");
+                return true;
+            }
+        }
+        Log.d(TAG, "isLocationServiceRunning: location service is not running.");
+        return false;
+    }
+    // Method for Starting the Location Service
+    private void startLocationService()
+    {
+        if (!isLocationServiceRunning())
+        {
+            Intent serviceIntent = new Intent(this, LocationUpdateService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            {
+                RideActivity.this.startForegroundService(serviceIntent);
+            }
+            else
+            {
+                startService(serviceIntent);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
     // --------------------------------------------------------------------------------
 
     // Main onCreate Function to override
@@ -240,6 +279,9 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                             {
                                 mUserLocation = currentLocation;
                                 saveUserLocation();
+                                // Starting Background Location Service
+                                startLocationService();
+
                             } catch (JSONException e)
                             {
                                 e.printStackTrace();
