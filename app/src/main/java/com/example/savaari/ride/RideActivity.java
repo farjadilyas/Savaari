@@ -11,23 +11,28 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.MainActivity;
-import com.example.savaari.OnAuthenticationListener;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 
+import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
+import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -47,21 +52,17 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.navigation.NavigationView;
 
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
-public class RideActivity extends Util implements OnMapReadyCallback {
+public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "RideActivity";
 
@@ -78,6 +79,14 @@ public class RideActivity extends Util implements OnMapReadyCallback {
     private FusedLocationProviderClient fusedLocationProviderClient;
 
     private ImageView centerGPSButton;
+
+    private DrawerLayout drawer;
+    private ImageButton menuButton;
+    private NavigationView navigationView;
+    private View headerView;
+    private TextView navUsername, navEmail;
+
+    private int USER_ID = -1;
 
 
     // --------------------------------------------------------------------------------
@@ -99,14 +108,7 @@ public class RideActivity extends Util implements OnMapReadyCallback {
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
                 // Creating new Task
-                new LoadDataTask(new OnAuthenticationListener()
-                {
-                    @Override
-                    public void authenticationStatus(int USER_ID)
-                    {
-                        // Empty
-                    }
-                }).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
                         , String.valueOf(mUserLocation.getLongitude()));
             }
         }
@@ -121,10 +123,25 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ride);
 
-        //searchText = findViewById(R.id.input_search);
-        centerGPSButton = findViewById(R.id.user_location);
+        Intent recvIntent = getIntent();
+        USER_ID = recvIntent.getIntExtra("USER_ID", -1);
 
-        getLocationPermission();
+        if (USER_ID == -1) {
+            SharedPreferences sh
+                    = getSharedPreferences("AuthSharedPref",
+                    MODE_PRIVATE);
+
+            USER_ID = sh.getInt("USER_ID", -1);
+        }
+
+        if (USER_ID == -1) {
+            Toast.makeText(RideActivity.this, "Sorry. We can not authenticate you", Toast.LENGTH_LONG).show();
+        }
+        else {
+            centerGPSButton = findViewById(R.id.user_location);
+
+            getLocationPermission();
+        }
     }
 
     /*
@@ -158,6 +175,32 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+
+    /*
+    * Loads user data from database
+    * */
+    private void loadUserData() {
+        new LoadDataTask(null, new OnDataLoadedListener() {
+            @Override
+            public void onDataLoaded(Object object) {
+                if (object == null) {
+                    Toast.makeText(RideActivity.this, "Network Connection failed", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    JSONObject jsonObject = (JSONObject) object;
+                    try {
+                        navUsername.setText(jsonObject.getString("USER_NAME"));
+                        navEmail.setText(jsonObject.getString("EMAIL_ADDRESS"));
+                    }
+                    catch (JSONException e) {
+                        e.printStackTrace();
+                        Log.d("loadUserData(): ", "JSONException");
+                    }
+                }
+            }
+        }).execute("loadData", String.valueOf(USER_ID));
+
+    }
 
     /*
     * Initializes View Objects including:
@@ -210,6 +253,29 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                 Log.d("init(): ", "onPlaceSelectedListener(): An error occurred: " + status);
             }
         });
+
+        drawer = findViewById(R.id.drawer_layout);
+
+
+        /* Initialize the View Objects constituting the Nav Bar */
+        navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        headerView = navigationView.getHeaderView(0);
+        navUsername = headerView.findViewById(R.id.header_nickname);
+        navEmail = headerView.findViewById(R.id.header_email);
+        menuButton = findViewById(R.id.menu_btn);
+
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!drawer.isDrawerOpen(GravityCompat.START)) {
+                    drawer.openDrawer(GravityCompat.START);
+                }
+            }
+        });
+
+        loadUserData();
     }
 
 
@@ -392,5 +458,36 @@ public class RideActivity extends Util implements OnMapReadyCallback {
             Toast.makeText(this, "Error. Map services unavailable", Toast.LENGTH_SHORT).show();
             return false;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+        drawer.closeDrawer(GravityCompat.START);
+
+        switch (item.getItemId()) {
+            case (R.id.nav_your_trips):
+                break;
+            case (R.id.nav_help):
+                break;
+            case (R.id.nav_wallet):
+                break;
+            case (R.id.nav_settings):
+                Intent i = new Intent(RideActivity.this, SettingsActivity.class);
+                startActivity(i);
+                finish();
+                break;
+        }
+        return true;
     }
 }
