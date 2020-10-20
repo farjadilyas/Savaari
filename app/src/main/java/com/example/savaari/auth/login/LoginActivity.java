@@ -2,6 +2,7 @@ package com.example.savaari.auth.login;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,10 +24,12 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.savaari.LoadDataTask;
+import com.example.savaari.MainActivity;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.signup.SignUpActivity;
+import com.example.savaari.ride.RideActivity;
 
 public class LoginActivity extends Util {
     public LoginActivity() {
@@ -40,14 +43,30 @@ public class LoginActivity extends Util {
 
         new LoadDataTask(new OnAuthenticationListener() {
             @Override
-            public void authenticationStatus(boolean result) {
+            public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);
 
-                if (result) {
-                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
+                SharedPreferences sharedPreferences
+                        = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
+
+                SharedPreferences.Editor myEdit
+                        = sharedPreferences.edit();
+
+                if (USER_ID == -1) {
+                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
+                    myEdit.putInt("USER_ID", -1);
+                    myEdit.commit();
                 }
                 else {
-                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
+
+                    myEdit.putInt("USER_ID", USER_ID);
+
+                    myEdit.commit();
+
+                    Intent i = new Intent(LoginActivity.this, RideActivity.class);
+                    startActivity(i);
+                    finish();
                 }
             }
         }).execute("login", username, password);

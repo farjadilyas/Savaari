@@ -24,8 +24,6 @@ public class MainActivity extends Util {
         }
     }
 
-    SharedPreferences preferences = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -49,7 +47,36 @@ public class MainActivity extends Util {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        SharedPreferences sh
+                = getSharedPreferences("AuthSharedPref",
+                MODE_PRIVATE);
 
+        if (sh.getInt("USER_ID", -1) == -1) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run()
+                {
+
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    finish();
+                }
+            }, 1200);
+        }
+        else {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run()
+                {
+
+                    Intent i = new Intent(MainActivity.this, RideActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    finish();
+                }
+            }, 1200);
+        }
 
         //mAuth.signOut();
 
@@ -98,22 +125,6 @@ public class MainActivity extends Util {
 
         }
         else*/
-        {
-            // User is signed out
-
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run()
-                {
-
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(i);
-                    finish();
-                }
-            }, 1200);
-        }
-
 
     }
 }

@@ -42,11 +42,11 @@ public class SignUpActivity extends Util {
     {
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        AsyncTask<String, Void, Boolean> result = new LoadDataTask(new OnAuthenticationListener() {
+        AsyncTask<String, Void, Integer> result = new LoadDataTask(new OnAuthenticationListener() {
             @Override
-            public void authenticationStatus(boolean result) {
+            public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);
-                if (result) {
+                if (USER_ID > 0) {
                     Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
                     NavUtils.navigateUpFromSameTask(SignUpActivity.this);
                 }
