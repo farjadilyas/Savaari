@@ -1,10 +1,8 @@
+  
 """
-
     Savaari Application Programming Interface
-
     Nabeel Danish               18I-0579
     Muhammad Farjad Ilyas       18I-0436
-
 """
 
 import pymysql
@@ -90,11 +88,11 @@ def student():
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM user_details")
+        cursor.execute("SELECT USER_ID, USER_NAME, PASSWORD, EMAIL_ADDRESS FROM user_details")
         rows = cursor.fetchall()
 
         res = jsonify(rows)
-        res.status_code = 200
+        #res.status_code = 200
 
         return res
     except Exception as e:
@@ -113,14 +111,12 @@ def student(student_id):
         row = cursor.fetchone()
         res = jsonify(row)
         res.status_code = 200
-
         return res
     except Exception as e:
         print(e)
     finally:
         cursor.close() 
         conn.close()
-
 """
 """
 Return codes: 
@@ -204,40 +200,41 @@ def delete_student(student_id):
 # Save Last Location API URL
 @app.route('/saveUserLocation', methods=['POST'])
 def saveUserLastLocation():
+    try:
+        # Receiving Request Params
+        _json = request.get_json()
 
-	try:
-		# Receiving Request Params
-		_json = request.json()
-		_user_id = _json['USER_ID']
-		_latitude = _json['LATITUDE']
-		_longitude = _json['LONGITUDE']
-		_timestamp = _json['TIMESTAMP']
+        _user_id = _json['USER_ID']
+        _latitude = _json['LATITUDE']
+        _longitude = _json['LONGITUDE']
+        _timestamp = _json['TIMESTAMP']
 
-		# SQL Query to Update
-		sql = 'UPDATE USER_DETAILS SET LATITUDE = %s, LONGITUDE = %s, TIMESTAMP = %s WHERE USER_ID = %s'
+        # SQL Query to Update
+        sql = 'UPDATE USER_DETAILS SET LATITUDE = %s, LONGITUDE = %s, TIMESTAMP = CURRENT_TIME() WHERE USER_ID = %s'
 
-		# Appending Placeholder Data
-		data = []
-		data.append(_latitude)
-		data.append(_longitude)
-		data.append(_timestamp)
-		data.append(_user_id)
+        # Appending Placeholder Data
+        data = []
+        data.append(_latitude)
+        data.append(_longitude)
+        #data.append(_timestamp)
+        data.append(_user_id)
 
-		# Conection to MYSQL
-		conn = mysql.connect()
+        # Conection to MYSQL
+        conn = mysql.connect()
         cursor = conn.cursor()
-        conn.execute(sql, data)
+        cursor.execute(sql, tuple(data))
         conn.commit()
 
-        res = 200
+        res = {"STATUS": 200}
+
         return res
 
-	except Exception as e:
-		print(e)
+    except Exception as e:
+        print(e)
 
-	finally:
-		cursor.close()
-		conn.close()
+    finally:
+        cursor.close()
+        conn.close()
         
 # Error Handler
 @app.errorhandler(404)
@@ -253,4 +250,4 @@ def not_found(error=None):
 
 # Running the Main App
 if __name__ == "__main__":
-    app.run(host = '0.0.0.0', port = 5000)	
+    app.run(host = '0.0.0.0', port = 5000)
