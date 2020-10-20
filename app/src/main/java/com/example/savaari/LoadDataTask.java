@@ -153,21 +153,22 @@ public class LoadDataTask extends AsyncTask<String, Void, Integer> {
     {
         try
         {
+            String url = "https://50ed16d8cec7.ngrok.io/";
             if (strings[0].equals("signup"))
             {
-                if (signup(R.string.sda_api_url + "add_user", strings[1], strings[2], strings[3]))
+                if (signup(url + "add_user", strings[1], strings[2], strings[3]))
                 {
                     return 1;
                 }
             }
             else if (strings[0].equals("sendLocation"))
             {
-                return sendLastLocation(R.string.sda_api_url + "saveUserLocation", Integer.parseInt(strings[1]),
+                return sendLastLocation(url + "saveUserLocation", Integer.parseInt(strings[1]),
                         Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
             }
             else
             {
-                return login(R.string.sda_api_url + "login", strings[1], strings[2]);
+                return login(url + "login", strings[1], strings[2]);
             }
         }
         catch (JSONException e)
@@ -178,7 +179,8 @@ public class LoadDataTask extends AsyncTask<String, Void, Integer> {
     }
 
     @Override
-    protected void onPostExecute(Integer integer) {
+    protected void onPostExecute(Integer integer)
+    {
         Log.d("IMP RES: ", String.valueOf(integer));
         onAuthenticationListener.authenticationStatus(integer);
         super.onPostExecute(integer);
