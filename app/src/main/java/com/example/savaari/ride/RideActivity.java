@@ -2,11 +2,8 @@ package com.example.savaari.ride;
 
 import android.Manifest;
 import android.app.Dialog;
-
-import android.content.SharedPreferences;
-
 import android.content.Intent;
-
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -15,17 +12,13 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-
-import com.example.savaari.LoadDataTask;
-import com.example.savaari.MainActivity;
-import com.example.savaari.OnAuthenticationListener;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-
+import com.example.savaari.LoadDataTask;
+import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.google.android.gms.common.ConnectionResult;
@@ -47,16 +40,7 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-
-
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -83,7 +67,6 @@ public class RideActivity extends Util implements OnMapReadyCallback {
     // --------------------------------------------------------------------------------
     // Nabeel Attributes
     private Location mUserLocation;
-    private Integer mUserID;
 
     // Call this function after getting the USER's Locations
     private void saveUserLocation() throws JSONException
@@ -151,9 +134,7 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                 Status status = Autocomplete.getStatusFromIntent(data);
                 Log.i(TAG, status.getStatusMessage());
             }
-            else if (resultCode == RESULT_CANCELED) {
-                // The user canceled the operation.
-            }
+            // The user canceled the operation.
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -211,9 +192,6 @@ public class RideActivity extends Util implements OnMapReadyCallback {
             }
         });
     }
-
-
-
 
     /*
     * Moves camera to param: (latLng, zoom)
