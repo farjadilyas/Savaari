@@ -15,9 +15,7 @@ from flask import jsonify
 from flask import flash, request, redirect, url_for
 from hashlib import sha256
 
-
-
-# create Student			
+# create User			
 @app.route('/add_user', methods=['POST'])
 def create_student():
     try:
@@ -48,8 +46,7 @@ def create_student():
         cursor.close() 
         conn.close()
 
-
-#signin
+# Login User
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     try:
@@ -87,6 +84,7 @@ def login():
         cursor.close() 
         conn.close()
 
+# Get Method for User Details
 @app.route('/user_details')
 def student():
     try:
@@ -129,6 +127,7 @@ Return codes:
     500 - Invalid request
     404, 200
 """
+# Update User using PUT
 @app.route('/update', methods=['PUT'])
 def update_student():
     try:
@@ -138,40 +137,38 @@ def update_student():
         _email_address = _json.get("email_address")
         _user_id = _json.get("user_id");
 
-        
-            
-            # update record in database
-            sql = "UPDATE student SET first_name=%s, last_name=%s, class=%s, age=%s, address=%s WHERE id=%s"
-            data = []
+        # update record in database
+        sql = "UPDATE student SET first_name=%s, last_name=%s, class=%s, age=%s, address=%s WHERE id=%s"
+        data = []
 
-            isDirty = False
-            if (_username is not None):
-                sql += "USER_NAME = %s "
-                data.append(_username)
-                isDirty = True
-            if (_password is not None):
-                sql+= "PASSWORD = %s "
-                data.append(_password)
-                isDirty = True
-            if (_email_address is not None):
-                sql+= "EMAIL_ADDRESS = %s "
-                data.append(_email_address)
-                isDirty = True
+        isDirty = False
+        if (_username is not None):
+            sql += "USER_NAME = %s "
+            data.append(_username)
+            isDirty = True
+        if (_password is not None):
+            sql+= "PASSWORD = %s "
+            data.append(_password)
+            isDirty = True
+        if (_email_address is not None):
+            sql+= "EMAIL_ADDRESS = %s "
+            data.append(_email_address)
+            isDirty = True
 
-            if (isDirty):
-                sql += "WHERE USER_ID = %s"
-                data.append(_user_id)
-                data = tuple(data)
+        if (isDirty):
+            sql += "WHERE USER_ID = %s"
+            data.append(_user_id)
+            data = tuple(data)
 
-                conn = mysql.connect()
-                cursor = conn.cursor()
-                cursor.execute(sql, data)
-                conn.commit()
-                results = {"UPDATED": 200}
-            else:
-                results = {"UPDATED": 500}
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.execute(sql, data)
+            conn.commit()
+            results = {"UPDATED": 200}
+        else:
+            results = {"UPDATED": 500}
 
-            return json.dumps(results)
+        return json.dumps(results)
         #else:
         #    return not_found()
     except Exception as e:
@@ -180,11 +177,7 @@ def update_student():
         cursor.close() 
         conn.close()
 
-# delete student record from database
-# 
-
-
-
+# Delete record from the Database
 @app.route('/delete', methods=['POST', 'DELETE'])
 def delete_student(student_id):
     try:
@@ -206,7 +199,47 @@ def delete_student(student_id):
     finally:
         cursor.close() 
         conn.close()
+
+
+# Save Last Location API URL
+@app.route('/saveUserLocation', methods=['POST'])
+def saveUserLastLocation():
+
+	try:
+		# Receiving Request Params
+		_json = request.json()
+		_user_id = _json['USER_ID']
+		_latitude = _json['LATITUDE']
+		_longitude = _json['LONGITUDE']
+		_timestamp = _json['TIMESTAMP']
+
+		# SQL Query to Update
+		sql = 'UPDATE USER_DETAILS SET LATITUDE = %s, LONGITUDE = %s, TIMESTAMP = %s WHERE USER_ID = %s'
+
+		# Appending Placeholder Data
+		data = []
+		data.append(_latitude)
+		data.append(_longitude)
+		data.append(_timestamp)
+		data.append(_user_id)
+
+		# Conection to MYSQL
+		conn = mysql.connect()
+        cursor = conn.cursor()
+        conn.execute(sql, data)
+        conn.commit()
+
+        res = 200
+        return res
+
+	except Exception as e:
+		print(e)
+
+	finally:
+		cursor.close()
+		conn.close()
         
+# Error Handler
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
@@ -218,5 +251,6 @@ def not_found(error=None):
 
     return res
 
+# Running the Main App
 if __name__ == "__main__":
     app.run(host = '0.0.0.0', port = 5000)	
