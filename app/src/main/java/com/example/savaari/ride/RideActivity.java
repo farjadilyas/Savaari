@@ -1,29 +1,26 @@
 package com.example.savaari.ride;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.savaari.MainActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -34,10 +31,16 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteActivity;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Objects;
 
 public class RideActivity extends Util implements OnMapReadyCallback {
 
@@ -55,7 +58,8 @@ public class RideActivity extends Util implements OnMapReadyCallback {
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
 
-    private EditText searchText;
+    private ImageView centerGPSButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,55 +68,104 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ride);
 
-        searchText = findViewById(R.id.input_search);
+        //searchText = findViewById(R.id.input_search);
+        centerGPSButton = findViewById(R.id.user_location);
 
         getLocationPermission();
     }
 
+    /*
+    * Receives autocompleteFragment's result
+    * Gets Place Object using 'getPlaceFromIntent()'
+    * */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1) {
+            Log.d("onActivityResult: ", "This happened");
 
-    private void geoLocate() {
-        Log.d(TAG, "geoLocate: geolocating...");
+            if (resultCode == AutocompleteActivity.RESULT_OK) {
+                assert data != null;
+                Place place = Autocomplete.getPlaceFromIntent(data);
+                String title = ((place.getName() == null) ?
+                        ((place.getAddress() == null) ? "" : place.getAddress()) : place.getName());
 
-        String searchString = searchText.getText().toString();
-
-        Geocoder geocoder = new Geocoder(RideActivity.this);
-        List<Address> list = new ArrayList<>();
-
-        try {
-            list = geocoder.getFromLocationName(searchString, 1);
+                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId() + ", lat: " + place.getLatLng().latitude
+                        + ", lon: " + place.getLatLng().longitude);
+                moveCamera(Objects.requireNonNull(place.getLatLng()), DEFAULT_ZOOM, title);
+            }
+            else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
+                // TODO: Handle the error.
+                Status status = Autocomplete.getStatusFromIntent(data);
+                Log.i(TAG, status.getStatusMessage());
+            }
+            else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
         }
-        catch (IOException e) {
-            Log.d(TAG, "geoLocate: IOException: " + e.getMessage());
-        }
-
-        if (list.size() > 0) {
-            Address address = list.get(0);  //Get first location in the list
-
-            Log.d(TAG, "geoLocate: found a location: " + address.toString());
-
-            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, address.getAddressLine(0));;
-        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
+
+    /*
+    * Initializes View Objects including:
+    * centerGPSButton
+    * autocompleteFragment
+    */
     private void init() {
         Log.d(TAG, "init: initializing");
 
-        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        /* moveCamera to user location*/
+        centerGPSButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH  || actionId == EditorInfo.IME_ACTION_DONE
-                || event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.KEYCODE_ENTER)
-                {
-                    //Execute method for searching
-                    geoLocate();
-                }
+            public void onClick(View v) {
+                getDeviceLocation();
+            }
+        });
 
-                return false;
+
+        /* Google Places Autocomplete API Initialization */
+
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
+        }
+
+        // Initialize the AutocompleteSupportFragment.
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        // Specify the types of place data to return.
+        assert autocompleteFragment != null;
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.LAT_LNG, Place.Field.ID, Place.Field.NAME));
+
+        // Set up a PlaceSelectionListener to handle the response.
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+
+                String title = ((place.getName() == null)?
+                        ((place.getAddress() == null)?  "" : place.getAddress()) : place.getName());
+
+                moveCamera(Objects.requireNonNull(place.getLatLng()), DEFAULT_ZOOM, title);
+
+                Log.d("onPlaceSelected: ", "Place: " + place.getName() + ", " + place.getId());
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+                // TODO: Handle the error.
+                Toast.makeText(RideActivity.this, "Could not navigate to selected place", Toast.LENGTH_SHORT).show();
+                Log.d("init(): ", "onPlaceSelectedListener(): An error occurred: " + status);
             }
         });
     }
 
 
+
+
+    /*
+    * Moves camera to param: (latLng, zoom)
+    * Adds marker if title specified
+    * */
     private void moveCamera(LatLng latLng, float zoom, String title) {
         Log.d(TAG, "moveCamera: moving the camera to lat: " + latLng.latitude + ", lng: " + latLng.longitude);
 
@@ -126,6 +179,8 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         }
     }
 
+
+    /* Get's device location, calls moveCamera()*/
     private void getDeviceLocation() {
         Log.d("getDeviceLocation", "getting device location");
 
@@ -140,6 +195,14 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: found location!");
                             Location currentLocation = (Location) task.getResult();
+
+                            /*
+                            CameraPosition cameraPosition = new CameraPosition.Builder()
+                                    .target(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()))
+                                    .build();
+                            CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cameraPosition);
+                            googleMap.animateCamera(cu);*/
+
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
                         } else {
                             Log.d(TAG, "onComplete: current location is null");
@@ -153,6 +216,10 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         }
     }
 
+    /*
+    * initMap() if permissions granted
+    * else, explicitly ask for permission
+    * */
     private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -171,6 +238,11 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                 LOCATION_PERMISSION_REQUEST_CODE); //Doesn't matter
     }
 
+
+    /*
+    * Callback from initMap()'s getMapAsync()
+    * Initialize GoogleMap Object
+    * */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Toast.makeText(RideActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
@@ -199,6 +271,10 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         }
     }
 
+    /*
+    * Prerequisite: Map permissions granted
+    * Initializes map fragment
+    * */
     private void initMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
@@ -206,6 +282,7 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         mapFragment.getMapAsync(RideActivity.this);
     }
 
+    /* Callback for when permissions have been granted/denied */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         locationPermissionGranted = false;
@@ -226,6 +303,10 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         }
     }
 
+    /*
+    * Checks if device's Google Play Services are available
+    * TODO: call this before getLocationPermission() in onCreate()
+    *  */
     public boolean isServicesOK() {
         Log.d("isServicesOK: ", "checking google services version");
 
