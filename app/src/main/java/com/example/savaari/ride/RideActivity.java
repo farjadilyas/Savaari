@@ -2,7 +2,11 @@ package com.example.savaari.ride;
 
 import android.Manifest;
 import android.app.Dialog;
+
+import android.content.SharedPreferences;
+
 import android.content.Intent;
+
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -11,10 +15,16 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+
+import com.example.savaari.LoadDataTask;
+import com.example.savaari.MainActivity;
+import com.example.savaari.OnAuthenticationListener;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 
 import com.example.savaari.R;
 import com.example.savaari.Util;
@@ -37,6 +47,15 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -61,6 +80,40 @@ public class RideActivity extends Util implements OnMapReadyCallback {
     private ImageView centerGPSButton;
 
 
+    // --------------------------------------------------------------------------------
+    // Nabeel Attributes
+    private Location mUserLocation;
+    private Integer mUserID;
+
+    // Call this function after getting the USER's Locations
+    private void saveUserLocation() throws JSONException
+    {
+        Log.d(TAG, "saveUserLocation: inside!");
+        if (mUserLocation != null)
+        {
+            // Function for Networking POST
+            SharedPreferences sh = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
+            int currentUserID = sh.getInt("USER_ID", -1);
+            Log.d(TAG, "saveUserLocation: currentUserID: " + currentUserID);
+            if (currentUserID != -1)
+            {
+                Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
+                // Creating new Task
+                new LoadDataTask(new OnAuthenticationListener()
+                {
+                    @Override
+                    public void authenticationStatus(int USER_ID)
+                    {
+                        // Empty
+                    }
+                }).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                        , String.valueOf(mUserLocation.getLongitude()));
+            }
+        }
+    }
+    // --------------------------------------------------------------------------------
+
+    // Main onCreate Function to override
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         themeSelect(this);
@@ -204,6 +257,16 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                             googleMap.animateCamera(cu);*/
 
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
+                            // Calling User Location Save Function
+                            try
+                            {
+                                mUserLocation = currentLocation;
+                                saveUserLocation();
+                            } catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+
                         } else {
                             Log.d(TAG, "onComplete: current location is null");
                             Toast.makeText(RideActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
@@ -249,6 +312,8 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         this.googleMap = googleMap;
 
         if (locationPermissionGranted) {
+
+            // Calling the Get Device Location to retrieve the location
             getDeviceLocation();
 
             if (ActivityCompat.checkSelfPermission(this,

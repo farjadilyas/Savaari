@@ -1,5 +1,11 @@
 <resources>
+
+    <!-- API Related -->
+
     <string name = "google_maps_api_key">AIzaSyCUTRgtUcFQ8-ShUacER-f3rs45EsvHfcQ</string>
+    <string name = "sda_api_url">https://50ed16d8cec7.ngrok.io/</string>
+
+    <!-- General App related -->
     <string name="app_name">savaari</string>
     <string name="app_title">savaari</string>
     <string name="preference_file_key">com.example.savaari.fileprefkey</string>

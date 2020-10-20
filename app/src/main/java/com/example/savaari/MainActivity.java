@@ -26,7 +26,6 @@ public class MainActivity extends Util {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
         switch (ThemeVar.getData())
         {
             case(0):

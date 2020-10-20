@@ -1,5 +1,6 @@
 package com.example.savaari;
 
+import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -13,6 +14,9 @@ import java.net.URL;
 import java.util.Scanner;
 
 public class LoadDataTask extends AsyncTask<String, Void, Integer> {
+
+    // String Tag
+    private final String LOG_TAG = this.getClass().getSimpleName();
 
     // Declare any reference to UI objects from UI controller
     private OnAuthenticationListener onAuthenticationListener;
@@ -111,27 +115,73 @@ public class LoadDataTask extends AsyncTask<String, Void, Integer> {
         return (int) results.get("USER_ID");
     }
 
-    @Override
-    protected Integer doInBackground(String... strings) {
+    // Function for Posting Current Location Data
+    int sendLastLocation(String urladdress, int currentUserID, double latitude, double longitude)
+    {
+        try
+        {
+            // TimeStamp
+            long tsLong = System.currentTimeMillis() / 1000;
+            String currentTimeStamp = Long.toString(tsLong);
 
-        try {
-            if (strings[0].equals("signup")) {
-                if (signup("https://50ed16d8cec7.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
+
+            // JSON
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("USER_ID", currentUserID);
+            jsonParam.put("LATITUDE", latitude);
+            jsonParam.put("LONGITUDE", longitude);
+            jsonParam.put("TIMESTAMP", currentTimeStamp);
+
+            // Logging
+            Log.d(LOG_TAG, "sendLastLocation: User_ID: " + currentUserID);
+            Log.d(LOG_TAG, "sendLastLocation: Latitude: " + latitude);
+            Log.d(LOG_TAG, "sendLastLocation: Longitude: " + longitude);
+            Log.d(LOG_TAG, "sendLastLocation: TimeStamp: " + currentTimeStamp);
+
+            // Sending JSON
+            return sendPost(urladdress, jsonParam) ? 1 : 0;
+
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    @Override
+    protected Integer doInBackground(String... strings)
+    {
+        try
+        {
+            String url = "https://50ed16d8cec7.ngrok.io/";
+            if (strings[0].equals("signup"))
+            {
+                if (signup(url + "add_user", strings[1], strings[2], strings[3]))
+                {
                     return 1;
                 }
-            } else {
-                return login("https://50ed16d8cec7.ngrok.io/login", strings[1], strings[2]);
+            }
+            else if (strings[0].equals("sendLocation"))
+            {
+                return sendLastLocation(url + "saveUserLocation", Integer.parseInt(strings[1]),
+                        Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
+            }
+            else
+            {
+                return login(url + "login", strings[1], strings[2]);
             }
         }
-         catch (JSONException e) {
+        catch (JSONException e)
+        {
             e.printStackTrace();
         }
-
         return -1;
     }
 
     @Override
-    protected void onPostExecute(Integer integer) {
+    protected void onPostExecute(Integer integer)
+    {
         Log.d("IMP RES: ", String.valueOf(integer));
         onAuthenticationListener.authenticationStatus(integer);
         super.onPostExecute(integer);
