@@ -1,5 +1,4 @@
 <resources>
-
     <string name = "google_maps_api_key">AIzaSyCUTRgtUcFQ8-ShUacER-f3rs45EsvHfcQ</string>
     <string name="app_name">savaari</string>
     <string name="app_title">savaari</string>
