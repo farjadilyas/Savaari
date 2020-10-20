@@ -23,7 +23,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.example.savaari.LoadAuthDataTask;
+import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
@@ -284,7 +284,7 @@ public class LoginActivity extends Util {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        new LoadAuthDataTask(new OnAuthenticationListener() {
+        new LoadDataTask(new OnAuthenticationListener() {
             @Override
             public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);

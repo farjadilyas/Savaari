@@ -19,13 +19,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.example.savaari.LoadAuthDataTask;
-import com.example.savaari.MainActivity;
-import com.example.savaari.OnAuthenticationListener;
+import com.example.savaari.LoadDataTask;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
@@ -35,7 +32,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
-import com.example.savaari.auth.login.LoginActivity;
 import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -112,7 +108,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
                 // Creating new Task
-                new LoadAuthDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
                         , String.valueOf(mUserLocation.getLongitude()));
             }
         }
@@ -184,7 +180,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     * Loads user data from database
     * */
     private void loadUserData() {
-        new LoadAuthDataTask(null, new OnDataLoadedListener() {
+        new LoadDataTask(null, new OnDataLoadedListener() {
             @Override
             public void onDataLoaded(Object object) {
                 if (object == null) {

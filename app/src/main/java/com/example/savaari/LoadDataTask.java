@@ -13,7 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
 
-public class LoadAuthDataTask extends AsyncTask<String, Void, Object> {
+public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
     // String Tag
     private final String LOG_TAG = this.getClass().getSimpleName();
@@ -27,7 +27,7 @@ public class LoadAuthDataTask extends AsyncTask<String, Void, Object> {
     private OnAuthenticationListener onAuthenticationListener;
     private OnDataLoadedListener onDataLoadedListener;
 
-    public LoadAuthDataTask(OnAuthenticationListener mListener, OnDataLoadedListener onDataLoadedListener) { // Can pass references to UI objects
+    public LoadDataTask(OnAuthenticationListener mListener, OnDataLoadedListener onDataLoadedListener) { // Can pass references to UI objects
         this.onAuthenticationListener = mListener;
         this.onDataLoadedListener = onDataLoadedListener;
     }

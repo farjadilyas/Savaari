@@ -8,7 +8,6 @@ import androidx.core.app.NavUtils;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -27,7 +26,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.savaari.LoadAuthDataTask;
+import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
@@ -40,7 +39,7 @@ public class SignUpActivity extends Util {
     {
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        new LoadAuthDataTask(new OnAuthenticationListener() {
+        new LoadDataTask(new OnAuthenticationListener() {
             @Override
             public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);
