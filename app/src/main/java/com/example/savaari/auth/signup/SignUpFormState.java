@@ -1,11 +1,11 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.signup;
 
 import androidx.annotation.Nullable;
 
 /**
  * Data validation state of the login form.
  */
-class SignupFormState {
+class SignUpFormState {
     @Nullable
     private Integer usernameError;
     @Nullable
@@ -14,14 +14,14 @@ class SignupFormState {
     private Integer nicknameError;
     private boolean isDataValid, isSignupDataValid, isRecoveryDataValid;
 
-    SignupFormState(@Nullable Integer usernameError, @Nullable Integer passwordError, @Nullable Integer nicknameError) {
+    SignUpFormState(@Nullable Integer usernameError, @Nullable Integer passwordError, @Nullable Integer nicknameError) {
         this.usernameError = usernameError;
         this.passwordError = passwordError;
         this.nicknameError = nicknameError;
         this.isDataValid = false;
     }
 
-    SignupFormState(boolean isDataValid) {
+    SignUpFormState(boolean isDataValid) {
         this.usernameError = null;
         this.passwordError = null;
         this.nicknameError = null;

@@ -1,4 +1,4 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.login;
 
 import androidx.annotation.Nullable;
 

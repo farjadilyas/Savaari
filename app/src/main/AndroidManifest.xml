@@ -24,10 +24,10 @@
             android:value="@string/google_maps_api_key" />
 
         <activity android:name=".ride.RideActivity"></activity>
-        <activity android:name=".login.LoginActivity" />
+        <activity android:name=".auth.login.LoginActivity" />
         <activity
-            android:name=".login.SignUpActivity"
-            android:parentActivityName=".login.LoginActivity" />
+            android:name=".auth.signup.SignUpActivity"
+            android:parentActivityName=".auth.login.LoginActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

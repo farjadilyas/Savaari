@@ -116,11 +116,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Boolean> {
 
         try {
             if (strings[0].equals("signup")) {
-                if (signup("http://48f0cbbfba7d.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
+                if (signup("https://aee71b131318.ngrok.io/add_user", strings[1], strings[2], strings[3])) {
                     return true;
                 }
             } else {
-                return login("http://48f0cbbfba7d.ngrok.io/login", strings[1], strings[2]);
+                return login("https://aee71b131318.ngrok.io/login", strings[1], strings[2]);
             }
         }
          catch (JSONException e) {

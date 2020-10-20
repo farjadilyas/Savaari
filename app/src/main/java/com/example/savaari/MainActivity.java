@@ -6,9 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 
-import androidx.annotation.NonNull;
-
-import com.example.savaari.login.LoginActivity;
+import com.example.savaari.auth.login.LoginActivity;
 import com.example.savaari.ride.RideActivity;
 
 
@@ -108,7 +106,7 @@ public class MainActivity extends Util {
                 public void run()
                 {
 
-                    Intent i = new Intent(MainActivity.this, RideActivity.class);
+                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(i);
                     finish();
