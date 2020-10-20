@@ -27,13 +27,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.savaari.LoadDataTask;
+import com.example.savaari.LoadAuthDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
-import com.example.savaari.auth.login.LoginViewModel;
-import com.example.savaari.auth.login.LoginViewModelFactory;
 
 
 public class SignUpActivity extends Util {
@@ -42,7 +40,7 @@ public class SignUpActivity extends Util {
     {
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        AsyncTask<String, Void, Integer> result = new LoadDataTask(new OnAuthenticationListener() {
+        new LoadAuthDataTask(new OnAuthenticationListener() {
             @Override
             public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);
@@ -51,7 +49,7 @@ public class SignUpActivity extends Util {
                     NavUtils.navigateUpFromSameTask(SignUpActivity.this);
                 }
             }
-        }).execute("signup", nickname, username, password);
+        }, null).execute("signup", nickname, username, password);
     }
 
     private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;

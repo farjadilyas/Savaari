@@ -62,18 +62,9 @@
 
     <!-- TASK ACTIVITY -->
 
-    <string-array name="taskNavDrawer">
-        <item name="navInbox">Inbox</item>
-        <item name="navToday">Today</item>
-        <item name="navUpcoming">Upcoming</item>
-        <item name="navProjects">Projects</item>
-        <item name="navSettings">Settings</item>
-    </string-array>
-
-    <string name="navInbox">Inbox</string>
-    <string name="navToday">Today</string>
-    <string name="navUpcoming">Upcoming</string>
-    <string name="navProjects">Projects</string>
+    <string name="navYourTrips">Your trips</string>
+    <string name="navHelp">Help</string>
+    <string name="navWallet">Wallet</string>
     <string name="navSettings">Settings</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
