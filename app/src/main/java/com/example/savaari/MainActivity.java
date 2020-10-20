@@ -9,6 +9,7 @@ import android.os.Handler;
 import androidx.annotation.NonNull;
 
 import com.example.savaari.login.LoginActivity;
+import com.example.savaari.ride.RideActivity;
 
 
 public class MainActivity extends Util {
@@ -107,7 +108,7 @@ public class MainActivity extends Util {
                 public void run()
                 {
 
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                    Intent i = new Intent(MainActivity.this, RideActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(i);
                     finish();
