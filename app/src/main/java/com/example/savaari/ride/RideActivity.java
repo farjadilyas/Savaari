@@ -90,7 +90,7 @@ public class RideActivity extends Util implements OnMapReadyCallback {
 
             Log.d(TAG, "geoLocate: found a location: " + address.toString());
 
-            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, "Search Location");;
+            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, address.getAddressLine(0));;
         }
     }
 
@@ -193,6 +193,7 @@ public class RideActivity extends Util implements OnMapReadyCallback {
             }
             googleMap.setMyLocationEnabled(true);
             googleMap.getUiSettings().setAllGesturesEnabled(true);
+            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
 
             init();
         }
