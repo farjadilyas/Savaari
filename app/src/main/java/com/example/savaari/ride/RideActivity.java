@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -19,7 +20,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.savaari.LoadDataTask;
 import com.example.savaari.MainActivity;
+import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.google.android.gms.common.ConnectionResult;
@@ -35,7 +38,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +64,40 @@ public class RideActivity extends Util implements OnMapReadyCallback {
 
     private EditText searchText;
 
+    // --------------------------------------------------------------------------------
+    // Nabeel Attributes
+    private Location mUserLocation;
+    private Integer mUserID;
+
+    // Call this function after getting the USER's Locations
+    private void saveUserLocation() throws JSONException
+    {
+        Log.d(TAG, "saveUserLocation: inside!");
+        if (mUserLocation != null)
+        {
+            // Function for Networking POST
+            SharedPreferences sh = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
+            int currentUserID = sh.getInt("USER_ID", -1);
+            Log.d(TAG, "saveUserLocation: currentUserID: " + currentUserID);
+            if (currentUserID != -1)
+            {
+                Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
+                // Creating new Task
+                new LoadDataTask(new OnAuthenticationListener()
+                {
+                    @Override
+                    public void authenticationStatus(int USER_ID)
+                    {
+                        // Empty
+                    }
+                }).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                        , String.valueOf(mUserLocation.getLongitude()));
+            }
+        }
+    }
+    // --------------------------------------------------------------------------------
+
+    // Main onCreate Function to override
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         themeSelect(this);
@@ -141,6 +182,16 @@ public class RideActivity extends Util implements OnMapReadyCallback {
                             Log.d(TAG, "onComplete: found location!");
                             Location currentLocation = (Location) task.getResult();
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
+                            // Calling User Location Save Function
+                            try
+                            {
+                                mUserLocation = currentLocation;
+                                saveUserLocation();
+                            } catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+
                         } else {
                             Log.d(TAG, "onComplete: current location is null");
                             Toast.makeText(RideActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
@@ -177,6 +228,8 @@ public class RideActivity extends Util implements OnMapReadyCallback {
         this.googleMap = googleMap;
 
         if (locationPermissionGranted) {
+
+            // Calling the Get Device Location to retrieve the location
             getDeviceLocation();
 
             if (ActivityCompat.checkSelfPermission(this,
