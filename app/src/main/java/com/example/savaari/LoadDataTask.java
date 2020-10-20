@@ -124,6 +124,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Integer> {
             long tsLong = System.currentTimeMillis() / 1000;
             String currentTimeStamp = Long.toString(tsLong);
 
+
             // JSON
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);

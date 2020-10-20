@@ -17,34 +17,34 @@
         android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="10dp"
+        android:layout_alignParentBottom="true"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/white_border"
         android:elevation="10dp"
-        android:background="@drawable/white_border">
+        android:gravity="bottom">
 
-        <ImageView
-            android:id="@+id/ic_magnify"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="10dp"
-            android:src="@drawable/ic_magnify"
-            android:contentDescription="TODO" />
-
-        <EditText
-            android:id="@+id/input_search"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/autocomplete_fragment"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="text"
-            android:layout_marginStart="30dp"
-            android:layout_centerVertical="true"
-            android:textSize="18sp"
-            android:textColor="?attr/textColor"
-            android:background="@null"
-            android:hint="Enter Address, City, or Zip Code"
-            android:imeOptions="actionSearch"
-            android:autofillHints="" />
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/user_location"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="80dp"
+        android:elevation="10dp"
+        android:backgroundTint="?attr/backgroundColor"
+        android:baselineAlignBottom="false"
+        android:scaleX="1.2"
+        android:scaleY="1.2"
+        android:src="@drawable/ic_gps" />
 </RelativeLayout>
