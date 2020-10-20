@@ -9,7 +9,7 @@
     android:elevation="4dp"
     android:foregroundTint="?attr/backgroundColor"
     android:foregroundTintMode="src_over"
-    tools:context=".login.LoginActivity">
+    tools:context=".auth.login.LoginActivity">
 
     <EditText
         android:id="@+id/username"

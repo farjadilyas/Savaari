@@ -1,4 +1,4 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.login;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -26,6 +26,7 @@ import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
+import com.example.savaari.auth.signup.SignUpActivity;
 
 public class LoginActivity extends Util {
     public LoginActivity() {

@@ -1,4 +1,4 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.login;
 
 /**
  * Class exposing authenticated user details to the UI.

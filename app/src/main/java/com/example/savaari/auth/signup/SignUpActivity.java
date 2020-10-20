@@ -1,4 +1,4 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.signup;
 
 import android.app.Activity;
 
@@ -32,6 +32,8 @@ import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
+import com.example.savaari.auth.login.LoginViewModel;
+import com.example.savaari.auth.login.LoginViewModelFactory;
 
 
 public class SignUpActivity extends Util {
@@ -52,7 +54,7 @@ public class SignUpActivity extends Util {
         }).execute("signup", nickname, username, password);
     }
 
-    private LoginViewModel loginViewModel;
+    private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,8 +71,8 @@ public class SignUpActivity extends Util {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 
-        loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
-                .get(LoginViewModel.class);
+        signUpViewModel = ViewModelProviders.of(this, new SignUpViewModelFactory())
+                .get(SignUpViewModel.class);
 
         final EditText usernameEditText = findViewById(R.id.username);
         final EditText passwordEditText = findViewById(R.id.password);
@@ -98,9 +100,9 @@ public class SignUpActivity extends Util {
             }
         });
 
-        loginViewModel.getSignupFormState().observe(this, new Observer<SignupFormState>() {
+        signUpViewModel.getSignUpFormState().observe(this, new Observer<SignUpFormState>() {
             @Override
-            public void onChanged(@Nullable SignupFormState signupFormState) {
+            public void onChanged(@Nullable SignUpFormState signupFormState) {
                 if (signupFormState == null) {
                     return;
                 }
@@ -119,7 +121,7 @@ public class SignUpActivity extends Util {
 
         /*
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
+        signUpViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
                 if (loginResult == null) {
@@ -152,7 +154,7 @@ public class SignUpActivity extends Util {
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.signupDataChanged(usernameEditText.getText().toString(),
+                signUpViewModel.signUpDataChanged(usernameEditText.getText().toString(),
                         passwordEditText.getText().toString(), nicknameEditText.getText().toString());
             }
         };

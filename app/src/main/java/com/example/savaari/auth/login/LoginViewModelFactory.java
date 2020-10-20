@@ -1,4 +1,4 @@
-package com.example.savaari.login;
+package com.example.savaari.auth.login;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
@@ -14,8 +14,8 @@ public class LoginViewModelFactory implements ViewModelProvider.Factory {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        if (modelClass.isAssignableFrom(com.example.savaari.login.LoginViewModel.class)) {
-            return (T) new com.example.savaari.login.LoginViewModel();
+        if (modelClass.isAssignableFrom(com.example.savaari.auth.login.LoginViewModel.class)) {
+            return (T) new com.example.savaari.auth.login.LoginViewModel();
         } else {
             throw new IllegalArgumentException("Unknown ViewModel class");
         }
