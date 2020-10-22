@@ -31,6 +31,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     }
 
     // Main Method that runs in background when this Async task is called
+
     @Override
     protected Object doInBackground(String... strings)
     {
@@ -74,6 +75,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     protected void onPostExecute(Object object)
     {
         if (OPERATION_CODE == USER_DATA && onDataLoadedListener != null) {
+            Log.d("onPostExecute: ", "Data is loaded!" + String.valueOf(object == null));
             onDataLoadedListener.onDataLoaded(object);
         }
         else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null){
