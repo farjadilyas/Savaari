@@ -181,7 +181,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     {
         try
         {
-            String url = "https://50ed16d8cec7.ngrok.io/";
+            String url = "https://5b293cd0ff38.ngrok.io/";
             if (strings[0].equals("signup")) {
 
                 if (signup(url + "add_user", strings[1], strings[2], strings[3])) {
