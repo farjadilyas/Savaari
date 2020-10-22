@@ -103,6 +103,9 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
 
+
+            Log.d("HEREEE4: ", "RAND");
+
             URL url = new URL(urlAddress);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
@@ -113,8 +116,12 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
             Log.i("JSON", jsonParam.toString());
 
+            Log.d("HEREEE3: ", "RAND");
+
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
             os.writeBytes(jsonParam.toString());
+
+            Log.d("HEREEE2: ", "RAND");
 
             os.flush();
             os.close();
@@ -125,8 +132,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             try {
                 scanner = new Scanner(conn.getInputStream());
             } catch (IOException e) {
+                Log.d("loadUserData: ", "NULL #1");
                 e.printStackTrace();
+                return null;
             }
+            Log.d("HEREEE1: ", "RAND");
             String response = scanner.useDelimiter("\\Z").next();
 
             results = new JSONObject(response);
@@ -139,6 +149,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         }
         catch (Exception e) {
             e.printStackTrace();
+            Log.d("loadUserData: ", "NULL #2");
             return null;
         }
     }
@@ -181,7 +192,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     {
         try
         {
-            String url = "https://d440b35ba592.ngrok.io//";
+            String url = "https://b9b0b4d43db2.ngrok.io/";
             if (strings[0].equals("signup")) {
 
                 if (signup(url + "add_user", strings[1], strings[2], strings[3])) {
@@ -211,6 +222,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     protected void onPostExecute(Object object)
     {
         if (OPERATION_CODE == USER_DATA && onDataLoadedListener != null) {
+            Log.d("onPostExecute: ", "Data is loaded!" + String.valueOf(object == null));
             onDataLoadedListener.onDataLoaded(object);
         }
         else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null){

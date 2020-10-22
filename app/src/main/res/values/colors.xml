@@ -22,4 +22,6 @@
     <color name = "DarkBlueThemeSecondary">#15FFFFFF</color>
 
     <color name = "neutralGray">#7F8086</color>
+
+    <color name = "maps_blue">#4A80F5</color>
 </resources>
