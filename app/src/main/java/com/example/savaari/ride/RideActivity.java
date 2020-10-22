@@ -52,6 +52,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -63,6 +64,10 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.PendingResult;
+import com.google.maps.model.DirectionsResult;
 
 
 import org.json.JSONException;
@@ -87,6 +92,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
+
+    private GeoApiContext geoApiContext = null;
 
     private ImageView centerGPSButton;
 
@@ -333,10 +340,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
         if (!title.equals("")) {
+
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
                     .title(title);
-            googleMap.addMarker(options);
+            Marker marker = googleMap.addMarker(options);
+            calculateDirections(marker);
         }
     }
 
@@ -456,6 +465,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         assert mapFragment != null;
         mapFragment.getMapAsync(RideActivity.this);
+
+        if (geoApiContext == null) {
+            geoApiContext = new GeoApiContext.Builder()
+                    .apiKey(getString(R.string.google_maps_api_key))
+                    .build();
+        }
     }
 
     /* Callback for when permissions have been granted/denied */
@@ -477,6 +492,41 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 }
             }
         }
+    }
+
+
+    private void calculateDirections(Marker marker){
+        Log.d(TAG, "calculateDirections: calculating directions.");
+
+        com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
+                marker.getPosition().latitude,
+                marker.getPosition().longitude
+        );
+        DirectionsApiRequest directions = new DirectionsApiRequest(geoApiContext);
+
+        directions.alternatives(true);
+        directions.origin(
+                new com.google.maps.model.LatLng(
+                        mUserLocation.getLatitude(),
+                        mUserLocation.getLongitude()
+                )
+        );
+        Log.d(TAG, "calculateDirections: destination: " + destination.toString());
+        directions.destination(destination).setCallback(new PendingResult.Callback<DirectionsResult>() {
+            @Override
+            public void onResult(DirectionsResult result) {
+                Log.d(TAG, "calculateDirections: routes: " + result.routes[0].toString());
+                Log.d(TAG, "calculateDirections: duration: " + result.routes[0].legs[0].duration);
+                Log.d(TAG, "calculateDirections: distance: " + result.routes[0].legs[0].distance);
+                Log.d(TAG, "calculateDirections: geocodedWayPoints: " + result.geocodedWaypoints[0].toString());
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                Log.e(TAG, "calculateDirections: Failed to get directions: " + e.getMessage() );
+
+            }
+        });
     }
 
     /*
