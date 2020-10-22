@@ -235,6 +235,27 @@ def saveUserLastLocation():
     finally:
         cursor.close()
         conn.close()
+
+# Get User Location
+@app.route('/getUserLocations', methods=['GET'])
+def getUserLocations():
+
+	try:
+		conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT USER_ID, USER_NAME, LATITUDE, LONGITUDE, TIMESTAMP FROM USER_DETAILS")
+        rows = cursor.fetchall()
+
+        res = jsonify(rows)
+        return res
+
+	except Exception as e:
+        print(e)
+    finally:
+        cursor.close() 
+        conn.close()
+
+# End of Function
         
 # Error Handler
 @app.errorhandler(404)

@@ -40,6 +40,7 @@ import com.example.savaari.services.LocationUpdateService;
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
+import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -125,38 +126,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
         }
     }
-    // Check if the background location service is running
-    private boolean isLocationServiceRunning()
-    {
-        // Iterating over all services to check if the service is running
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
-        {
-            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
-            {
-                Log.d(TAG, "isLocationServiceRunning: location service is running");
-                return true;
-            }
-        }
-        Log.d(TAG, "isLocationServiceRunning: location service is not running.");
-        return false;
-    }
-    // Method for Starting the Location Service
-    private void startLocationService()
-    {
-        if (!isLocationServiceRunning())
-        {
-            Intent serviceIntent = new Intent(this, LocationUpdateService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            {
-                RideActivity.this.startForegroundService(serviceIntent);
-            }
-            else
-            {
-                startService(serviceIntent);
-            }
-        }
-    }
+
+
 
     // --------------------------------------------------------------------------------
     // --------------------------------------------------------------------------------
@@ -370,8 +341,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                             {
                                 mUserLocation = currentLocation;
                                 saveUserLocation();
+
                                 // Starting Background Location Service
-                                startLocationService();
+                                ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                                LocationUpdateUtil.startLocationService(manager, RideActivity.this);
 
                             } catch (JSONException e)
                             {

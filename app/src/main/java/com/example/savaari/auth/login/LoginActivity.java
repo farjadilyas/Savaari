@@ -41,6 +41,7 @@ public class LoginActivity extends Util {
     boolean isEmailSent = false;                // forgot password transition management
 
     public LoginActivity() {
+        // Empty
     }
 
     @Override
@@ -48,18 +49,18 @@ public class LoginActivity extends Util {
 
         themeSelect(this);
 
+        // Default Codes
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-
+        // Calling Handlers
         init();
         forgotPasswordBannerHandler();;
         loginFormStateWatcher();
         recoveryFormStateWatcher();
         loginRequestHandler();
 
-        // Launches SignupActivity
-
+        // Launches Sign up Activity
         newAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,7 +96,6 @@ public class LoginActivity extends Util {
 
 
         // Visibility settings for forgot password banner
-
         forgotPasswordBanner.setVisibility(View.INVISIBLE);
         emailSentBanner.setVisibility(View.INVISIBLE);
         backFromBanner.setText(R.string.pass_reset_btn_text);
@@ -103,7 +103,6 @@ public class LoginActivity extends Util {
 
     private void forgotPasswordBannerHandler() {
         // Displays forgot password banner
-
         forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,10 +117,7 @@ public class LoginActivity extends Util {
             }
         });
 
-
-
         // Handles forgot-pass banner interactions
-
         closeBanner.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -136,7 +132,6 @@ public class LoginActivity extends Util {
 
 
         // [ sends recovery email on first button press ] + [ retracts banner on second press]
-
         backFromBanner.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -207,7 +202,6 @@ public class LoginActivity extends Util {
 
     private void recoveryFormStateWatcher() {
         // Receives and displays input validation messages - for password recovery banner
-
         loginViewModel.getRecoveryFormState().observe(this, new Observer<RecoveryFormState>() {
 
             @Override
@@ -225,7 +219,6 @@ public class LoginActivity extends Util {
         });
 
         // Listener for recovery page input fields
-
         TextWatcher afterRecoveryTextChangedListener = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -245,7 +238,6 @@ public class LoginActivity extends Util {
 
     private void loginRequestHandler() {
         // Sends login requests to loginAction()
-
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
@@ -278,8 +270,7 @@ public class LoginActivity extends Util {
         });
     }
 
-    //Method: Handles Login Request
-
+    // Method: Handles Login Request
     private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
