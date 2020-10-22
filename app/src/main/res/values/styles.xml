@@ -90,6 +90,11 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name= "nav_item_theme">
+        <item name = "android:textSize">16sp</item>
+        <item name="listPreferredItemHeightSmall">90dp</item>
+    </style>
+
     <style name = "h3Text">
         <item name = "android:textSize">22sp</item>
         <item name = "android:textAlignment">center</item>

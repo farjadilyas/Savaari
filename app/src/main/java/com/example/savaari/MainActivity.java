@@ -49,7 +49,8 @@ public class MainActivity extends Util {
                 = getSharedPreferences("AuthSharedPref",
                 MODE_PRIVATE);
 
-        if (sh.getInt("USER_ID", -1) == -1) {
+        final int USER_ID = sh.getInt("USER_ID", -1);
+        if (USER_ID == -1) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run()
@@ -70,6 +71,7 @@ public class MainActivity extends Util {
 
                     Intent i = new Intent(MainActivity.this, RideActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    i.putExtra("USER_ID", USER_ID);
                     startActivity(i);
                     finish();
                 }
