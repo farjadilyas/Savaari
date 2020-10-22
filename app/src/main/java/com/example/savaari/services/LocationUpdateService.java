@@ -29,7 +29,7 @@ public class LocationUpdateService extends Service {
     private static final String LOG_TAG = "LocationUpdateService";
     private FusedLocationProviderClient mFusedLocationClient;
     private final static long UPDATE_INTERVAL = 10 * 1000; // 10 seconds
-    private final static long FASTEST_INTERVAL = 2 * 1000; // 2 seconds
+    private final static long FASTEST_INTERVAL = 10 * 1000; // 2 seconds
     private int mUserID;
 
     // Location Callback Function

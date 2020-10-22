@@ -1,7 +1,9 @@
 package com.example.savaari;
 
+import android.location.Location;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,6 +11,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 // This class holds static functions for interacting with the API Layer
@@ -28,6 +31,61 @@ public class NetworkUtil
     //                                 Main Methods
     // -------------------------------------------------------------------------------
 
+    public static JSONArray sendPostArray(String urlAddress, JSONObject jsonParam, boolean needResponse) throws JSONException {
+
+        JSONArray result = new JSONArray();
+        try
+        {
+            // Creating the HTTP Connection
+            URL url = new URL(urlAddress);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Accept","application/json");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+
+            // Sending the Data and Receiving Output
+            Log.i(TAG, "sendPostArray: " + jsonParam.toString());
+            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+            os.writeBytes(jsonParam.toString());
+
+            // Flushing output streams
+            os.flush();
+            os.close();
+
+            Log.i(TAG, "sendPostArray: Status: " + conn.getResponseCode());
+            Log.i(TAG, "sendPostArray: Response Message: " + conn.getResponseMessage());
+
+            // Sending the Response Back to the User in JSON
+            if (needResponse)
+            {
+                Scanner scanner = null;
+                try
+                {
+                    scanner = new Scanner(conn.getInputStream());
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+                String response = scanner.useDelimiter("\\Z").next();
+                JSONArray results = new JSONArray(response);
+                Log.d(TAG, "sendPostArray: " + response);
+                scanner.close();
+                conn.disconnect();
+                return results;
+            }
+            result.put(0, true);
+            return result;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            result.put(0, false);
+            return result;
+        }
+    }
     // Sending POST Requests
     public static JSONObject sendPost(String urlAddress, JSONObject jsonParam, boolean needResponse) throws JSONException {
 
@@ -148,14 +206,30 @@ public class NetworkUtil
         }
     }
     // Loading User Data
-    public static JSONObject loadUserData(String urlAddress, int currentUserID)
+    public static JSONArray loadUserData(String urlAddress, int currentUserID)
     {
         JSONObject jsonParam = new JSONObject();
         try
         {
             jsonParam.put("USER_ID", currentUserID);
-            return sendPost(urlAddress, jsonParam, true);
+            return sendPost(urlAddress, jsonParam, true).getJSONArray("");
         } catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Get User Locations
+    public static JSONArray getUserLocations(String urlAddress)
+    {
+        JSONObject jsonParam = new JSONObject();
+        try
+        {
+            jsonParam.put("Dummy", 0);
+            return sendPostArray(urlAddress, jsonParam, true);
+        }
+        catch (Exception e)
         {
             e.printStackTrace();
             return null;

@@ -39,6 +39,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
+import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateService;
 
@@ -59,7 +60,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+
 import com.google.android.gms.maps.model.LatLngBounds;
+
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -83,6 +86,7 @@ import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -126,6 +130,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private TextView navUsername, navEmail;
 
     private int USER_ID = -1;
+    private ArrayList<UserLocation> mUserLocations;
 
    // --------------------------------------------------------------------------------
     // --------------------[ LOCATION BACKGROUND SERVICE ]-----------------------------
@@ -203,6 +208,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
+
+        mUserLocations = new ArrayList<>();
 
         if (USER_ID == -1) {
             SharedPreferences sh
@@ -282,6 +289,59 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     .apiKey(getString(R.string.directions_api_key))
                     .build();
         }
+    }
+
+    // Function for loading User Location Data
+    // Nabeel Danish
+    private void loadUserLocations()
+    {
+        Log.d(TAG, "loadUserLocations: Started!");
+        new LoadDataTask(null, new OnDataLoadedListener()
+        {
+            @Override
+            public void onDataLoaded(Object object)
+            {
+                try {
+                    JSONArray resultArray = (JSONArray) object;
+                    Log.d(TAG, "loadUserLocations: " + resultArray.toString());
+                    if (resultArray != null)
+                    {
+                        Log.d(TAG, "loadUserLocations: found JSON Array");
+                        for (int i = 0; i < resultArray.length(); i++) {
+                            JSONObject obj = resultArray.getJSONObject(i);
+                            UserLocation userLocation = new UserLocation();
+
+                            // Assigning User Objects
+                            userLocation.setUserID(obj.getInt("USER_ID"));
+                            userLocation.setLatitude(obj.getDouble("LATITUDE"));
+                            userLocation.setLongitude(obj.getDouble("LONGITUDE"));
+                            userLocation.setTimestamp(obj.getString("TIMESTAMP"));
+
+                            // Adding Final Object
+                            mUserLocations.add(userLocation);
+                            Log.d(TAG, "loadUserLocations: userID: " + userLocation.getUserID());
+                            Log.d(TAG, "loadUserLocations: latitude: " + userLocation.getLatitude());
+                            Log.d(TAG, "loadUserLocations: longitude: " + userLocation.getLongitude());
+                            Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.d(TAG, "Exception in loadUserLocations");
+                    e.printStackTrace();
+                }
+                // Testing Code
+                Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
+                for (int i = 0; i < mUserLocations.size(); ++i)
+                {
+                    Log.d(TAG, "loadUserLocations: setting Markers");
+                    MarkerOptions option = new MarkerOptions()
+                            .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                    googleMap.addMarker(option);
+                }
+            }
+        }).execute("getUserLocations");
     }
 
     /*
@@ -406,6 +466,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void init() {
         Log.d(TAG, "init: initializing");
 
+
+        // Calling Load Data Functions
+        loadUserData();
+        loadUserLocations();
+
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
 
         /* Google Places Autocomplete API Initialization */
@@ -414,7 +479,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
 
         initializeNavigationBar();
-        loadUserData();
         initializeAutocomplete();
     }
 
