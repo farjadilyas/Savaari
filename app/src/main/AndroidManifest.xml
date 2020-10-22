@@ -25,6 +25,12 @@
             android:value="@string/google_maps_api_key" />
 
         <activity android:name=".ride.RideActivity" />
+
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".ride.RideActivity"/>
+
         <activity android:name=".auth.login.LoginActivity" />
         <activity
             android:name=".auth.signup.SignUpActivity"

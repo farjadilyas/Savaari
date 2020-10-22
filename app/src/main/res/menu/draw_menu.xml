@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <group android:checkableBehavior="single">
+
+        <item android:id="@+id/nav_your_trips"
+            android:icon="@drawable/ic_trips"
+            android:title="@string/navYourTrips"
+            android:checkable="true"
+            android:checked="true" />
+
+        <item android:id="@+id/nav_help"
+            android:icon="@drawable/ic_help"
+            android:title="@string/navHelp"
+            android:checkable="true"
+            android:checked="false"/>
+
+        <item android:id="@+id/nav_wallet"
+            android:icon="@drawable/ic_wallet"
+            android:title="@string/navWallet"
+            android:checkable="true"
+            android:checked="false"/>
+
+        <item android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/navSettings"
+            android:checkable="true"
+            android:checked="false"/>
+
+    </group>
+</menu>

@@ -8,7 +8,6 @@ import androidx.core.app.NavUtils;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -32,8 +31,6 @@ import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
-import com.example.savaari.auth.login.LoginViewModel;
-import com.example.savaari.auth.login.LoginViewModelFactory;
 
 
 public class SignUpActivity extends Util {
@@ -42,7 +39,7 @@ public class SignUpActivity extends Util {
     {
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        AsyncTask<String, Void, Integer> result = new LoadDataTask(new OnAuthenticationListener() {
+        new LoadDataTask(new OnAuthenticationListener() {
             @Override
             public void authenticationStatus(int USER_ID) {
                 loadingProgressBar.setVisibility(View.GONE);
@@ -51,7 +48,7 @@ public class SignUpActivity extends Util {
                     NavUtils.navigateUpFromSameTask(SignUpActivity.this);
                 }
             }
-        }).execute("signup", nickname, username, password);
+        }, null).execute("signup", nickname, username, password);
     }
 
     private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;

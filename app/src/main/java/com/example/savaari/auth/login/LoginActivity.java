@@ -24,7 +24,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.MainActivity;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
@@ -313,7 +312,7 @@ public class LoginActivity extends Util {
                     finish();
                 }
             }
-        }).execute("login", username, password);
+        }, null).execute("login", username, password);
     }
 
     @Override
