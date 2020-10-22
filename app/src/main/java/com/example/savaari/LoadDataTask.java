@@ -38,7 +38,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         jsonParam.put("email_address", emailAddress);
         jsonParam.put("password", password);
 
-        return sendPost(urlAddress, jsonParam);
+        return NetworkUtil.sendPost(urlAddress, jsonParam, false).getBoolean("result");
     }
 
     Integer login(String urlAddress, String username, String password) throws JSONException {
@@ -143,61 +143,32 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         }
     }
 
-    // Function for Posting Current Location Data
-    int sendLastLocation(String urladdress, int currentUserID, double latitude, double longitude)
-    {
-        OPERATION_CODE = LAST_LOCATION;
-        try
-        {
-            // TimeStamp
-            long tsLong = System.currentTimeMillis() / 1000;
-            String currentTimeStamp = Long.toString(tsLong);
-
-            // JSON
-            JSONObject jsonParam = new JSONObject();
-            jsonParam.put("USER_ID", currentUserID);
-            jsonParam.put("LATITUDE", latitude);
-            jsonParam.put("LONGITUDE", longitude);
-            jsonParam.put("TIMESTAMP", currentTimeStamp);
-
-            // Logging
-            Log.d(LOG_TAG, "sendLastLocation: User_ID: " + currentUserID);
-            Log.d(LOG_TAG, "sendLastLocation: Latitude: " + latitude);
-            Log.d(LOG_TAG, "sendLastLocation: Longitude: " + longitude);
-            Log.d(LOG_TAG, "sendLastLocation: TimeStamp: " + currentTimeStamp);
-
-            // Sending JSON
-            return sendPost(urladdress, jsonParam) ? 1 : 0;
-        }
-        catch (JSONException e)
-        {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
+    // Main Method that runs in background when this Async task is called
     @Override
     protected Object doInBackground(String... strings)
     {
         try
         {
-            String url = "https://5b293cd0ff38.ngrok.io/";
-            if (strings[0].equals("signup")) {
+            // Main URL
+            String url = "https://d440b35ba592.ngrok.io/";
 
-                if (signup(url + "add_user", strings[1], strings[2], strings[3])) {
-                    return 1;
-                }
-            }
-            else if (strings[0].equals("sendLocation")) {
+            switch (strings[0]) {
+                case "signup":
+                    if (signup(url + "add_user", strings[1], strings[2], strings[3])) {
+                        return 1;
+                    }
+                    break;
 
-                return sendLastLocation(url + "saveUserLocation", Integer.parseInt(strings[1]),
-                        Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
-            }
-            else if (strings[0].equals("loadData")) {
-                return loadUserData(url + "user_data", Integer.parseInt(strings[1]));
-            }
-            else {
-                return login(url + "login", strings[1], strings[2]);
+                case "sendLocation":
+                    OPERATION_CODE = LAST_LOCATION;
+                    return NetworkUtil.sendLastLocation(url + "saveUserLocation", Integer.parseInt(strings[1]),
+                            Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
+
+                case "loadData":
+                    return loadUserData(url + "user_data", Integer.parseInt(strings[1]));
+
+                default:
+                    return login(url + "login", strings[1], strings[2]);
             }
         }
         catch (JSONException e)
@@ -218,35 +189,5 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             onAuthenticationListener.authenticationStatus((int) object);
         }
         super.onPostExecute(object);
-    }
-
-
-    boolean sendPost(String urlAddress, JSONObject jsonParam) {
-        try {
-            URL url = new URL(urlAddress);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            conn.setRequestProperty("Accept","application/json");
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-
-            Log.i("JSON", jsonParam.toString());
-            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            os.writeBytes(jsonParam.toString());
-
-            os.flush();
-            os.close();
-
-            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-            Log.i("MSG" , conn.getResponseMessage());
-
-            conn.disconnect();
-
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 }
