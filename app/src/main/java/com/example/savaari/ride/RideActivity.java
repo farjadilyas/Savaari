@@ -1,14 +1,13 @@
 package com.example.savaari.ride;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.Dialog;
-
-import android.content.SharedPreferences;
-
 import android.content.Intent;
-
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -19,7 +18,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+
 import com.example.savaari.LoadDataTask;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,10 +30,18 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 
+import com.example.savaari.LoadDataTask;
+import com.example.savaari.OnAuthenticationListener;
+import com.example.savaari.R;
+import com.example.savaari.Util;
+import com.example.savaari.services.LocationUpdateService;
+
+
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.settings.SettingsActivity;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -52,6 +61,7 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+
 import com.google.android.material.navigation.NavigationView;
 
 
@@ -80,6 +90,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private ImageView centerGPSButton;
 
+
     private DrawerLayout drawer;
     private ImageButton menuButton;
     private NavigationView navigationView;
@@ -88,11 +99,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private int USER_ID = -1;
 
-
+   // --------------------------------------------------------------------------------
+    // --------------------[ LOCATION BACKGROUND SERVICE ]-----------------------------
     // --------------------------------------------------------------------------------
     // Nabeel Attributes
     private Location mUserLocation;
-    private Integer mUserID;
+  
 
     // Call this function after getting the USER's Locations
     private void saveUserLocation() throws JSONException
@@ -113,6 +125,41 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
         }
     }
+    // Check if the background location service is running
+    private boolean isLocationServiceRunning()
+    {
+        // Iterating over all services to check if the service is running
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+        {
+            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
+            {
+                Log.d(TAG, "isLocationServiceRunning: location service is running");
+                return true;
+            }
+        }
+        Log.d(TAG, "isLocationServiceRunning: location service is not running.");
+        return false;
+    }
+    // Method for Starting the Location Service
+    private void startLocationService()
+    {
+        if (!isLocationServiceRunning())
+        {
+            Intent serviceIntent = new Intent(this, LocationUpdateService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            {
+                RideActivity.this.startForegroundService(serviceIntent);
+            }
+            else
+            {
+                startService(serviceIntent);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
     // --------------------------------------------------------------------------------
 
     // Main onCreate Function to override
@@ -168,9 +215,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 Status status = Autocomplete.getStatusFromIntent(data);
                 Log.i(TAG, status.getStatusMessage());
             }
-            else if (resultCode == RESULT_CANCELED) {
-                // The user canceled the operation.
-            }
+            // The user canceled the operation.
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -278,9 +323,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         loadUserData();
     }
 
-
-
-
     /*
     * Moves camera to param: (latLng, zoom)
     * Adds marker if title specified
@@ -328,6 +370,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                             {
                                 mUserLocation = currentLocation;
                                 saveUserLocation();
+                                // Starting Background Location Service
+                                startLocationService();
+
                             } catch (JSONException e)
                             {
                                 e.printStackTrace();

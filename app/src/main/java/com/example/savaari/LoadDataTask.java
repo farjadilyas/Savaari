@@ -1,12 +1,9 @@
 package com.example.savaari;
 
-import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -156,7 +153,6 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             long tsLong = System.currentTimeMillis() / 1000;
             String currentTimeStamp = Long.toString(tsLong);
 
-
             // JSON
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
@@ -172,7 +168,6 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
             // Sending JSON
             return sendPost(urladdress, jsonParam) ? 1 : 0;
-
         }
         catch (JSONException e)
         {
