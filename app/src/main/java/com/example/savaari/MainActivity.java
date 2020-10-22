@@ -11,18 +11,6 @@ import com.example.savaari.ride.RideActivity;
 
 public class MainActivity extends Util {
 
-    public static void wait(int ms)
-    {
-        try
-        {
-            Thread.sleep(ms);
-        }
-        catch(InterruptedException ex)
-        {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -74,6 +62,8 @@ public class MainActivity extends Util {
                 }
             }, 1200);
         }
+
+        //TODO: Firebase theme logic implementation in MainActivity
 
         //mAuth.signOut();
 

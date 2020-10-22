@@ -2,13 +2,19 @@ package com.example.savaari.ride;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,8 +60,13 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+
+import com.google.android.gms.maps.model.LatLngBounds;
+
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
@@ -66,6 +77,13 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.PendingResult;
+import com.google.maps.internal.PolylineEncoding;
+import com.google.maps.model.DirectionsLeg;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.DirectionsRoute;
 
 
 import org.json.JSONArray;
@@ -74,10 +92,12 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
+public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private static final String TAG = "RideActivity";
 
@@ -93,7 +113,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
 
+    private GeoApiContext geoApiContext = null;
+
     private ImageView centerGPSButton;
+
+    /* Drawing the route on Maps*/
+    private Polyline destinationPolyline = null;
+    private DirectionsLeg destinationLeg = null;
+    private Marker destinationMarker = null;
 
 
     private DrawerLayout drawer;
@@ -113,7 +140,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
   
 
     // Call this function after getting the USER's Locations
-    private void saveUserLocation() throws JSONException
+    private void saveUserLocation()
     {
         Log.d(TAG, "saveUserLocation: inside!");
         if (mUserLocation != null)
@@ -132,6 +159,39 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
+
+    // Check if the background location service is running
+    private boolean isLocationServiceRunning()
+    {
+        // Iterating over all services to check if the service is running
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+        {
+            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
+            {
+                Log.d(TAG, "isLocationServiceRunning: location service is running");
+                return true;
+            }
+        }
+        Log.d(TAG, "isLocationServiceRunning: location service is not running.");
+        return false;
+    }
+    // Method for Starting the Location Service
+    private void startLocationService()
+    {
+        if (!isLocationServiceRunning())
+        {
+            Intent serviceIntent = new Intent(this, LocationUpdateService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            {
+                RideActivity.this.startForegroundService(serviceIntent);
+            }
+            else
+            {
+                startService(serviceIntent);
+            }
+        }
+    }
 
 
     // --------------------------------------------------------------------------------
@@ -169,60 +229,66 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
+
     /*
-    * Receives autocompleteFragment's result
-    * Gets Place Object using 'getPlaceFromIntent()'
-    * */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1) {
-            Log.d("onActivityResult: ", "This happened");
+     * initMap() if permissions granted
+     * else, explicitly ask for permission
+     * */
+    private void getLocationPermission() {
+        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION};
 
-            if (resultCode == AutocompleteActivity.RESULT_OK) {
-                assert data != null;
-                Place place = Autocomplete.getPlaceFromIntent(data);
-                String title = ((place.getName() == null) ?
-                        ((place.getAddress() == null) ? "" : place.getAddress()) : place.getName());
-
-                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId() + ", lat: " + place.getLatLng().latitude
-                        + ", lon: " + place.getLatLng().longitude);
-                moveCamera(Objects.requireNonNull(place.getLatLng()), DEFAULT_ZOOM, title);
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                locationPermissionGranted = true;
+                initMap();
+                return;
             }
-            else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
-                // TODO: Handle the error.
-                Status status = Autocomplete.getStatusFromIntent(data);
-                Log.i(TAG, status.getStatusMessage());
-            }
-            // The user canceled the operation.
         }
-        super.onActivityResult(requestCode, resultCode, data);
+
+        ActivityCompat.requestPermissions(this, permissions,
+                LOCATION_PERMISSION_REQUEST_CODE); //Doesn't matter
+    }
+
+    /* Callback for when permissions have been granted/denied */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        locationPermissionGranted = false;
+
+        switch(requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0) {
+                    for (int permissionIndex = 0 ; permissionIndex < grantResults.length ; ++permissionIndex) {
+                        if (grantResults[permissionIndex] != PackageManager.PERMISSION_GRANTED) {
+                            locationPermissionGranted = false;
+                            return;
+                        }
+                    }
+                    locationPermissionGranted = true;
+                    initMap();
+                }
+            }
+        }
     }
 
 
     /*
-    * Loads user data from database
-    * */
-    private void loadUserData() {
-        new LoadDataTask(null, new OnDataLoadedListener() {
-            @Override
-            public void onDataLoaded(Object object) {
-                if (object == null) {
-                    Toast.makeText(RideActivity.this, "Network Connection failed", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    JSONObject jsonObject = (JSONObject) object;
-                    try {
-                        navUsername.setText(jsonObject.getString("USER_NAME"));
-                        navEmail.setText(jsonObject.getString("EMAIL_ADDRESS"));
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d("loadUserData(): ", "JSONException");
-                    }
-                }
-            }
-        }).execute("loadData", String.valueOf(USER_ID));
+     * Prerequisite: Map permissions granted
+     * Initializes map fragment
+     * */
+    private void initMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
+        assert mapFragment != null;
+        mapFragment.getMapAsync(RideActivity.this);
+
+        if (geoApiContext == null) {
+            geoApiContext = new GeoApiContext.Builder()
+                    .apiKey(getString(R.string.directions_api_key))
+                    .build();
+        }
     }
 
     // Function for loading User Location Data
@@ -279,28 +345,71 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     /*
-    * Initializes View Objects including:
-    * centerGPSButton
-    * autocompleteFragment
-    */
-    private void init() {
-        Log.d(TAG, "init: initializing");
+     * Callback from initMap()'s getMapAsync()
+     * Initialize GoogleMap Object
+     * */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Toast.makeText(RideActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
+        this.googleMap = googleMap;
+        googleMap.setOnPolylineClickListener(this);
 
-        /* moveCamera to user location*/
-        centerGPSButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getDeviceLocation();
+        if (locationPermissionGranted) {
+
+            // Calling the Get Device Location to retrieve the location
+            getDeviceLocation();
+
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissi ons
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
             }
-        });
+            googleMap.setMyLocationEnabled(true);
+            googleMap.getUiSettings().setAllGesturesEnabled(true);
+            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+            googleMap.setOnInfoWindowClickListener(this);
+
+            init();
+        }
+    }
+
+    /*
+     * Moves camera to param: (latLng, zoom)
+     * Adds marker if title specified
+     * */
+    private void moveCamera(LatLng latLng, float zoom, String title) {
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+    }
 
 
-        /* Google Places Autocomplete API Initialization */
+    /* Method for adding a destination */
+    private void setDestination(LatLng latLng, String title) {
+        moveCamera(latLng, DEFAULT_ZOOM, title);
 
-        if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
+        if (destinationMarker != null) {
+            destinationMarker.remove();
         }
 
+        MarkerOptions options = new MarkerOptions()
+                .position(latLng)
+                .title(title);
+        destinationMarker = googleMap.addMarker(options);
+
+        calculateDirections(destinationMarker);
+    }
+
+    /*
+    * Initialize Autocomplete Support Fragment
+    * onPlaceSelected() implementation
+    */
+    private void initializeAutocomplete() {
         // Initialize the AutocompleteSupportFragment.
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
@@ -317,7 +426,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 String title = ((place.getName() == null)?
                         ((place.getAddress() == null)?  "" : place.getAddress()) : place.getName());
 
-                moveCamera(Objects.requireNonNull(place.getLatLng()), DEFAULT_ZOOM, title);
+                setDestination(Objects.requireNonNull(place.getLatLng()), title);
 
                 Log.d("onPlaceSelected: ", "Place: " + place.getName() + ", " + place.getId());
             }
@@ -329,11 +438,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 Log.d("init(): ", "onPlaceSelectedListener(): An error occurred: " + status);
             }
         });
+    }
 
+    private void initializeNavigationBar() {
         drawer = findViewById(R.id.drawer_layout);
 
-
-        /* Initialize the View Objects constituting the Nav Bar */
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -342,35 +451,85 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         navEmail = headerView.findViewById(R.id.header_email);
         menuButton = findViewById(R.id.menu_btn);
 
-        menuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!drawer.isDrawerOpen(GravityCompat.START)) {
-                    drawer.openDrawer(GravityCompat.START);
-                }
+        menuButton.setOnClickListener(v -> {
+            if (!drawer.isDrawerOpen(GravityCompat.START)) {
+                drawer.openDrawer(GravityCompat.START);
             }
         });
+    }
+
+    /*
+     * Initializes View Objects including:
+     * centerGPSButton
+     * autocompleteFragment
+     */
+    private void init() {
+        Log.d(TAG, "init: initializing");
+
 
         // Calling Load Data Functions
         loadUserData();
         loadUserLocations();
+
+        centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
+
+        /* Google Places Autocomplete API Initialization */
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
+        }
+
+        initializeNavigationBar();
+        initializeAutocomplete();
     }
 
     /*
-    * Moves camera to param: (latLng, zoom)
-    * Adds marker if title specified
-    * */
-    private void moveCamera(LatLng latLng, float zoom, String title) {
-        Log.d(TAG, "moveCamera: moving the camera to lat: " + latLng.latitude + ", lng: " + latLng.longitude);
+     * Loads user data from database
+     */
+    private void loadUserData() {
+        new LoadDataTask(null, object -> {
+            if (object == null) {
+                Toast.makeText(RideActivity.this, "Network Connection failed", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                JSONObject jsonObject = (JSONObject) object;
+                try {
+                    navUsername.setText(jsonObject.getString("USER_NAME"));
+                    navEmail.setText(jsonObject.getString("EMAIL_ADDRESS"));
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.d("loadUserData(): ", "JSONException");
+                }
+            }
+        }).execute("loadData", String.valueOf(USER_ID));
+    }
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+    /*
+    * Receives autocompleteFragment's result (callback)
+    * Gets Place Object using 'getPlaceFromIntent()'
+    */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1) {
 
-        if (!title.equals("")) {
-            MarkerOptions options = new MarkerOptions()
-                    .position(latLng)
-                    .title(title);
-            googleMap.addMarker(options);
+            if (resultCode == AutocompleteActivity.RESULT_OK) {
+                assert data != null;
+                Place place = Autocomplete.getPlaceFromIntent(data);
+                String title = ((place.getName() == null) ?
+                        ((place.getAddress() == null) ? "" : place.getAddress()) : place.getName());
+
+                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId() + ", lat: " + place.getLatLng().latitude
+                        + ", lon: " + place.getLatLng().longitude);
+                moveCamera(Objects.requireNonNull(place.getLatLng()), DEFAULT_ZOOM, title);
+            }
+            else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
+                // TODO: Handle the error.
+                Status status = Autocomplete.getStatusFromIntent(data);
+                Log.i(TAG, status.getStatusMessage());
+            }
+            // The user canceled the operation.
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 
@@ -390,14 +549,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                             Log.d(TAG, "onComplete: found location!");
                             Location currentLocation = (Location) task.getResult();
 
-                            /*
-                            CameraPosition cameraPosition = new CameraPosition.Builder()
-                                    .target(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()))
-                                    .build();
-                            CameraUpdate cu = CameraUpdateFactory.newCameraPosition(cameraPosition);
-                            googleMap.animateCamera(cu);*/
-
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
+
                             // Calling User Location Save Function
                             try
                             {
@@ -425,94 +578,155 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-    /*
-    * initMap() if permissions granted
-    * else, explicitly ask for permission
-    * */
-    private void getLocationPermission() {
-        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION};
 
-        if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                locationPermissionGranted = true;
-                initMap();
-                return;
+    /*
+    * Calculates directions from userLocation to marker
+    */
+    private void calculateDirections(Marker marker){
+        Log.d(TAG, "calculateDirections: calculating directions.");
+
+        com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
+                marker.getPosition().latitude,
+                marker.getPosition().longitude
+        );
+        DirectionsApiRequest directions = new DirectionsApiRequest(geoApiContext);
+
+        directions.alternatives(false);
+        directions.origin(
+                new com.google.maps.model.LatLng(
+                        mUserLocation.getLatitude(),
+                        mUserLocation.getLongitude()
+                )
+        );
+        Log.d(TAG, "calculateDirections: destination: " + destination.toString());
+        directions.destination(destination).setCallback(new PendingResult.Callback<DirectionsResult>() {
+            @Override
+            public void onResult(DirectionsResult result) {
+                Log.d(TAG, "calculateDirections: routes: " + result.routes[0].toString());
+                Log.d(TAG, "calculateDirections: duration: " + result.routes[0].legs[0].duration);
+                Log.d(TAG, "calculateDirections: distance: " + result.routes[0].legs[0].distance);
+                Log.d(TAG, "calculateDirections: geocodedWayPoints: " + result.geocodedWaypoints[0].toString());
+
+                addPolylinesToMap(result);
             }
-        }
 
-        ActivityCompat.requestPermissions(this, permissions,
-                LOCATION_PERMISSION_REQUEST_CODE); //Doesn't matter
-    }
+            @Override
+            public void onFailure(Throwable e) {
+                Log.e(TAG, "calculateDirections: Failed to get directions: " + e.getMessage() );
 
-
-    /*
-    * Callback from initMap()'s getMapAsync()
-    * Initialize GoogleMap Object
-    * */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(RideActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
-        this.googleMap = googleMap;
-
-        if (locationPermissionGranted) {
-
-            // Calling the Get Device Location to retrieve the location
-            getDeviceLocation();
-
-            if (ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissi ons
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
             }
-            googleMap.setMyLocationEnabled(true);
-            googleMap.getUiSettings().setAllGesturesEnabled(true);
-            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-
-            init();
-        }
+        });
     }
 
-    /*
-    * Prerequisite: Map permissions granted
-    * Initializes map fragment
-    * */
-    private void initMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+    /* Given a list of 'checkpoints, this zooms in on the route '*/
+    public void zoomRoute(List<LatLng> lstLatLngRoute) {
 
-        assert mapFragment != null;
-        mapFragment.getMapAsync(RideActivity.this);
+        if (googleMap == null || lstLatLngRoute == null || lstLatLngRoute.isEmpty()) return;
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        for (LatLng latLngPoint : lstLatLngRoute)
+            boundsBuilder.include(latLngPoint);
+
+        int routePadding = 120;
+        LatLngBounds latLngBounds = boundsBuilder.build();
+
+        googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding),
+                600,
+                null
+        );
     }
 
-    /* Callback for when permissions have been granted/denied */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        locationPermissionGranted = false;
+    private void addPolylinesToMap(final DirectionsResult result){
 
-        switch(requestCode) {
-            case LOCATION_PERMISSION_REQUEST_CODE: {
-                if (grantResults.length > 0) {
-                    for (int permissionIndex = 0 ; permissionIndex < grantResults.length ; ++permissionIndex) {
-                        if (grantResults[permissionIndex] != PackageManager.PERMISSION_GRANTED) {
-                            locationPermissionGranted = false;
-                            return;
-                        }
-                    }
-                    locationPermissionGranted = true;
-                    initMap();
+        /*
+        * Posting to main thread
+        * since this method is called from a different context
+        * changes to google map must be made on the same thread as the one it is on
+        */
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "run: result routes: " + result.routes.length);
+
+                /* Loops through possible routes*/
+                //for(DirectionsRoute route: result.routes){
+                DirectionsRoute route = result.routes[0];
+                Log.d(TAG, "run: leg: " + route.legs[0].toString());
+
+                /* get list of LatLng corresponding to each 'checkpoint' along the route */
+                List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
+
+                List<LatLng> newDecodedPath = new ArrayList<>();
+
+                // This loops through all the LatLng coordinates of ONE polyline.
+                for(com.google.maps.model.LatLng latLng: decodedPath){
+
+                    newDecodedPath.add(new LatLng(
+                            latLng.lat,
+                            latLng.lng
+                    ));
                 }
+
+                /* Add all the 'checkpoints' to the polyline */
+                if (destinationPolyline != null)
+                    destinationPolyline.remove();
+                destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
+                destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+                destinationPolyline.setClickable(true);
+                destinationLeg = route.legs[0];
+                destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
+                destinationMarker.showInfoWindow();
+
+                zoomRoute(newDecodedPath);
+
+                //}
             }
-        }
+        });
     }
+
+    /* listener for polyline clicks */
+    @Override
+    public void onPolylineClick(Polyline polyline) {
+        //TODO: Highlight more specific details (maybe?)
+        //polyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+        //polyline.setZIndex(1);
+
+    }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(RideActivity.this);
+        builder.setMessage("Open Google Maps?")
+                .setCancelable(true)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        String latitude = String.valueOf(marker.getPosition().latitude);
+                        String longitude = String.valueOf(marker.getPosition().longitude);
+                        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitude + "," + longitude);
+                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                        mapIntent.setPackage("com.google.android.apps.maps");
+
+                        try{
+                            if (mapIntent.resolveActivity(RideActivity.this.getPackageManager()) != null) {
+                                startActivity(mapIntent);
+                            }
+                        }catch (NullPointerException e){
+                            Log.e(TAG, "onClick: NullPointerException: Couldn't open map." + e.getMessage() );
+                            Toast.makeText(RideActivity.this, "Couldn't open map", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
+    }
+
 
     /*
     * Checks if device's Google Play Services are available
