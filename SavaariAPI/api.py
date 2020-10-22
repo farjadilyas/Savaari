@@ -101,6 +101,39 @@ def student():
         cursor.close() 
         conn.close()
 
+
+# Load User Dat
+@app.route('/user_data', methods=['POST', 'GET'])
+def user_data():
+    try:
+        _json = request.get_json()
+        _user_id = _json['USER_ID']
+        
+        # insert record in database
+        sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM USER_DETAILS WHERE USER_ID = %s"
+        data = (_user_id)
+
+        conn = mysql.connect()
+
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, data)
+
+        rows = cursor.fetchall()
+
+        results = {"USER_NAME": rows[0][0], "EMAIL_ADDRESS" : rows[0][1]}
+        results = json.dumps(results)
+
+        return results
+
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close() 
+        conn.close()
+
+
+
+
 """	
 @app.route('/student/<int:student_id>')
 def student(student_id):
@@ -237,19 +270,19 @@ def saveUserLastLocation():
         conn.close()
 
 # Get User Location
-@app.route('/getUserLocations', methods=['GET'])
+@app.route('/getUserLocations', methods=['POST'])
 def getUserLocations():
 
-	try:
-		conn = mysql.connect()
+    try:
+        conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT USER_ID, USER_NAME, LATITUDE, LONGITUDE, TIMESTAMP FROM USER_DETAILS")
+        cursor.execute("SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE, TIMESTAMP FROM USER_DETAILS")
         rows = cursor.fetchall()
 
         res = jsonify(rows)
         return res
 
-	except Exception as e:
+    except Exception as e:
         print(e)
     finally:
         cursor.close() 
