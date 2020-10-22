@@ -18,6 +18,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     private final static int LOG_IN = 1;
     private final static int LAST_LOCATION = 2;
     private final static int USER_DATA = 3;
+    private final static int USER_LOCATIONS = 4;
     private int OPERATION_CODE = -1;
 
     // Declare any reference to UI objects from UI controller
@@ -57,6 +58,10 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
                     OPERATION_CODE = USER_DATA;
                     return NetworkUtil.loadUserData(url + "user_data", Integer.parseInt(strings[1]));
 
+                case "getUserLocations":
+                    OPERATION_CODE = USER_LOCATIONS;
+                    return NetworkUtil.getUserLocations(url + "getUserLocations");
+
                 default:
                     OPERATION_CODE = LOG_IN;
                     return NetworkUtil.login(url + "login", strings[1], strings[2]);
@@ -73,10 +78,12 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     @Override
     protected void onPostExecute(Object object)
     {
-        if (OPERATION_CODE == USER_DATA && onDataLoadedListener != null) {
+        if ((OPERATION_CODE == USER_DATA || OPERATION_CODE == USER_LOCATIONS) && onDataLoadedListener != null)
+        {
             onDataLoadedListener.onDataLoaded(object);
         }
-        else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null){
+        else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null)
+        {
             Log.d("IMP RES: ", String.valueOf((int) object));
             onAuthenticationListener.authenticationStatus((int) object);
         }

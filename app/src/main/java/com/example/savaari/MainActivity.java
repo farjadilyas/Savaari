@@ -34,9 +34,6 @@ public class MainActivity extends Util {
             case(1):
                 setTheme(R.style.RedTheme);
                 break;
-            case(2):
-                setTheme(R.style.BlueTheme);
-                break;
             default:
                 setTheme(R.style.BlueTheme);
                 break;
