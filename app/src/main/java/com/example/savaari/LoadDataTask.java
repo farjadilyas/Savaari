@@ -103,9 +103,6 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
 
-
-            Log.d("HEREEE4: ", "RAND");
-
             URL url = new URL(urlAddress);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
@@ -116,12 +113,8 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
             Log.i("JSON", jsonParam.toString());
 
-            Log.d("HEREEE3: ", "RAND");
-
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
             os.writeBytes(jsonParam.toString());
-
-            Log.d("HEREEE2: ", "RAND");
 
             os.flush();
             os.close();
@@ -136,12 +129,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
                 e.printStackTrace();
                 return null;
             }
-            Log.d("HEREEE1: ", "RAND");
             String response = scanner.useDelimiter("\\Z").next();
 
             results = new JSONObject(response);
 
-            Log.d("HEREEE: ", response);
+            Log.d("loadUserData response: ", response);
             scanner.close();
             conn.disconnect();
 
