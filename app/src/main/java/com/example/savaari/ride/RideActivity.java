@@ -46,6 +46,7 @@ import com.example.savaari.services.LocationUpdateService;
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
+import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -153,6 +154,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
+
     // Check if the background location service is running
     private boolean isLocationServiceRunning()
     {
@@ -185,6 +187,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
         }
     }
+
 
     // --------------------------------------------------------------------------------
     // --------------------------------------------------------------------------------
@@ -485,10 +488,19 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
 
                             // Calling User Location Save Function
-                            mUserLocation = currentLocation;
-                            saveUserLocation();
-                            // Starting Background Location Service
-                            startLocationService();
+                            try
+                            {
+                                mUserLocation = currentLocation;
+                                saveUserLocation();
+
+                                // Starting Background Location Service
+                                ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                                LocationUpdateUtil.startLocationService(manager, RideActivity.this);
+
+                            } catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
 
                         } else {
                             Log.d(TAG, "onComplete: current location is null");

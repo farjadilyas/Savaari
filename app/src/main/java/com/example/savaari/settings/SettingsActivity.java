@@ -4,25 +4,23 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
-
 import androidx.appcompat.widget.Toolbar;
-
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.login.LoginActivity;
-
+import com.example.savaari.ride.RideActivity;
+import com.example.savaari.services.LocationUpdateUtil;
 
 public class SettingsActivity extends Util implements SettingsClickListener {
 
     private Toolbar myToolbar;
-
     private boolean inSubSetting = false;
     private UserSettings userSettings;
 
+    // Getters and Setters
     public boolean isInSubSetting() {
         return inSubSetting;
     }
-
     public void setInSubSetting(boolean inSubSetting) {
         this.inSubSetting = inSubSetting;
     }
@@ -33,7 +31,7 @@ public class SettingsActivity extends Util implements SettingsClickListener {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-
+    // Main onCreate Function
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -50,6 +48,7 @@ public class SettingsActivity extends Util implements SettingsClickListener {
 
         userSettings = new UserSettings();
 
+        // TODO Check this old code from Firebase
         /*
         DatabaseReference settingsReference = databaseReference.child("users").child(Objects.requireNonNull(mAuth.getUid())).child("settings");
 
@@ -160,10 +159,14 @@ public class SettingsActivity extends Util implements SettingsClickListener {
                 = sharedPreferences.edit();
 
         myEdit.putInt("USER_ID", -1);
-        myEdit.commit();
+        myEdit.apply();
+
+        // Stopping the Location Service
+        LocationUpdateUtil.stopLocationService(SettingsActivity.this);
 
         Intent i = new Intent(SettingsActivity.this, LoginActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         finishAffinity();
         startActivity(i);
     }
