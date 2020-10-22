@@ -52,7 +52,7 @@ public class NetworkUtil
             os.flush();
             os.close();
 
-            Log.i(TAG, "sendPost: Status: " + String.valueOf(conn.getResponseCode()));
+            Log.i(TAG, "sendPost: Status: " + conn.getResponseCode());
             Log.i(TAG, "sendPost: Response Message: " + conn.getResponseMessage());
 
             // Sending the Response Back to the User in JSON
@@ -114,6 +114,51 @@ public class NetworkUtil
         {
             e.printStackTrace();
             return -1;
+        }
+    }
+
+    // Sign-Up
+    public static boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException
+    {
+        JSONObject jsonParam = new JSONObject();
+        jsonParam.put("username", username);
+        jsonParam.put("email_address", emailAddress);
+        jsonParam.put("password", password);
+
+        return sendPost(urlAddress, jsonParam, false).getBoolean("result");
+    }
+    // Login
+    public static int login(String urlAddress, String username, String password)
+    {
+        try
+        {
+            // Creating the JSON Object
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("username", username);
+            jsonParam.put("password", password);
+
+            // Sending Request
+            JSONObject results = sendPost(urlAddress, jsonParam, true);
+
+            return results.getInt("USER_ID");
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+    // Loading User Data
+    public static JSONObject loadUserData(String urlAddress, int currentUserID)
+    {
+        JSONObject jsonParam = new JSONObject();
+        try
+        {
+            jsonParam.put("USER_ID", currentUserID);
+            return sendPost(urlAddress, jsonParam, true);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
         }
     }
 }

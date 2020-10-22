@@ -24,123 +24,10 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     private OnAuthenticationListener onAuthenticationListener;
     private OnDataLoadedListener onDataLoadedListener;
 
-    public LoadDataTask(OnAuthenticationListener mListener, OnDataLoadedListener onDataLoadedListener) { // Can pass references to UI objects
+    public LoadDataTask(OnAuthenticationListener mListener, OnDataLoadedListener onDataLoadedListener)
+    { // Can pass references to UI objects
         this.onAuthenticationListener = mListener;
         this.onDataLoadedListener = onDataLoadedListener;
-    }
-
-    boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException {
-
-        OPERATION_CODE = SIGN_UP;
-
-        JSONObject jsonParam = new JSONObject();
-        jsonParam.put("username", username);
-        jsonParam.put("email_address", emailAddress);
-        jsonParam.put("password", password);
-
-        return NetworkUtil.sendPost(urlAddress, jsonParam, false).getBoolean("result");
-    }
-
-    Integer login(String urlAddress, String username, String password) throws JSONException {
-
-        OPERATION_CODE = LOG_IN;
-        Scanner scanner = null;
-
-        JSONObject results;
-
-        try {
-            JSONObject jsonParam = new JSONObject();
-            jsonParam.put("username", username);
-            jsonParam.put("password", password);
-
-            URL url = new URL(urlAddress);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            conn.setRequestProperty("Accept","application/json");
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-
-            Log.i("JSON", jsonParam.toString());
-
-            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            os.writeBytes(jsonParam.toString());
-
-            os.flush();
-            os.close();
-
-            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-            Log.i("MSG" , conn.getResponseMessage());
-
-            try {
-                scanner = new Scanner(conn.getInputStream());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String response = scanner.useDelimiter("\\Z").next();
-
-            results = new JSONObject(response);
-
-            Log.d("HEREEE: ", response);
-            scanner.close();
-            conn.disconnect();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
-
-        return (int) results.get("USER_ID");
-    }
-
-    JSONObject loadUserData(String urlAddress, int currentUserID) {
-        OPERATION_CODE = USER_DATA;
-
-        Scanner scanner = null;
-        JSONObject results;
-
-        try {
-            JSONObject jsonParam = new JSONObject();
-            jsonParam.put("USER_ID", currentUserID);
-
-            URL url = new URL(urlAddress);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            conn.setRequestProperty("Accept","application/json");
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-
-            Log.i("JSON", jsonParam.toString());
-
-            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            os.writeBytes(jsonParam.toString());
-
-            os.flush();
-            os.close();
-
-            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-            Log.i("MSG" , conn.getResponseMessage());
-
-            try {
-                scanner = new Scanner(conn.getInputStream());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String response = scanner.useDelimiter("\\Z").next();
-
-            results = new JSONObject(response);
-
-            Log.d("HEREEE: ", response);
-            scanner.close();
-            conn.disconnect();
-
-            return results;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     // Main Method that runs in background when this Async task is called
@@ -150,11 +37,13 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         try
         {
             // Main URL
-            String url = "https://d440b35ba592.ngrok.io/";
-
-            switch (strings[0]) {
+            String url = "https://b9b0b4d43db2.ngrok.io/";
+            switch (strings[0])
+            {
                 case "signup":
-                    if (signup(url + "add_user", strings[1], strings[2], strings[3])) {
+                    OPERATION_CODE = SIGN_UP;
+                    if (NetworkUtil.signup(url + "add_user", strings[1], strings[2], strings[3]))
+                    {
                         return 1;
                     }
                     break;
@@ -165,18 +54,21 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
                             Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
 
                 case "loadData":
-                    return loadUserData(url + "user_data", Integer.parseInt(strings[1]));
+                    OPERATION_CODE = USER_DATA;
+                    return NetworkUtil.loadUserData(url + "user_data", Integer.parseInt(strings[1]));
 
                 default:
-                    return login(url + "login", strings[1], strings[2]);
+                    OPERATION_CODE = LOG_IN;
+                    return NetworkUtil.login(url + "login", strings[1], strings[2]);
             }
+            // End of Switch
         }
         catch (JSONException e)
         {
             e.printStackTrace();
         }
         return -1;
-    }
+    }// End of Function doInBackground();
 
     @Override
     protected void onPostExecute(Object object)

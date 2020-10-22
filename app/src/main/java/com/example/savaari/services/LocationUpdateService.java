@@ -18,13 +18,11 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnAuthenticationListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import org.json.JSONException;
 
 public class LocationUpdateService extends Service {
     // Main Attributes
@@ -32,6 +30,31 @@ public class LocationUpdateService extends Service {
     private FusedLocationProviderClient mFusedLocationClient;
     private final static long UPDATE_INTERVAL = 10 * 1000; // 10 seconds
     private final static long FASTEST_INTERVAL = 2 * 1000; // 2 seconds
+    private int mUserID;
+
+    // Location Callback Function
+    private final LocationCallback locationCallback = new LocationCallback()
+    {
+        @Override
+        public void onLocationResult(LocationResult locationResult)
+        {
+            Log.d(LOG_TAG, "onLocationResult: got Location result");
+            Location location = locationResult.getLastLocation();
+
+            // Saving the Location Data on database
+            if (location != null)
+            {
+                // Call Save User
+                try
+                {
+                    saveUserLocation(location);
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
 
     // Method that needs to be Implemented because of extending Service
     @Nullable
@@ -77,6 +100,14 @@ public class LocationUpdateService extends Service {
     // Member function for setting location data
     private void getLocation()
     {
+        Log.d(LOG_TAG, "getLocation: Inside function!");
+
+        // Quit the looper if the user is signed out
+        if (mUserID == -1)
+        {
+            Looper.myLooper().quitSafely();
+        }
+
         // Creating the Location Request
         LocationRequest mLocationRequestHighAccuracy = new LocationRequest();
         mLocationRequestHighAccuracy.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -95,45 +126,35 @@ public class LocationUpdateService extends Service {
         // Getting the Location Information and calling the SaveUserLocation Function
         Log.d(LOG_TAG, "getLocation: getting Location information.");
         mFusedLocationClient.requestLocationUpdates(mLocationRequestHighAccuracy,
-                new LocationCallback()
-                {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult)
-                    {
-                        Log.d(LOG_TAG, "onLocationResult: got Location result");
-                        Location location = locationResult.getLastLocation();
-
-                        // Saving the Location Data on database
-                        if (location != null)
-                        {
-                            // Call Save User
-                            try {
-                                saveUserLocation(location);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }, Looper.myLooper()); // Added a Looper at the End to repeat the function
+                locationCallback, Looper.myLooper()); // Added a Looper at the End to repeat the function
     }
 
     // Call this function after getting the USER's Locations
-    private void saveUserLocation(Location mUserLocation) throws JSONException
+    private void saveUserLocation(Location mUserLocation)
     {
         Log.d(LOG_TAG, "saveUserLocation: inside!");
         if (mUserLocation != null)
         {
             // Function for Networking POST
             SharedPreferences sh = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
-            int currentUserID = sh.getInt("USER_ID", -1);
-            Log.d(LOG_TAG, "saveUserLocation: currentUserID: " + currentUserID);
-            if (currentUserID != -1)
+            mUserID = sh.getInt("USER_ID", -1);
+            Log.d(LOG_TAG, "saveUserLocation: currentUserID: " + mUserID);
+            if (mUserID != -1)
             {
                 Log.d(LOG_TAG, "saveUserLocation: Executing sendLocationFunction");
                 // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(mUserID), String.valueOf(mUserLocation.getLatitude())
                         , String.valueOf(mUserLocation.getLongitude()));
             }
         }
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        Log.d(LOG_TAG, "onDestroy: Service Destroyed!");
+        mFusedLocationClient.removeLocationUpdates(locationCallback);
+        stopSelf();
     }
 }

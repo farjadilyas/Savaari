@@ -8,6 +8,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.login.LoginActivity;
+import com.example.savaari.ride.RideActivity;
 import com.example.savaari.services.LocationUpdateUtil;
 
 public class SettingsActivity extends Util implements SettingsClickListener {
