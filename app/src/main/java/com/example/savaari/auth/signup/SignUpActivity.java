@@ -68,6 +68,9 @@ public class SignUpActivity extends Util {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 
+        /*
+        * Initialize ViewModel & View Objects
+        */
         signUpViewModel = ViewModelProviders.of(this, new SignUpViewModelFactory())
                 .get(SignUpViewModel.class);
 
@@ -80,6 +83,9 @@ public class SignUpActivity extends Util {
         final ProgressBar loadingProgressBar = findViewById(R.id.loading);
         final ConstraintLayout successBanner = findViewById(R.id.successBanner);
         successBanner.setVisibility(View.INVISIBLE);
+
+
+        /*  Back to Login Activity actions */
 
         backFromBanner.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,6 +102,9 @@ public class SignUpActivity extends Util {
                 NavUtils.navigateUpFromSameTask(SignUpActivity.this);
             }
         });
+
+
+        /* Observe changes in SignpFormState (Input Validation) */
 
         signUpViewModel.getSignUpFormState().observe(this, new Observer<SignUpFormState>() {
             @Override
@@ -116,27 +125,8 @@ public class SignUpActivity extends Util {
             }
         });
 
-        /*
 
-        signUpViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
-            @Override
-            public void onChanged(@Nullable LoginResult loginResult) {
-                if (loginResult == null) {
-                    return;
-                }
-                loadingProgressBar.setVisibility(View.GONE);
-                if (loginResult.getError() != null) {
-                    showLoginFailed(loginResult.getError());
-                }
-                if (loginResult.getSuccess() != null) {
-                    updateUiWithUser(loginResult.getSuccess());
-                }
-                setResult(Activity.RESULT_OK);
-
-                //Complete and destroy login activity once successful
-                finish();
-            }
-        });*/
+        /* TextWatcher to notify ViewModel of changes in text */
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
             @Override
@@ -158,6 +148,9 @@ public class SignUpActivity extends Util {
         usernameEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
         nicknameEditText.addTextChangedListener(afterTextChangedListener);
+
+
+        /* Sign Up action handlers */
 
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 

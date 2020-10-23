@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
+
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NavUtils;
+
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.login.LoginActivity;
-import com.example.savaari.ride.RideActivity;
 import com.example.savaari.services.LocationUpdateUtil;
 
 public class SettingsActivity extends Util implements SettingsClickListener {
@@ -48,22 +50,12 @@ public class SettingsActivity extends Util implements SettingsClickListener {
 
         userSettings = new UserSettings();
 
-        // TODO Check this old code from Firebase
+        // TODO: ValueEvenetListener for change in theme settings
+
         /*
-        DatabaseReference settingsReference = databaseReference.child("users").child(Objects.requireNonNull(mAuth.getUid())).child("settings");
-
-        settingsReference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                userSettings.setSyncTheme((boolean) snapshot.child("syncTheme").getValue());
-                userSettings.setAutoDarkTheme((boolean) snapshot.child("autoDarkTheme").getValue());
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });*/
+        * If themeChange is true (theme has been changed), then replace with new ThemeFragment
+        * else, replace with new SettingsFragment
+        */
 
         if (getIntent().getBooleanExtra("themeChange", false)) {
             setInSubSetting(true);
@@ -90,17 +82,6 @@ public class SettingsActivity extends Util implements SettingsClickListener {
 
         return(super.onOptionsItemSelected(item));
     }
-
-    /*
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        if (item.getItemId() == android.R.id.home) {
-            NavUtils.navigateUpFromSameTask(SettingsActivity.this);
-            return super.onOptionsItemSelected(item);
-        }
-        return super.onOptionsItemSelected(item);
-    }*/
 
     @Override
     public void onAccountClicked() {
@@ -183,7 +164,7 @@ public class SettingsActivity extends Util implements SettingsClickListener {
                     .commit();
         }
         else {
-            super.onBackPressed();
+            NavUtils.navigateUpFromSameTask(SettingsActivity.this);
         }
     }
 }

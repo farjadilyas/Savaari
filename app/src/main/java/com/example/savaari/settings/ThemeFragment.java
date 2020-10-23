@@ -25,8 +25,6 @@ import com.example.savaari.R;
 import com.example.savaari.ThemeVar;
 import com.example.savaari.ride.RideActivity;
 
-import java.util.Objects;
-
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ThemeFragment#newInstance} factory method to
