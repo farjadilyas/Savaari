@@ -58,21 +58,20 @@ public class NetworkUtil
             // Sending the Response Back to the User in JSON
             if (needResponse)
             {
-                Scanner scanner = null;
+                Scanner scanner;
                 try
                 {
                     scanner = new Scanner(conn.getInputStream());
-                } catch (IOException e)
+                    String response = scanner.useDelimiter("\\Z").next();
+                    JSONArray results = new JSONArray(response);
+                    Log.d(TAG, "sendPostArray: " + response);
+                    scanner.close();
+                    conn.disconnect();
+                    return results;
+                } catch (Exception e)
                 {
                     e.printStackTrace();
                 }
-
-                String response = scanner.useDelimiter("\\Z").next();
-                JSONArray results = new JSONArray(response);
-                Log.d(TAG, "sendPostArray: " + response);
-                scanner.close();
-                conn.disconnect();
-                return results;
             }
             result.put(0, true);
             return result;
@@ -114,21 +113,20 @@ public class NetworkUtil
             // Sending the Response Back to the User in JSON
             if (needResponse)
             {
-                Scanner scanner = null;
+                Scanner scanner;
                 try
                 {
                     scanner = new Scanner(conn.getInputStream());
+                    String response = scanner.useDelimiter("\\Z").next();
+                    JSONObject results = new JSONObject(response);
+                    Log.d(TAG, "sendPost: " + response);
+                    scanner.close();
+                    conn.disconnect();
+                    return results;
                 } catch (IOException e)
                 {
                     e.printStackTrace();
                 }
-
-                String response = scanner.useDelimiter("\\Z").next();
-                JSONObject results = new JSONObject(response);
-                Log.d(TAG, "sendPost: " + response);
-                scanner.close();
-                conn.disconnect();
-                return results;
             }
             result.put("result", true);
             return result;

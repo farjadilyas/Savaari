@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,7 +20,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -30,12 +28,9 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-
-import com.example.savaari.LoadDataTask;
 import com.example.savaari.R;
 import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
-import com.example.savaari.services.LocationUpdateService;
 import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
@@ -69,7 +64,6 @@ import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,62 +109,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private ArrayList<UserLocation> mUserLocations;
     private Location mUserLocation;
   
-
-    // Call this function after getting the USER's Locations
-    private void saveUserLocation()
-    {
-        rideViewModel.setUserCoordinates(mUserLocation.getLatitude(), mUserLocation.getLongitude());
-        Log.d(TAG, "saveUserLocation: inside!");
-        if (mUserLocation != null)
-        {
-            // Function for Networking POST
-            SharedPreferences sh = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
-            int currentUserID = sh.getInt("USER_ID", -1);
-            Log.d(TAG, "saveUserLocation: currentUserID: " + currentUserID);
-            if (currentUserID != -1)
-            {
-                Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
-                // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
-                        , String.valueOf(mUserLocation.getLongitude()));
-            }
-        }
-    }
-
-    // Check if the background location service is running
-    private boolean isLocationServiceRunning()
-    {
-        // Iterating over all services to check if the service is running
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
-        {
-            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
-            {
-                Log.d(TAG, "isLocationServiceRunning: location service is running");
-                return true;
-            }
-        }
-        Log.d(TAG, "isLocationServiceRunning: location service is not running.");
-        return false;
-    }
-
-    // Method for Starting the Location Service
-    private void startLocationService()
-    {
-        if (!isLocationServiceRunning())
-        {
-            Intent serviceIntent = new Intent(this, LocationUpdateService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            {
-                RideActivity.this.startForegroundService(serviceIntent);
-            }
-            else
-            {
-                startService(serviceIntent);
-            }
-        }
-    }
-
 
     // Main onCreate Function to override
     @Override
@@ -406,17 +344,16 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* Loads user data from database */
     private void loadUserData() {
         rideViewModel.loadUserData();
-        rideViewModel.isLiveUserDataLoaded().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean aBoolean) {
-                if (aBoolean) {
-                    navUsername.setText(rideViewModel.getUsername());
-                    navEmail.setText(rideViewModel.getEmailAddress());
-                    Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    //Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
-                }
+        rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
+            if (aBoolean)
+            {
+                navUsername.setText(rideViewModel.getUsername());
+                navEmail.setText(rideViewModel.getEmailAddress());
+                Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
+            }
+            else
+            {
+                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -490,34 +427,32 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         try {
             if (locationPermissionGranted) {
                 Task location = fusedLocationProviderClient.getLastLocation();
-                location.addOnCompleteListener(new OnCompleteListener() {
-                    @Override
-                    public void onComplete(@NonNull Task task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "onComplete: found location!");
-                            Location currentLocation = (Location) task.getResult();
+                location.addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "onComplete: found location!");
+                        Location currentLocation = (Location) task.getResult();
 
-                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
+                        moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "");
 
-                            // Calling User Location Save Function
-                            try
-                            {
-                                mUserLocation = currentLocation;
-                                saveUserLocation();
+                        // Calling User Location Save Function
+                        try
+                        {
+                            mUserLocation = currentLocation;
+                            rideViewModel.setUserCoordinates(mUserLocation.getLatitude(), mUserLocation.getLongitude());
+                            LocationUpdateUtil.saveUserLocation(mUserLocation, RideActivity.this);
 
-                                // Starting Background Location Service
-                                ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-                                LocationUpdateUtil.startLocationService(manager, RideActivity.this);
+                            // Starting Background Location Service
+                            ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                            LocationUpdateUtil.startLocationService(manager, RideActivity.this);
 
-                            } catch (Exception e)
-                            {
-                                e.printStackTrace();
-                            }
-
-                        } else {
-                            Log.d(TAG, "onComplete: current location is null");
-                            Toast.makeText(RideActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
+                        } catch (Exception e)
+                        {
+                            e.printStackTrace();
                         }
+
+                    } else {
+                        Log.d(TAG, "onComplete: current location is null");
+                        Toast.makeText(RideActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -592,43 +527,40 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         * since this method is called from a different context
         * changes to google map must be made on the same thread as the one it is on
         */
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "run: result routes: " + result.routes.length);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            Log.d(TAG, "run: result routes: " + result.routes.length);
 
-                /* Loops through possible routes*/
-                //for(DirectionsRoute route: result.routes){
-                DirectionsRoute route = result.routes[0];
-                Log.d(TAG, "run: leg: " + route.legs[0].toString());
+            /* Loops through possible routes*/
+            //for(DirectionsRoute route: result.routes){
+            DirectionsRoute route = result.routes[0];
+            Log.d(TAG, "run: leg: " + route.legs[0].toString());
 
-                /* get list of LatLng corresponding to each 'checkpoint' along the route */
-                List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
+            /* get list of LatLng corresponding to each 'checkpoint' along the route */
+            List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
 
-                List<LatLng> newDecodedPath = new ArrayList<>();
+            List<LatLng> newDecodedPath = new ArrayList<>();
 
-                // This loops through all the LatLng coordinates of ONE polyline.
-                for(com.google.maps.model.LatLng latLng: decodedPath){
+            // This loops through all the LatLng coordinates of ONE polyline.
+            for(com.google.maps.model.LatLng latLng: decodedPath){
 
-                    newDecodedPath.add(new LatLng(
-                            latLng.lat,
-                            latLng.lng
-                    ));
-                }
-
-                /* Add all the 'checkpoints' to the polyline */
-                if (destinationPolyline != null)
-                    destinationPolyline.remove();
-                destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
-                destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
-                destinationLeg = route.legs[0];
-                destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
-                destinationMarker.showInfoWindow();
-
-                zoomRoute(newDecodedPath);
-
-                //}
+                newDecodedPath.add(new LatLng(
+                        latLng.lat,
+                        latLng.lng
+                ));
             }
+
+            /* Add all the 'checkpoints' to the polyline */
+            if (destinationPolyline != null)
+                destinationPolyline.remove();
+            destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
+            destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+            destinationLeg = route.legs[0];
+            destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
+            destinationMarker.showInfoWindow();
+
+            zoomRoute(newDecodedPath);
+
+            //}
         });
     }
 
@@ -665,11 +597,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                     }
                 })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-                        dialog.cancel();
-                    }
-                });
+                .setNegativeButton("No", (dialog, id) -> dialog.cancel());
         final AlertDialog alert = builder.create();
         alert.show();
     }
@@ -718,9 +646,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         switch (item.getItemId()) {
             case (R.id.nav_your_trips):
-                break;
             case (R.id.nav_help):
-                break;
             case (R.id.nav_wallet):
                 break;
             case (R.id.nav_settings):
