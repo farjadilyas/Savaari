@@ -17,8 +17,8 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     private int OPERATION_CODE = -1;
 
     // Declare any reference to UI objects from UI controller
-    private OnAuthenticationListener onAuthenticationListener;
-    private OnDataLoadedListener onDataLoadedListener;
+    private final OnAuthenticationListener onAuthenticationListener;
+    private final OnDataLoadedListener onDataLoadedListener;
 
     public LoadDataTask(OnAuthenticationListener mListener, OnDataLoadedListener onDataLoadedListener)
     { // Can pass references to UI objects
