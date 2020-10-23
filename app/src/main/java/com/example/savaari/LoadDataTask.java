@@ -39,7 +39,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
             {
                 case "signup":
                     OPERATION_CODE = SIGN_UP;
-                    if (NetworkUtil.signup(url + "add_user", strings[1], strings[2], strings[3]))
+                    if (NetworkUtil.signup(url + "add_rider", strings[1], strings[2], strings[3]))
                     {
                         return 1;
                     }
@@ -47,20 +47,20 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
                 case "sendLocation":
                     OPERATION_CODE = LAST_LOCATION;
-                    return NetworkUtil.sendLastLocation(url + "saveUserLocation", Integer.parseInt(strings[1]),
+                    return NetworkUtil.sendLastLocation(url + "saveRiderLocation", Integer.parseInt(strings[1]),
                             Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
 
                 case "loadData":
                     OPERATION_CODE = USER_DATA;
-                    return NetworkUtil.loadUserData(url + "user_data", Integer.parseInt(strings[1]));
+                    return NetworkUtil.loadUserData(url + "rider_data", Integer.parseInt(strings[1]));
 
                 case "getUserLocations":
                     OPERATION_CODE = USER_LOCATIONS;
-                    return NetworkUtil.getUserLocations(url + "getUserLocations");
+                    return NetworkUtil.getUserLocations(url + "getRiderLocations");
 
                 default:
                     OPERATION_CODE = LOG_IN;
-                    return NetworkUtil.login(url + "login", strings[1], strings[2]);
+                    return NetworkUtil.login(url + "login_rider", strings[1], strings[2]);
             }
             // End of Switch
         }

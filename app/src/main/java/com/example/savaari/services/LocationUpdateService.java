@@ -28,7 +28,7 @@ public class LocationUpdateService extends Service {
     private FusedLocationProviderClient mFusedLocationClient;
     private final static long UPDATE_INTERVAL = 10 * 1000; // 10 seconds
     private final static long FASTEST_INTERVAL = 10 * 1000; // 2 seconds
-    private final int mUserID;
+    private int mUserID;
 
     // Location Callback Function
     private final LocationCallback locationCallback = new LocationCallback()
@@ -53,6 +53,11 @@ public class LocationUpdateService extends Service {
             }
         }
     };
+
+    public LocationUpdateService()
+    {
+        // Empty Constructor
+    }
 
     public LocationUpdateService(int mUserID)
     {
