@@ -2,13 +2,8 @@ package com.example.savaari;
 
 import android.os.AsyncTask;
 import android.util.Log;
+
 import org.json.JSONException;
-import org.json.JSONObject;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Scanner;
 
 public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
@@ -39,7 +34,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         try
         {
             // Main URL
-            String url = "https://b9b0b4d43db2.ngrok.io/";
+            String url = "https://af63c85112a8.ngrok.io/";
             switch (strings[0])
             {
                 case "signup":

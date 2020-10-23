@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,33 +22,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
-
-import com.example.savaari.LoadDataTask;
-
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateService;
-
-
-import com.example.savaari.OnDataLoadedListener;
-import com.example.savaari.R;
-import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -60,9 +48,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-
 import com.google.android.gms.maps.model.LatLngBounds;
-
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -75,7 +61,6 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-
 import com.google.android.material.navigation.NavigationView;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -85,11 +70,6 @@ import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,6 +78,8 @@ import java.util.Objects;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
+
+    private RideViewModel rideViewModel = null;
 
     private static final String TAG = "RideActivity";
 
@@ -131,17 +113,13 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private int USER_ID = -1;
     private ArrayList<UserLocation> mUserLocations;
-
-   // --------------------------------------------------------------------------------
-    // --------------------[ LOCATION BACKGROUND SERVICE ]-----------------------------
-    // --------------------------------------------------------------------------------
-    // Nabeel Attributes
     private Location mUserLocation;
   
 
     // Call this function after getting the USER's Locations
     private void saveUserLocation()
     {
+        rideViewModel.setUserCoordinates(mUserLocation.getLatitude(), mUserLocation.getLongitude());
         Log.d(TAG, "saveUserLocation: inside!");
         if (mUserLocation != null)
         {
@@ -159,7 +137,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-
     // Check if the background location service is running
     private boolean isLocationServiceRunning()
     {
@@ -176,6 +153,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         Log.d(TAG, "isLocationServiceRunning: location service is not running.");
         return false;
     }
+
     // Method for Starting the Location Service
     private void startLocationService()
     {
@@ -193,10 +171,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-
-    // --------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------
-    // --------------------------------------------------------------------------------
 
     // Main onCreate Function to override
     @Override
@@ -224,7 +198,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
         else {
             centerGPSButton = findViewById(R.id.user_location);
-
+            rideViewModel = new ViewModelProvider(this, new RideViewModelFactory(USER_ID)).get(RideViewModel.class);
             getLocationPermission();
         }
     }
@@ -291,59 +265,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-    // Function for loading User Location Data
-    // Nabeel Danish
-    private void loadUserLocations()
-    {
-        Log.d(TAG, "loadUserLocations: Started!");
-        new LoadDataTask(null, new OnDataLoadedListener()
-        {
-            @Override
-            public void onDataLoaded(Object object)
-            {
-                try {
-                    JSONArray resultArray = (JSONArray) object;
-                    Log.d(TAG, "loadUserLocations: " + resultArray.toString());
-                    if (resultArray != null)
-                    {
-                        Log.d(TAG, "loadUserLocations: found JSON Array");
-                        for (int i = 0; i < resultArray.length(); i++) {
-                            JSONObject obj = resultArray.getJSONObject(i);
-                            UserLocation userLocation = new UserLocation();
-
-                            // Assigning User Objects
-                            userLocation.setUserID(obj.getInt("USER_ID"));
-                            userLocation.setLatitude(obj.getDouble("LATITUDE"));
-                            userLocation.setLongitude(obj.getDouble("LONGITUDE"));
-                            userLocation.setTimestamp(obj.getString("TIMESTAMP"));
-
-                            // Adding Final Object
-                            mUserLocations.add(userLocation);
-                            Log.d(TAG, "loadUserLocations: userID: " + userLocation.getUserID());
-                            Log.d(TAG, "loadUserLocations: latitude: " + userLocation.getLatitude());
-                            Log.d(TAG, "loadUserLocations: longitude: " + userLocation.getLongitude());
-                            Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.d(TAG, "Exception in loadUserLocations");
-                    e.printStackTrace();
-                }
-                // Testing Code
-                Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
-                for (int i = 0; i < mUserLocations.size(); ++i)
-                {
-                    Log.d(TAG, "loadUserLocations: setting Markers");
-                    MarkerOptions option = new MarkerOptions()
-                            .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
-                    googleMap.addMarker(option);
-                }
-            }
-        }).execute("getUserLocations");
-    }
-
     /*
      * Callback from initMap()'s getMapAsync()
      * Initialize GoogleMap Object
@@ -388,7 +309,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
     }
 
-
     /* Method for adding a destination */
     private void setDestination(LatLng latLng, String title) {
         moveCamera(latLng, DEFAULT_ZOOM, title);
@@ -410,6 +330,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     * onPlaceSelected() implementation
     */
     private void initializeAutocomplete() {
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
+        }
+
         // Initialize the AutocompleteSupportFragment.
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
@@ -458,6 +382,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         });
     }
 
+
     /*
      * Initializes View Objects including:
      * centerGPSButton
@@ -467,42 +392,65 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         Log.d(TAG, "init: initializing");
 
 
-        // Calling Load Data Functions
+        initializeNavigationBar();
         loadUserData();
         loadUserLocations();
 
+        initializeAutocomplete();
+
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
 
-        /* Google Places Autocomplete API Initialization */
-        if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
-        }
 
-        initializeNavigationBar();
-        initializeAutocomplete();
     }
 
-    /*
-     * Loads user data from database
-     */
+    /* Loads user data from database */
     private void loadUserData() {
-        new LoadDataTask(null, object -> {
-            if (object == null) {
-                Toast.makeText(RideActivity.this, "Network Connection failed", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                JSONObject jsonObject = (JSONObject) object;
-                try {
-                    navUsername.setText(jsonObject.getString("USER_NAME"));
-                    navEmail.setText(jsonObject.getString("EMAIL_ADDRESS"));
+        rideViewModel.loadUserData();
+        rideViewModel.isLiveUserDataLoaded().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean) {
+                    navUsername.setText(rideViewModel.getUsername());
+                    navEmail.setText(rideViewModel.getEmailAddress());
+                    Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
                 }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                    Log.d("loadUserData(): ", "JSONException");
+                else {
+                    //Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
                 }
             }
-        }).execute("loadData", String.valueOf(USER_ID));
+        });
+
     }
+
+    /* Function for loading User Location Data */
+    private void loadUserLocations()
+    {
+        rideViewModel.loadUserLocations();
+        rideViewModel.isLiveUserLocationsLoaded().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+
+                if (aBoolean) {
+                    mUserLocations = rideViewModel.getUserLocations();
+                    Log.d(TAG, "loadUserLocations: Started!");
+
+                    // Testing Code
+                    Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
+                    for (int i = 0; i < mUserLocations.size(); ++i) {
+                        Log.d(TAG, "loadUserLocations: setting Markers");
+                        MarkerOptions option = new MarkerOptions()
+                                .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                        googleMap.addMarker(option);
+                    }
+                    Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
 
     /*
     * Receives autocompleteFragment's result (callback)
@@ -561,7 +509,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                                 ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
                                 LocationUpdateUtil.startLocationService(manager, RideActivity.this);
 
-                            } catch (JSONException e)
+                            } catch (Exception e)
                             {
                                 e.printStackTrace();
                             }
@@ -673,7 +621,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     destinationPolyline.remove();
                 destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
-                destinationPolyline.setClickable(true);
                 destinationLeg = route.legs[0];
                 destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
                 destinationMarker.showInfoWindow();

@@ -1,6 +1,5 @@
 package com.example.savaari;
 
-import android.location.Location;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -11,7 +10,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 // This class holds static functions for interacting with the API Layer
@@ -206,13 +204,13 @@ public class NetworkUtil
         }
     }
     // Loading User Data
-    public static JSONArray loadUserData(String urlAddress, int currentUserID)
+    public static JSONObject loadUserData(String urlAddress, int currentUserID)
     {
         JSONObject jsonParam = new JSONObject();
         try
         {
             jsonParam.put("USER_ID", currentUserID);
-            return sendPost(urlAddress, jsonParam, true).getJSONArray("");
+            return sendPost(urlAddress, jsonParam, true);
         } catch (Exception e)
         {
             e.printStackTrace();
