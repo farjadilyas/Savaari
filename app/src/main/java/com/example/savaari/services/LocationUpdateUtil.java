@@ -3,8 +3,12 @@ package com.example.savaari.services;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Build;
 import android.util.Log;
+
+import com.example.savaari.LoadDataTask;
 
 public class LocationUpdateUtil
 {
@@ -56,5 +60,26 @@ public class LocationUpdateUtil
     {
         context.stopService(new Intent(context, LocationUpdateService.class));
         Log.d(TAG, "stopLocationService: service stopped");
+    }
+
+    // Method for Saving User Location
+    // Call this function after getting the USER's Locations
+    public static void saveUserLocation(Location mUserLocation, Context context)
+    {
+        Log.d(TAG, "saveUserLocation: inside!");
+        if (mUserLocation != null)
+        {
+            // Function for Networking POST
+            SharedPreferences sh = context.getSharedPreferences("AuthSharedPref", Context.MODE_PRIVATE);
+            int currentUserID = sh.getInt("USER_ID", -1);
+            Log.d(TAG, "saveUserLocation: currentUserID: " + currentUserID);
+            if (currentUserID != -1)
+            {
+                Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
+                // Creating new Task
+                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
+                        , String.valueOf(mUserLocation.getLongitude()));
+            }
+        }
     }
 }

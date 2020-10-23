@@ -7,7 +7,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
@@ -17,7 +16,6 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import com.example.savaari.LoadDataTask;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -30,7 +28,7 @@ public class LocationUpdateService extends Service {
     private FusedLocationProviderClient mFusedLocationClient;
     private final static long UPDATE_INTERVAL = 10 * 1000; // 10 seconds
     private final static long FASTEST_INTERVAL = 10 * 1000; // 2 seconds
-    private int mUserID;
+    private final int mUserID;
 
     // Location Callback Function
     private final LocationCallback locationCallback = new LocationCallback()
@@ -47,7 +45,7 @@ public class LocationUpdateService extends Service {
                 // Call Save User
                 try
                 {
-                    saveUserLocation(location);
+                    LocationUpdateUtil.saveUserLocation(location, LocationUpdateService.this);
                 } catch (Exception e)
                 {
                     e.printStackTrace();
@@ -55,6 +53,11 @@ public class LocationUpdateService extends Service {
             }
         }
     };
+
+    public LocationUpdateService(int mUserID)
+    {
+        this.mUserID = mUserID;
+    }
 
     // Method that needs to be Implemented because of extending Service
     @Nullable
@@ -127,26 +130,6 @@ public class LocationUpdateService extends Service {
         Log.d(LOG_TAG, "getLocation: getting Location information.");
         mFusedLocationClient.requestLocationUpdates(mLocationRequestHighAccuracy,
                 locationCallback, Looper.myLooper()); // Added a Looper at the End to repeat the function
-    }
-
-    // Call this function after getting the USER's Locations
-    private void saveUserLocation(Location mUserLocation)
-    {
-        Log.d(LOG_TAG, "saveUserLocation: inside!");
-        if (mUserLocation != null)
-        {
-            // Function for Networking POST
-            SharedPreferences sh = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
-            mUserID = sh.getInt("USER_ID", -1);
-            Log.d(LOG_TAG, "saveUserLocation: currentUserID: " + mUserID);
-            if (mUserID != -1)
-            {
-                Log.d(LOG_TAG, "saveUserLocation: Executing sendLocationFunction");
-                // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(mUserID), String.valueOf(mUserLocation.getLatitude())
-                        , String.valueOf(mUserLocation.getLongitude()));
-            }
-        }
     }
 
     @Override

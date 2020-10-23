@@ -12,8 +12,8 @@ import com.example.savaari.ride.RideActivity;
 public class MainActivity extends Util {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
+    protected void onCreate(Bundle savedInstanceState)
+    {
         switch (ThemeVar.getData())
         {
             case(0):
@@ -36,30 +36,22 @@ public class MainActivity extends Util {
 
         final int USER_ID = sh.getInt("USER_ID", -1);
         if (USER_ID == -1) {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run()
-                {
+            new Handler().postDelayed(() -> {
 
-                    Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(i);
-                    finish();
-                }
+                Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(i);
+                finish();
             }, 1200);
         }
         else {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run()
-                {
+            new Handler().postDelayed(() -> {
 
-                    Intent i = new Intent(MainActivity.this, RideActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    i.putExtra("USER_ID", USER_ID);
-                    startActivity(i);
-                    finish();
-                }
+                Intent i = new Intent(MainActivity.this, RideActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                i.putExtra("USER_ID", USER_ID);
+                startActivity(i);
+                finish();
             }, 1200);
         }
 
