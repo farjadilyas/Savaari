@@ -14,8 +14,8 @@ from flask import flash, request, redirect, url_for
 from hashlib import sha256
 
 # create User			
-@app.route('/add_user', methods=['POST'])
-def create_student():
+@app.route('/add_rider', methods=['POST'])
+def add_rider():
     try:
         _json = request.json
         _email_address = _json['email_address']
@@ -26,7 +26,36 @@ def create_student():
 
         
         # insert record in database
-        sqlQuery = "INSERT INTO `user_details` (`USER_ID`, `USER_NAME`, `PASSWORD`, `EMAIL_ADDRESS`) VALUES (%s, %s, %s, %s)"
+        sqlQuery = "INSERT INTO `RIDER_DETAILS` (`USER_ID`, `USER_NAME`, `PASSWORD`, `EMAIL_ADDRESS`) VALUES (%s, %s, %s, %s)"
+        data = (0, _username, sha256(_password.encode()).hexdigest(), _email_address)
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, data)
+        conn.commit()
+        res = jsonify('Student created successfully.')
+        res.status_code = 200
+
+        return res
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close() 
+        conn.close()
+
+# create Driver		
+@app.route('/add_driver', methods=['POST'])
+def add_driver():
+    try:
+        _json = request.json
+        _email_address = _json['email_address']
+        _username = _json['username']
+        _password = _json['password']
+
+        print(_email_address)
+
+        
+        # insert record in database
+        sqlQuery = "INSERT INTO `DRIVER_DETAILS` (`USER_ID`, `USER_NAME`, `PASSWORD`, `EMAIL_ADDRESS`) VALUES (%s, %s, %s, %s)"
         data = (0, _username, sha256(_password.encode()).hexdigest(), _email_address)
         conn = mysql.connect()
         cursor = conn.cursor()
@@ -45,7 +74,7 @@ def create_student():
         conn.close()
 
 # Login User
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login_rider', methods=['POST', 'GET'])
 def login():
     try:
         _json = request.json
@@ -53,7 +82,7 @@ def login():
         _password = _json['password']
         
         # insert record in database
-        sqlQuery = "SELECT USER_ID FROM USER_DETAILS WHERE (USER_NAME = %s OR EMAIL_ADDRESS = %s) AND PASSWORD = %s"
+        sqlQuery = "SELECT USER_ID FROM RIDER_DETAILS WHERE (USER_NAME = %s OR EMAIL_ADDRESS = %s) AND PASSWORD = %s"
         data = (_username, _username, sha256(_password.encode()).hexdigest())
 
         conn = mysql.connect()
@@ -83,12 +112,12 @@ def login():
         conn.close()
 
 # Get Method for User Details
-@app.route('/user_details')
+@app.route('/rider_details')
 def student():
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT USER_ID, USER_NAME, PASSWORD, EMAIL_ADDRESS FROM user_details")
+        cursor.execute("SELECT USER_ID, USER_NAME, PASSWORD, EMAIL_ADDRESS FROM RIDER_DETAILS")
         rows = cursor.fetchall()
 
         res = jsonify(rows)
@@ -103,14 +132,14 @@ def student():
 
 
 # Load User Dat
-@app.route('/user_data', methods=['POST', 'GET'])
+@app.route('/rider_data', methods=['POST', 'GET'])
 def user_data():
     try:
         _json = request.get_json()
         _user_id = _json['USER_ID']
         
         # insert record in database
-        sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM USER_DETAILS WHERE USER_ID = %s"
+        sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM RIDER_DETAILS WHERE USER_ID = %s"
         data = (_user_id)
 
         conn = mysql.connect()
@@ -157,8 +186,8 @@ Return codes:
     404, 200
 """
 # Update User using PUT
-@app.route('/update', methods=['PUT'])
-def update_student():
+@app.route('/update_rider', methods=['PUT'])
+def update_rider():
     try:
         _json = request.get_json()
         _username = _json.get("username")
@@ -207,8 +236,8 @@ def update_student():
         conn.close()
 
 # Delete record from the Database
-@app.route('/delete', methods=['POST', 'DELETE'])
-def delete_student(student_id):
+@app.route('/delete_rider', methods=['POST', 'DELETE'])
+def delete_rider(student_id):
     try:
         _json = request.json
         _userID = _json.get('userID')
@@ -217,7 +246,7 @@ def delete_student(student_id):
         
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM USER_DETAILS WHERE USER_ID=%s", (student_id,))
+        cursor.execute("DELETE FROM RIDER_DETAILS WHERE USER_ID=%s", (student_id,))
         conn.commit()
         res = jsonify('Student deleted successfully.')
         res.status_code = 200
@@ -231,7 +260,7 @@ def delete_student(student_id):
 
 
 # Save Last Location API URL
-@app.route('/saveUserLocation', methods=['POST'])
+@app.route('/saveRiderLocation', methods=['POST'])
 def saveUserLastLocation():
     try:
         # Receiving Request Params
@@ -243,7 +272,7 @@ def saveUserLastLocation():
         _timestamp = _json['TIMESTAMP']
 
         # SQL Query to Update
-        sql = 'UPDATE USER_DETAILS SET LATITUDE = %s, LONGITUDE = %s, TIMESTAMP = CURRENT_TIME() WHERE USER_ID = %s'
+        sql = 'UPDATE RIDER_DETAILS SET LATITUDE = %s, LONGITUDE = %s, TIMESTAMP = CURRENT_TIME() WHERE USER_ID = %s'
 
         # Appending Placeholder Data
         data = []
@@ -270,13 +299,13 @@ def saveUserLastLocation():
         conn.close()
 
 # Get User Location
-@app.route('/getUserLocations', methods=['POST'])
+@app.route('/getRiderLocations', methods=['POST'])
 def getUserLocations():
 
     try:
         conn = mysql.connect()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE, TIMESTAMP FROM USER_DETAILS")
+        cursor.execute("SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE, TIMESTAMP FROM RIDER_DETAILS")
         rows = cursor.fetchall()
 
         res = jsonify(rows)

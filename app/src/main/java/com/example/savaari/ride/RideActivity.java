@@ -345,15 +345,15 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void loadUserData() {
         rideViewModel.loadUserData();
         rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
-            if (aBoolean)
-            {
+
+            if (aBoolean) {
                 navUsername.setText(rideViewModel.getUsername());
                 navEmail.setText(rideViewModel.getEmailAddress());
                 Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
             }
             else
             {
-                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show()
             }
         });
 
@@ -363,27 +363,24 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void loadUserLocations()
     {
         rideViewModel.loadUserLocations();
-        rideViewModel.isLiveUserLocationsLoaded().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean aBoolean) {
+        rideViewModel.isLiveUserLocationsLoaded().observe(this, aBoolean -> {
 
-                if (aBoolean) {
-                    mUserLocations = rideViewModel.getUserLocations();
-                    Log.d(TAG, "loadUserLocations: Started!");
+            if (aBoolean) {
+                mUserLocations = rideViewModel.getUserLocations();
+                Log.d(TAG, "loadUserLocations: Started!");
 
-                    // Testing Code
-                    Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
-                    for (int i = 0; i < mUserLocations.size(); ++i) {
-                        Log.d(TAG, "loadUserLocations: setting Markers");
-                        MarkerOptions option = new MarkerOptions()
-                                .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
-                        googleMap.addMarker(option);
-                    }
-                    Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+                // Testing Code
+                Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
+                for (int i = 0; i < mUserLocations.size(); ++i) {
+                    Log.d(TAG, "loadUserLocations: setting Markers");
+                    MarkerOptions option = new MarkerOptions()
+                            .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                    googleMap.addMarker(option);
                 }
-                else {
-                    //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
             }
         });
     }
