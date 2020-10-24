@@ -604,6 +604,56 @@ def checkRideStatus():
 		cursor.close() 
 		conn.close()
 
+# Function that confirms Ride by Driver
+@app.route('/confirmRideRequest', methods=['POST'])
+def confirmRideRequest():
+
+	# This function is called from the driver and confirms the ride request assigned
+	try:
+		_json = request.get_json()
+
+		_driver_id = _json['USER_ID']
+		_found_status = _json['FOUND_STATUS']
+		_rider_id = _json['RIDER_ID']
+
+		sql = 'UPDATE DRIVER_DETAILS SET RIDE_STATUS = %s WHERE USER_ID = %s'
+
+		data = []
+		data.append(_found_status + 1)
+		data.append(_driver_id)
+
+		# Conection to MYSQL
+		conn = mysql.connect()
+		cursor = conn.cursor()
+
+		# First Query
+		cursor.execute(sql, tuple(data))
+
+		# Second Query
+		sql = 'UPDATE RIDER_DETAILS SET FIND_STATUS = %s, DRIVER_ID = %s WHERE USER_ID = %s'
+		data = []
+		data.append(_found_status)
+		data.append(_driver_id)
+		data.append(_rider_id)
+
+		cursor.execute(sql, tuple(data))
+
+		# Final Commit
+		conn.commit()
+
+		res = {"STATUS": 200}
+		return res
+
+	except Exception as e:
+
+		res = {"STATUS": 404}
+		print(e)
+		return res
+
+	finally:
+		cursor.close() 
+		conn.close()
+
 
 # Error Handler
 @app.errorhandler(404)
