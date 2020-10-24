@@ -32,10 +32,9 @@ def add_rider():
         cursor = conn.cursor()
         cursor.execute(sqlQuery, data)
         conn.commit()
-        res = jsonify('Student created successfully.')
-        res.status_code = 200
+        res = {"STATUS_CODE" : 200}
 
-        return res
+        return json.dumps(res)
     except Exception as e:
         print(e)
     finally:
@@ -61,12 +60,10 @@ def add_driver():
         cursor = conn.cursor()
         cursor.execute(sqlQuery, data)
         conn.commit()
-        res = jsonify('Student created successfully.')
-        res.status_code = 200
+        
+        res = {"STATUS_CODE" : 200}
 
-        #return redirect('http://localhost:5000/user_details', 302)
-
-        return res
+        return json.dumps(res)
     except Exception as e:
         print(e)
     finally:
