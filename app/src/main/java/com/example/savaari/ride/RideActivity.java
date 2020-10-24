@@ -14,8 +14,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -24,10 +26,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.example.savaari.LoadDataTask;
 import com.example.savaari.R;
 import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
@@ -64,6 +69,9 @@ import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -95,8 +103,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* Drawing the route on Maps*/
     private Polyline destinationPolyline = null;
-    private DirectionsLeg destinationLeg = null;
     private Marker destinationMarker = null;
+
+    private Marker pickupMarker = null;
+    private Polyline pickupPolyline = null;
 
 
     private DrawerLayout drawer;
@@ -108,7 +118,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private int USER_ID = -1;
     private ArrayList<UserLocation> mUserLocations;
     private Location mUserLocation;
-  
+
+    private Button searchRideButton;
+    private UserLocation driverLocation = new UserLocation();
+
 
     // Main onCreate Function to override
     @Override
@@ -260,13 +273,13 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 .title(title);
         destinationMarker = googleMap.addMarker(options);
 
-        calculateDirections(destinationMarker);
+        calculateDirections(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()), destinationMarker, true);
     }
 
     /*
-    * Initialize Autocomplete Support Fragment
-    * onPlaceSelected() implementation
-    */
+     * Initialize Autocomplete Support Fragment
+     * onPlaceSelected() implementation
+     */
     private void initializeAutocomplete() {
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
@@ -336,6 +349,40 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         initializeAutocomplete();
 
+        searchRideButton = findViewById(R.id.go_btn);
+        searchRideButton.setEnabled(false);
+
+        searchRideButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+                new LoadDataTask(null, object ->
+                {
+                    try {
+                        JSONObject results = (JSONObject) object;
+                        driverLocation.setUserID(results.getInt("USER_ID"));
+                        driverLocation.setLatitude(Double.parseDouble(results.getString("LATITUDE")));
+                        driverLocation.setLongitude(Double.parseDouble(results.getString("LONGITUDE")));
+                        ;
+
+                        MarkerOptions options = new MarkerOptions()
+                                .position(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()))
+                                .title("Pickup point");
+                        pickupMarker = googleMap.addMarker(options);
+
+                        calculateDirections(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()),
+                                pickupMarker, false);
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        Log.d("searchRideButton: ", "OnClick: error");
+                    }
+                }).execute("findDriver", String.valueOf(USER_ID), String.valueOf(mUserLocation.getLatitude()),
+                        String.valueOf(mUserLocation.getLongitude()));
+            }
+        });
+
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
 
 
@@ -353,7 +400,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
             else
             {
-                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show()
+                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -387,9 +434,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     /*
-    * Receives autocompleteFragment's result (callback)
-    * Gets Place Object using 'getPlaceFromIntent()'
-    */
+     * Receives autocompleteFragment's result (callback)
+     * Gets Place Object using 'getPlaceFromIntent()'
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == 1) {
@@ -460,9 +507,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     /*
-    * Calculates directions from userLocation to marker
-    */
-    private void calculateDirections(Marker marker){
+     * Calculates directions from userLocation to marker
+     */
+    private void calculateDirections(LatLng mUserLocation, Marker marker, boolean sourceToDest){
         Log.d(TAG, "calculateDirections: calculating directions.");
 
         com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
@@ -474,8 +521,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         directions.alternatives(false);
         directions.origin(
                 new com.google.maps.model.LatLng(
-                        mUserLocation.getLatitude(),
-                        mUserLocation.getLongitude()
+                        mUserLocation.latitude,
+                        mUserLocation.longitude
                 )
         );
         Log.d(TAG, "calculateDirections: destination: " + destination.toString());
@@ -487,7 +534,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 Log.d(TAG, "calculateDirections: distance: " + result.routes[0].legs[0].distance);
                 Log.d(TAG, "calculateDirections: geocodedWayPoints: " + result.geocodedWaypoints[0].toString());
 
-                addPolylinesToMap(result);
+                addPolylinesToMap(result, sourceToDest);
             }
 
             @Override
@@ -517,13 +564,13 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         );
     }
 
-    private void addPolylinesToMap(final DirectionsResult result){
+    private void addPolylinesToMap(final DirectionsResult result, boolean sourceToDest){
 
         /*
-        * Posting to main thread
-        * since this method is called from a different context
-        * changes to google map must be made on the same thread as the one it is on
-        */
+         * Posting to main thread
+         * since this method is called from a different context
+         * changes to google map must be made on the same thread as the one it is on
+         */
         new Handler(Looper.getMainLooper()).post(() -> {
             Log.d(TAG, "run: result routes: " + result.routes.length);
 
@@ -547,15 +594,33 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
 
             /* Add all the 'checkpoints' to the polyline */
-            if (destinationPolyline != null)
-                destinationPolyline.remove();
-            destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
-            destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
-            destinationLeg = route.legs[0];
-            destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
-            destinationMarker.showInfoWindow();
+            if (sourceToDest) {
+                if (destinationPolyline != null) {
+                    destinationPolyline.remove();
+
+                    if (pickupPolyline != null) {
+                        pickupPolyline.remove();
+                    }
+                }
+
+                destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
+                destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+                destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
+                destinationMarker.showInfoWindow();
+            }
+            else {
+                if (pickupPolyline != null) {
+                    destinationPolyline.remove();
+                }
+                pickupPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
+                pickupPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.success_green));
+                pickupMarker.setSnippet("Duration: " + route.legs[0].duration);
+                pickupMarker.showInfoWindow();
+            }
 
             zoomRoute(newDecodedPath);
+
+            searchRideButton.setEnabled(true);
 
             //}
         });
@@ -601,9 +666,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     /*
-    * Checks if device's Google Play Services are available
-    * TODO: call this before getLocationPermission() in onCreate()
-    *  */
+     * Checks if device's Google Play Services are available
+     * TODO: call this before getLocationPermission() in onCreate()
+     *  */
     public boolean isServicesOK() {
         Log.d("isServicesOK: ", "checking google services version");
 

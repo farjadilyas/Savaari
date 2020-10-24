@@ -171,6 +171,23 @@ public class NetworkUtil
         }
     }
 
+    //Find Driver
+    public static JSONObject findDriver(String urladdress, int currentUserID, double latitude, double longitude) {
+        try {
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("USER_ID", currentUserID);
+            jsonParam.put("LATITUDE", latitude);
+            jsonParam.put("LONGITUDE", longitude);
+
+            return NetworkUtil.sendPost(urladdress, jsonParam, true);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.d("NetworkUtil: ", "findDriver() Exception");
+            return null;
+        }
+    }
+
     // Sign-Up
     public static boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException
     {
