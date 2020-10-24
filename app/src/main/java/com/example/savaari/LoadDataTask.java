@@ -14,6 +14,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     private final static int LAST_LOCATION = 2;
     private final static int USER_DATA = 3;
     private final static int USER_LOCATIONS = 4;
+    private final static int FIND_DRIVER = 5;
     private int OPERATION_CODE = -1;
 
     // Declare any reference to UI objects from UI controller
@@ -34,7 +35,7 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
         try
         {
             // Main URL
-            String url = "https://af63c85112a8.ngrok.io/";
+            String url = "https://df9259526ade.ngrok.io/";
             switch (strings[0])
             {
                 case "signup":
@@ -58,6 +59,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
                     OPERATION_CODE = USER_LOCATIONS;
                     return NetworkUtil.getUserLocations(url + "getRiderLocations");
 
+                case "findDriver":
+                    OPERATION_CODE = FIND_DRIVER;
+                    return NetworkUtil.findDriver(url + "findDriver", Integer.parseInt(strings[1]),
+                            Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
+
                 default:
                     OPERATION_CODE = LOG_IN;
                     return NetworkUtil.login(url + "login_rider", strings[1], strings[2]);
@@ -74,14 +80,17 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     @Override
     protected void onPostExecute(Object object)
     {
-        if ((OPERATION_CODE == USER_DATA || OPERATION_CODE == USER_LOCATIONS) && onDataLoadedListener != null)
-        {
-            onDataLoadedListener.onDataLoaded(object);
+        try {
+            if ((OPERATION_CODE == USER_DATA || OPERATION_CODE == USER_LOCATIONS || OPERATION_CODE == FIND_DRIVER) && onDataLoadedListener != null) {
+                onDataLoadedListener.onDataLoaded(object);
+            } else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null) {
+                Log.d("IMP RES: ", String.valueOf((int) object));
+                onAuthenticationListener.authenticationStatus((int) object);
+            }
         }
-        else if (OPERATION_CODE != LAST_LOCATION && onAuthenticationListener != null)
-        {
-            Log.d("IMP RES: ", String.valueOf((int) object));
-            onAuthenticationListener.authenticationStatus((int) object);
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.d("LoadDataTask: ", "onPostExecute exception");
         }
         super.onPostExecute(object);
     }

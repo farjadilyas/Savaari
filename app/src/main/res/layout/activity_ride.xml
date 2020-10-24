@@ -13,6 +13,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         tools:context=".ride.RideActivity">
 
         <androidx.fragment.app.FragmentContainerView
@@ -20,7 +21,8 @@
             android:layout_height="match_parent"
             android:id="@+id/map"
             tools:context=".MapsActivity"
-            android:name="com.google.android.gms.maps.SupportMapFragment" />
+            android:name="com.google.android.gms.maps.SupportMapFragment" >
+        </androidx.fragment.app.FragmentContainerView>
 
         <RelativeLayout
             android:id="@+id/search_bar"
@@ -62,17 +64,32 @@
             android:id="@+id/user_location"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:tint="?attr/textColor"
-            android:layout_alignParentEnd="true"
+            android:layout_alignStart="@+id/search_bar"
+            android:layout_alignEnd="@+id/search_bar"
             android:layout_alignParentBottom="true"
-            android:layout_marginEnd="10dp"
+            android:layout_marginStart="342dp"
+            android:layout_marginEnd="0dp"
             android:layout_marginBottom="80dp"
-            android:elevation="10dp"
             android:backgroundTint="?attr/backgroundColor"
             android:baselineAlignBottom="false"
+            android:elevation="10dp"
             android:scaleX="1.2"
             android:scaleY="1.2"
-            android:src="@drawable/ic_gps" />
+            android:src="@drawable/ic_gps"
+            android:tint="?attr/textColor" />
+
+        <Button
+            android:id="@+id/go_btn"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="80dp"
+            android:background="@drawable/go_btn"
+            android:outlineProvider="background"
+            android:elevation="30dp"
+            android:textSize="18dp"
+            android:text="GO" />
     </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
