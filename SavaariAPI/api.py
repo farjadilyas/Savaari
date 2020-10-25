@@ -32,10 +32,9 @@ def add_rider():
         cursor = conn.cursor()
         cursor.execute(sqlQuery, data)
         conn.commit()
-        res = jsonify('Student created successfully.')
-        res.status_code = 200
+        res = {"STATUS_CODE" : 200}
 
-        return res
+        return json.dumps(res)
     except Exception as e:
         print(e)
     finally:
@@ -61,12 +60,10 @@ def add_driver():
         cursor = conn.cursor()
         cursor.execute(sqlQuery, data)
         conn.commit()
-        res = jsonify('Student created successfully.')
-        res.status_code = 200
 
-        #return redirect('http://localhost:5000/user_details', 302)
+        res = {"STATUS_CODE" : 200}
 
-        return res
+        return json.dumps(res)
     except Exception as e:
         print(e)
     finally:
@@ -77,7 +74,7 @@ def add_driver():
 @app.route('/login_rider', methods=['POST', 'GET'])
 def login_rider():
     try:
-        _json = request.json
+        _json = request.get_json()
         _username = _json['username']
         _password = _json['password']
         
@@ -107,6 +104,8 @@ def login_rider():
         return results
     except Exception as e:
         print(e)
+        results = {"USER_ID": -1, "STATUS_CODE": 404}
+        return json.dumps(results)
     finally:
         cursor.close() 
         conn.close()
@@ -372,6 +371,7 @@ def delete_driver(student_id):
         conn.close()
 
 
+#Searches for drivers and sends a request
 @app.route('/findDriver', methods=['POST'])
 def findDriver():
     try:
@@ -382,17 +382,43 @@ def findDriver():
         _latitude = _json['LATITUDE']
         _longitude = _json['LONGITUDE']
 
-        sql = "SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE FROM DRIVER_DETAILS WHERE (LATITUDE BETWEEN %s AND %s) AND (LONGITUDE BETWEEN %s and %s) ORDER BY LATITUDE - %s + LONGITUDE - %s"
+        sendRequest = "UPDATE DRIVER_DETAILS SET RIDER_ID = %s, RIDE_STATUS = 1, DEST_LAT = %s, DEST_LONG = %s WHERE USER_ID = %s AND IS_ACTIVE = 1 AND RIDE_STATUS = 0"
 
-        data = (_latitude-0.1, _latitude+0.1, _longitude-0.1, _longitude+0.1, _latitude, _longitude)
+        driverFound = False
+
+        searchDriver = '''SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE FROM DRIVER_DETAILS'''
+
+        #data = (_latitude-0.1, _latitude+0.1, _longitude-0.1, _longitude+0.1, _latitude, _longitude)
 
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.execute(sql, tuple(data))
+        #cursor.execute(searchDriver, tuple(data))
+        cursor.execute(searchDriver)
         rows = cursor.fetchall()
         conn.commit()
 
-        results = {"USER_ID" : rows[0][0], "USER_NAME" : rows[0][1], "LATITUDE": rows[0][2], "LONGITUDE" : rows[0][3], "STATUS": 200}
+        for row in rows:
+            _driver_id = row[0]
+            data = (_user_id, _latitude, _longitude, _driver_id);
+
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.execute(sendRequest, tuple(data))
+            cursor.fetchall()
+            conn.commit()
+
+            print("Rowcount is", cursor.rowcount)
+
+            if (cursor.rowcount == 1):
+                driverFound = True
+                break
+
+        if (driverFound):
+            results = {"STATUS" :200}
+        else:
+            results = {"STATUS" :404}
+        
+        #results = {"USER_ID" : rows[0][0], "USER_NAME" : rows[0][1], "LATITUDE": rows[0][2], "LONGITUDE" : rows[0][3], "STATUS": 200}
 
         return json.dumps(results)
     except Exception as e:
@@ -402,6 +428,183 @@ def findDriver():
     finally:
         cursor.close()
         conn.close()
+
+# End of Function
+
+
+#Checks if a driver has accepted the rider's request
+@app.route('/checkFindStatus', methods = ['POST'])
+def checkFindStatus():
+    try:
+        _json = request.get_json()
+        _user_id = _json['USER_ID']
+
+        getFindStatus = "SELECT R.FIND_STATUS, D.USER_ID, D.USER_NAME, D.LATITUDE AS SOURCE_LAT, D.LONGITUDE AS SOURCE_LONG FROM RIDER_DETAILS R LEFT JOIN DRIVER_DETAILS D ON R.DRIVER_ID = D.USER_ID WHERE R.FIND_STATUS IN (1,2) AND R.USER_ID = %s"
+
+        data = (_user_id)
+
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute(getFindStatus, data)
+        rows = cursor.fetchall()
+        conn.commit()
+
+        if (rows[0][0] == 0):
+            results = {"STATUS" : 404}
+        elif (rows[0][0] == 1):
+            results = {"STATUS" : 404}
+        elif (rows[0][0] == 2):
+            results = {"STATUS" : 200, "DRIVER_ID": rows[0][1], "DRIVER_NAME" : rows[0][2], "DRIVER_LAT" : str(rows[0][3]), "DRIVER_LONG": str(rows[0][4])}
+        
+        return json.dumps(results)
+
+    except Exception as e:
+        print(e)
+        return json.dumps({"STATUS": 404})
+
+    finally:
+        cursor.close() 
+        conn.close()
+
+
+
+# Sets driver to ACTIVE
+@app.route('/findRider', methods=['POST'])
+def findRider():
+
+    # This function is called from the driver and marks it active
+    try:
+        _json = request.json
+        _user_id = _json['USER_ID']
+        _active_status = _json['ACTIVE_STATUS']
+
+        sql = 'UPDATE DRIVER_DETAILS SET IS_ACTIVE = %s WHERE USER_ID = %s'
+
+        data = []
+        data.append(_active_status)
+        data.append(_user_id)
+
+        # Conection to MYSQL
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute(sql, tuple(data))
+        conn.commit()
+
+        res = {"STATUS": 200}
+        return res
+
+    except Exception as e:
+        print(e)
+        return json.dumps({"STATUS": 404})
+
+    finally:
+        cursor.close() 
+        conn.close()
+
+# End of Function
+
+
+
+@app.route('/checkRideStatus', methods = ['POST'])
+def checkRideStatus():
+
+	# This function is called from the driver and checks Ride Status
+	try:
+		_json = request.get_json()
+		_user_id = _json['USER_ID']
+
+		sql = '''SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, R.LATITUDE AS SOURCE_LAT, R.LONGITUDE AS SOURCE_LONG, D.DEST_LAT, D.DEST_LONG FROM DRIVER_DETAILS D LEFT JOIN RIDER_DETAILS R ON D.RIDER_ID = R.USER_ID WHERE D.RIDE_STATUS = 1 AND D.USER_ID = %s'''
+
+		data = []
+		data.append(_user_id)
+
+		# Conection to MYSQL
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.execute(sql, tuple(data))
+
+		rows = cursor.fetchall();
+
+		# If Ride is not assigned
+		if (rows[0][0] == 0):
+			res = {"STATUS": 404}
+			return res
+
+		if (rows[0][0] == 1):
+			results = {'STATUS': 200, 
+			'RIDER_ID': rows[0][1], 
+			'USER_NAME': rows[0][2],
+			'SOURCE_LAT': str(rows[0][3]),
+			'SOURCE_LONG': str(rows[0][4]),
+			'DEST_LAT': str(rows[0][5]),
+			'DEST_LONG': str(rows[0][6])
+            }
+			return json.dumps(results)
+
+	except Exception as e:
+		print(e)
+		res = {"STATUS": 404}
+		return res
+
+	finally:
+		cursor.close() 
+		conn.close()
+
+
+# Function that confirms Ride by Driver
+@app.route('/confirmRideRequest', methods=['POST'])
+def confirmRideRequest():
+
+    # This function is called from the driver and confirms the ride request assigned
+    try:
+        _json = request.get_json()
+
+        _driver_id = _json['USER_ID']
+        _found_status = _json['FOUND_STATUS']
+        _rider_id = _json['RIDER_ID']
+
+        sql = 'UPDATE DRIVER_DETAILS SET RIDE_STATUS = %s WHERE USER_ID = %s'
+
+        data = []
+
+        if (_found_status == 1):
+            data.append(2)
+        else:
+            data.append(0)
+
+        data.append(_driver_id)
+
+        # Conection to MYSQL
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        # First Query
+        cursor.execute(sql, tuple(data))
+
+        # Second Query
+        sql = 'UPDATE RIDER_DETAILS SET FIND_STATUS = %s, DRIVER_ID = %s WHERE USER_ID = %s'
+        data = []
+        data.append(_found_status + 1)
+        data.append(_driver_id)
+        data.append(_rider_id)
+
+        cursor.execute(sql, tuple(data))
+
+        # Final Commit
+        conn.commit()
+
+        res = {"STATUS": 200}
+        return res
+
+    except Exception as e:
+        res = {"STATUS": 404}
+        print(e)
+        return res
+
+    finally:
+        cursor.close() 
+        conn.close()
+#End of function
 
 
 

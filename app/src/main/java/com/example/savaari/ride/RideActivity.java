@@ -4,8 +4,11 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -31,12 +34,14 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.example.savaari.LoadDataTask;
 import com.example.savaari.R;
 import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateUtil;
+import com.example.savaari.services.network.NetworkServiceUtil;
 import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -79,7 +84,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, RideActionResponseListener {
 
     private RideViewModel rideViewModel = null;
 
@@ -130,6 +135,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ride);
+
+        /* Register Broadcast Receiver for NetworkService */
+        registerRideReceiver();
 
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
@@ -357,6 +365,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             public void onClick(View v) {
                 v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
+                LocationUpdateUtil.stopLocationService(RideActivity.this);
+
+                /*
                 new LoadDataTask(null, object ->
                 {
                     try {
@@ -379,7 +390,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                         Log.d("searchRideButton: ", "OnClick: error");
                     }
                 }).execute("findDriver", String.valueOf(USER_ID), String.valueOf(mUserLocation.getLatitude()),
-                        String.valueOf(mUserLocation.getLongitude()));
+                        String.valueOf(mUserLocation.getLongitude()));*/
             }
         });
 
@@ -390,7 +401,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* Loads user data from database */
     private void loadUserData() {
-        rideViewModel.loadUserData();
+        NetworkServiceUtil.loadUserData(RideActivity.this, USER_ID);
+
         rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
 
             if (aBoolean) {
@@ -690,6 +702,42 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             return false;
         }
     }
+
+    /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
+
+    /* Receives response from NetworkService methods */
+    private static class RideReceiver extends BroadcastReceiver {
+        private RideActionResponseListener rideActionResponseListener;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String task = intent.getExtras().getString("TASK");
+            if (task.equals("loadData")) {
+                rideActionResponseListener = (RideActionResponseListener) context;
+                rideActionResponseListener.onDataLoaded(intent);
+            }
+        }
+    }
+
+    RideReceiver rideReceiver;
+
+    /* Register receiver */
+    public void registerRideReceiver() {
+        rideReceiver = new RideReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("RESULT");
+
+        registerReceiver(rideReceiver, intentFilter);
+    }
+
+    @Override
+    public void onDataLoaded(Intent intent) {
+        String resultString = intent.getExtras().getString("RESULT");
+
+        rideViewModel.onUserDataLoaded(resultString);
+    }
+
+    /*------------ END OF NETWORKSERVICE & BROADCAST RECEIVER SECTION ----------*/
 
     @Override
     public void onBackPressed() {
