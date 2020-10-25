@@ -1,9 +1,6 @@
-package com.example.savaari;
+package com.example.savaari.services.network;
 
 import android.util.Log;
-
-import com.example.savaari.ride.RideActivity;
-import com.example.savaari.services.LocationUpdateUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -11,7 +11,7 @@ import androidx.core.app.NavUtils;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.login.LoginActivity;
-import com.example.savaari.services.LocationUpdateUtil;
+import com.example.savaari.services.location.LocationUpdateUtil;
 
 public class SettingsActivity extends Util implements SettingsClickListener {
 

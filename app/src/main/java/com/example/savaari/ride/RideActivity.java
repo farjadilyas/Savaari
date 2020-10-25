@@ -29,18 +29,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
-import com.example.savaari.LoadDataTask;
 import com.example.savaari.R;
 import com.example.savaari.UserLocation;
 import com.example.savaari.Util;
-import com.example.savaari.services.LocationUpdateUtil;
+import com.example.savaari.services.location.LocationUpdateUtil;
+import com.example.savaari.services.network.NetworkService;
 import com.example.savaari.services.network.NetworkServiceUtil;
 import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
@@ -58,7 +55,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
@@ -71,11 +67,8 @@ import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
-import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -421,10 +414,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* Function for loading User Location Data */
     private void loadUserLocations()
     {
-        rideViewModel.loadUserLocations();
+        NetworkServiceUtil.getUserLocations(RideActivity.this);
         rideViewModel.isLiveUserLocationsLoaded().observe(this, aBoolean -> {
 
-            if (aBoolean) {
+            if (aBoolean)
+            {
                 mUserLocations = rideViewModel.getUserLocations();
                 Log.d(TAG, "loadUserLocations: Started!");
 
@@ -438,11 +432,13 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 }
                 Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
             }
-            else {
-                //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
+            else
+            {
+                Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
             }
         });
     }
+    // End of Function: loadUserLocations()
 
 
     /*
@@ -706,15 +702,21 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
 
     /* Receives response from NetworkService methods */
-    private static class RideReceiver extends BroadcastReceiver {
-        private RideActionResponseListener rideActionResponseListener;
-
+    private static class RideReceiver extends BroadcastReceiver
+    {
         @Override
         public void onReceive(Context context, Intent intent) {
             String task = intent.getExtras().getString("TASK");
+            RideActionResponseListener rideActionResponseListener;
+            rideActionResponseListener = (RideActionResponseListener) context;
+
+            // Calling Appropriate Listener Function based on the Result received.
             if (task.equals("loadData")) {
-                rideActionResponseListener = (RideActionResponseListener) context;
                 rideActionResponseListener.onDataLoaded(intent);
+            }
+            else if (task.equals("getUserLocations"))
+            {
+                rideActionResponseListener.onLocationsLoaded(intent);
             }
         }
     }
@@ -733,11 +735,17 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     @Override
     public void onDataLoaded(Intent intent) {
         String resultString = intent.getExtras().getString("RESULT");
-
         rideViewModel.onUserDataLoaded(resultString);
     }
 
-    /*------------ END OF NETWORKSERVICE & BROADCAST RECEIVER SECTION ----------*/
+    @Override
+    public void onLocationsLoaded(Intent intent)
+    {
+        String result = intent.getExtras().getString("RESULT");
+        rideViewModel.onUserLocationsLoaded(result);
+    }
+
+    /*------------ END OF NETWORK SERVICE & BROADCAST RECEIVER SECTION ----------*/
 
     @Override
     public void onBackPressed() {

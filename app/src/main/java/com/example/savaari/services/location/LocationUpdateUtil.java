@@ -1,4 +1,4 @@
-package com.example.savaari.services;
+package com.example.savaari.services.location;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Log;
 
-import com.example.savaari.LoadDataTask;
+import com.example.savaari.services.network.NetworkServiceUtil;
 
 public class LocationUpdateUtil
 {
@@ -29,7 +29,7 @@ public class LocationUpdateUtil
         // Iterating over all services to check if the service is running
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
         {
-            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
+            if ("com.example.savaari.services.location.LocationUpdateService".equals(service.service.getClassName()))
             {
                 Log.d(TAG, "isLocationServiceRunning: location service is running");
                 return true;
@@ -76,9 +76,9 @@ public class LocationUpdateUtil
             if (currentUserID != -1)
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
-                // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
-                        , String.valueOf(mUserLocation.getLongitude()));
+
+                // Passing the Function to the Intent
+                NetworkServiceUtil.sendLocation(context, currentUserID, mUserLocation.getLatitude(), mUserLocation.getLongitude());
             }
         }
     }

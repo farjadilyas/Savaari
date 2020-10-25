@@ -2,12 +2,9 @@ package com.example.savaari.services.network;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-
-import com.example.savaari.NetworkUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;

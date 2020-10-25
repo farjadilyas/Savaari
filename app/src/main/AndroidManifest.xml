@@ -44,7 +44,7 @@
         </activity>
 
         <service
-            android:name=".services.LocationUpdateService"
+            android:name=".services.location.LocationUpdateService"
             android:stopWithTask="true" />
 
         <service
