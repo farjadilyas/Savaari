@@ -1,4 +1,4 @@
-package com.example.savaari.services;
+package com.example.savaari.services.location;
 
 import android.Manifest;
 import android.app.Notification;

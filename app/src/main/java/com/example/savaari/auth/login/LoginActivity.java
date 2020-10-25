@@ -26,12 +26,9 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.signup.SignUpActivity;
-import com.example.savaari.auth.signup.SignUpResponseListener;
 import com.example.savaari.ride.RideActivity;
 import com.example.savaari.services.network.NetworkServiceUtil;
 

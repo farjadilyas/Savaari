@@ -42,4 +42,34 @@ public class NetworkServiceUtil {
         intent.putExtra("USER_ID", USER_ID);
         context.startService(intent);
     }
+
+    // Functions to assist passing of Location Service to Intent
+    public static void sendLocation(Context context, int USER_ID, double LATITUDE, double LONGITUDE)
+    {
+        Log.d(LOG_TAG, "sendLocation(): called");
+
+        // Putting Data
+        Intent intent = new Intent();
+        intent.setClass(context, NetworkService.class);
+        intent.putExtra("TASK", "sendLocation");
+        intent.putExtra("USER_ID", USER_ID);
+        intent.putExtra("LATITUDE", LATITUDE);
+        intent.putExtra("LONGITUDE", LONGITUDE);
+
+        // Starting the Service
+        context.startService(intent);
+    }
+    // Function to assist get User Locations
+    public static void getUserLocations(Context context)
+    {
+        Log.d(LOG_TAG, "getUserLocations(): called!");
+
+        // Putting Data
+        Intent intent = new Intent();
+        intent.setClass(context, NetworkService.class);
+        intent.putExtra("TASK", "getUserLocations");
+
+        // Starting the Service
+        context.startService(intent);
+    }
 }

@@ -31,8 +31,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
