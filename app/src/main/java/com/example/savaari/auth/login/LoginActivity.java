@@ -1,7 +1,10 @@
 package com.example.savaari.auth.login;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -28,9 +31,11 @@ import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.Util;
 import com.example.savaari.auth.signup.SignUpActivity;
+import com.example.savaari.auth.signup.SignUpResponseListener;
 import com.example.savaari.ride.RideActivity;
+import com.example.savaari.services.network.NetworkServiceUtil;
 
-public class LoginActivity extends Util {
+public class LoginActivity extends Util implements LoginResponseListener {
 
     private LoginViewModel loginViewModel;      // input validation
     private EditText usernameEditText, passwordEditText, recoveryEmailEditText;
@@ -40,9 +45,6 @@ public class LoginActivity extends Util {
     private ProgressBar loadingProgressBar, recoveryProgressBar;
     boolean isEmailSent = false;                // forgot password transition management
 
-    public LoginActivity() {
-        // Empty
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,8 +55,10 @@ public class LoginActivity extends Util {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Calling Handlers
+        /* Initialize members & register receiver */
+        registerLoginResponseReceiver();
         init();
+
         forgotPasswordBannerHandler();;
         loginFormStateWatcher();
         recoveryFormStateWatcher();
@@ -270,40 +274,67 @@ public class LoginActivity extends Util {
         });
     }
 
+    @Override
+    public void onResponseReceived(Intent intent) {
+        loginResponseAction(intent);
+    }
+
+    /* Receives response from NetworkService methods */
+    private static class LoginReceiver extends BroadcastReceiver {
+        private LoginResponseListener loginResponseListener;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getExtras().getString("TASK").equals("login")) {
+                loginResponseListener = (LoginResponseListener) context;
+                loginResponseListener.onResponseReceived(intent);
+            }
+        }
+    }
+
+    LoginReceiver loginReceiver;
+
+    /* Register receiver */
+    public void registerLoginResponseReceiver() {
+        loginReceiver = new LoginReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("RESULT");
+
+        registerReceiver(loginReceiver, intentFilter);
+    }
+
+    private void loginResponseAction(Intent intent) {
+        int USER_ID = intent.getExtras().getInt("RESULT");
+        loadingProgressBar.setVisibility(View.GONE);
+
+        SharedPreferences sharedPreferences
+                = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
+
+        SharedPreferences.Editor myEdit
+                = sharedPreferences.edit();
+
+        if (USER_ID <= 0) {
+            Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
+            myEdit.putInt("USER_ID", -1);
+            myEdit.commit();
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
+
+            myEdit.putInt("USER_ID", USER_ID);
+            myEdit.commit();
+
+            Intent i = new Intent(LoginActivity.this, RideActivity.class);
+            startActivity(i);
+            finish();
+        }
+    }
+
     // Method: Handles Login Request
     private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
-
-        new LoadDataTask(new OnAuthenticationListener() {
-            @Override
-            public void authenticationStatus(int USER_ID) {
-                loadingProgressBar.setVisibility(View.GONE);
-
-                SharedPreferences sharedPreferences
-                        = getSharedPreferences("AuthSharedPref", MODE_PRIVATE);
-
-                SharedPreferences.Editor myEdit
-                        = sharedPreferences.edit();
-
-                if (USER_ID == -1) {
-                    Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_LONG).show();
-                    myEdit.putInt("USER_ID", -1);
-                    myEdit.commit();
-                }
-                else {
-                    Toast.makeText(getApplicationContext(), "Logged in successfully", Toast.LENGTH_LONG).show();
-
-                    myEdit.putInt("USER_ID", USER_ID);
-
-                    myEdit.commit();
-
-                    Intent i = new Intent(LoginActivity.this, RideActivity.class);
-                    startActivity(i);
-                    finish();
-                }
-            }
-        }, null).execute("login", username, password);
+        NetworkServiceUtil.login(LoginActivity.this, username, password);
     }
 
     @Override

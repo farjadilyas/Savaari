@@ -8,12 +8,17 @@ import androidx.core.app.NavUtils;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -31,27 +36,39 @@ import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
 import com.example.savaari.Util;
+import com.example.savaari.services.network.NetworkServiceUtil;
+
+import java.util.Objects;
 
 
-public class SignUpActivity extends Util {
+public class SignUpActivity extends Util implements SignUpResponseListener {
+
+    private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;
+    ProgressBar loadingProgressBar;
+    EditText usernameEditText;
+    EditText passwordEditText;
+    EditText nicknameEditText;
+    Button signUpButton;
+    Button backToLogin;
+    Button backFromBanner;
+    ConstraintLayout successBanner;
 
     private void signupAction(final ConstraintLayout successBanner, final ProgressBar loadingProgressBar, final String username, final String password, final String nickname)
     {
+        Log.d("SignUpActivity", "signUpAction");
+        
         loadingProgressBar.setVisibility(View.VISIBLE);
-
-        new LoadDataTask(new OnAuthenticationListener() {
-            @Override
-            public void authenticationStatus(int USER_ID) {
-                loadingProgressBar.setVisibility(View.GONE);
-                if (USER_ID > 0) {
-                    Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
-                    NavUtils.navigateUpFromSameTask(SignUpActivity.this);
-                }
-            }
-        }, null).execute("signup", nickname, username, password);
+        NetworkServiceUtil.signup(SignUpActivity.this, nickname, username, password);
     }
+    
+    private void signUpResponseAction(Intent intent) {
+        loadingProgressBar.setVisibility(View.GONE);
 
-    private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;
+        if (intent.getExtras().getBoolean("RESULT")) {
+            Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
+            NavUtils.navigateUpFromSameTask(SignUpActivity.this);
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,94 +81,39 @@ public class SignUpActivity extends Util {
         Toolbar myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+        registerSignUpReceiver();
 
-        /*
-        * Initialize ViewModel & View Objects
-        */
+        initialize();
+        backToLoginHandler();
+        signUpFormStateWatcher();
+
+        signUpRequestHandler();
+    }
+    /* End of onCreate() method */
+
+    private void initialize() {
         signUpViewModel = ViewModelProviders.of(this, new SignUpViewModelFactory())
                 .get(SignUpViewModel.class);
 
-        final EditText usernameEditText = findViewById(R.id.username);
-        final EditText passwordEditText = findViewById(R.id.password);
-        final EditText nicknameEditText = findViewById(R.id.nickname);
-        final Button signUpButton = findViewById(R.id.signUp);
-        final Button backToLogin = findViewById(R.id.backToLogin);
-        final Button backFromBanner = findViewById(R.id.backFromBanner);
-        final ProgressBar loadingProgressBar = findViewById(R.id.loading);
-        final ConstraintLayout successBanner = findViewById(R.id.successBanner);
+        usernameEditText = findViewById(R.id.username);
+        passwordEditText = findViewById(R.id.password);
+        nicknameEditText = findViewById(R.id.nickname);
+
+        signUpButton = findViewById(R.id.signUp);
+        backToLogin = findViewById(R.id.backToLogin);
+        backFromBanner = findViewById(R.id.backFromBanner);
+
+        successBanner = findViewById(R.id.successBanner);
         successBanner.setVisibility(View.INVISIBLE);
 
+        loadingProgressBar = findViewById(R.id.loading);
+    }
 
-        /*  Back to Login Activity actions */
-
-        backFromBanner.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-                NavUtils.navigateUpFromSameTask(SignUpActivity.this);
-            }
-        });
-
-        backToLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NavUtils.navigateUpFromSameTask(SignUpActivity.this);
-            }
-        });
-
-
-        /* Observe changes in SignpFormState (Input Validation) */
-
-        signUpViewModel.getSignUpFormState().observe(this, new Observer<SignUpFormState>() {
-            @Override
-            public void onChanged(@Nullable SignUpFormState signupFormState) {
-                if (signupFormState == null) {
-                    return;
-                }
-                signUpButton.setEnabled(signupFormState.isDataValid());
-                if (signupFormState.getUsernameError() != null) {
-                    usernameEditText.setError(getString(signupFormState.getUsernameError()));
-                }
-                if (signupFormState.getPasswordError() != null) {
-                    passwordEditText.setError(getString(signupFormState.getPasswordError()));
-                }
-                if (signupFormState.getNicknameError() != null) {
-                    nicknameEditText.setError(getString(signupFormState.getNicknameError()));
-                }
-            }
-        });
-
-
-        /* TextWatcher to notify ViewModel of changes in text */
-
-        TextWatcher afterTextChangedListener = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // ignore
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // ignore
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                signUpViewModel.signUpDataChanged(usernameEditText.getText().toString(),
-                        passwordEditText.getText().toString(), nicknameEditText.getText().toString());
-            }
-        };
-        usernameEditText.addTextChangedListener(afterTextChangedListener);
-        passwordEditText.addTextChangedListener(afterTextChangedListener);
-        nicknameEditText.addTextChangedListener(afterTextChangedListener);
-
-
-        /* Sign Up action handlers */
-
+    /* Sign Up action handlers */
+    private void signUpRequestHandler() {
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
@@ -197,6 +159,71 @@ public class SignUpActivity extends Util {
         });
     }
 
+    /*  Back to Login Activity actions */
+    private void backToLoginHandler() {
+        backFromBanner.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                NavUtils.navigateUpFromSameTask(SignUpActivity.this);
+            }
+        });
+
+        backToLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavUtils.navigateUpFromSameTask(SignUpActivity.this);
+            }
+        });
+    }
+
+
+    /* Observe changes in Sign Up form state */
+    private void signUpFormStateWatcher() {
+
+        /* Called when Sign Up Form State changes (Input validation) */
+        signUpViewModel.getSignUpFormState().observe(this, new Observer<SignUpFormState>() {
+            @Override
+            public void onChanged(@Nullable SignUpFormState signupFormState) {
+                if (signupFormState == null) {
+                    return;
+                }
+                signUpButton.setEnabled(signupFormState.isDataValid());
+                if (signupFormState.getUsernameError() != null) {
+                    usernameEditText.setError(getString(signupFormState.getUsernameError()));
+                }
+                if (signupFormState.getPasswordError() != null) {
+                    passwordEditText.setError(getString(signupFormState.getPasswordError()));
+                }
+                if (signupFormState.getNicknameError() != null) {
+                    nicknameEditText.setError(getString(signupFormState.getNicknameError()));
+                }
+            }
+        });
+
+        TextWatcher afterTextChangedListener = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // ignore
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // ignore
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                signUpViewModel.signUpDataChanged(usernameEditText.getText().toString(),
+                        passwordEditText.getText().toString(), nicknameEditText.getText().toString());
+            }
+        };
+        usernameEditText.addTextChangedListener(afterTextChangedListener);
+        passwordEditText.addTextChangedListener(afterTextChangedListener);
+        nicknameEditText.addTextChangedListener(afterTextChangedListener);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -208,5 +235,34 @@ public class SignUpActivity extends Util {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    /* Receives response from NetworkService methods */
+    private static class SignUpReceiver extends BroadcastReceiver {
+        private SignUpResponseListener signUpResponseListener;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getExtras().getString("TASK").equals("signup")) {
+                signUpResponseListener = (SignUpResponseListener) context;
+                signUpResponseListener.onResponseReceived(intent);
+            }
+        }
+    }
+
+    SignUpReceiver signUpReceiver;
+
+    /* Register receiver */
+    public void registerSignUpReceiver() {
+        signUpReceiver = new SignUpReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("RESULT");
+
+        registerReceiver(signUpReceiver, intentFilter);
+    }
+
+    @Override
+    public void onResponseReceived(Intent intent) {
+        signUpResponseAction(intent);
     }
 }

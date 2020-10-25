@@ -46,6 +46,10 @@
         <service
             android:name=".services.LocationUpdateService"
             android:stopWithTask="true" />
+
+        <service
+            android:name=".services.network.NetworkService"
+            android:stopWithTask="true" />
     </application>
 
 </manifest>

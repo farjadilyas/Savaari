@@ -1,8 +1,14 @@
 package com.example.savaari.ride;
 
+import android.app.Application;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -11,6 +17,9 @@ import com.example.savaari.LoadDataTask;
 import com.example.savaari.NetworkUtil;
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.UserLocation;
+import com.example.savaari.auth.signup.SignUpActivity;
+import com.example.savaari.auth.signup.SignUpResponseListener;
+import com.example.savaari.services.network.NetworkServiceUtil;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -22,6 +31,8 @@ import java.util.ArrayList;
 import static android.content.ContentValues.TAG;
 
 public class RideViewModel extends ViewModel {
+
+    private static String LOG_TAG = RideViewModel.class.getSimpleName();
 
     /* CCredentials for netowrk operations */
     private int USER_ID = -1;
@@ -38,8 +49,6 @@ public class RideViewModel extends ViewModel {
     MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>(false);
     MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>(false);
 
-
-
     public RideViewModel(int USER_ID) {
         this.USER_ID = USER_ID;
     }
@@ -54,11 +63,12 @@ public class RideViewModel extends ViewModel {
     public LatLng getUserCoordinates() {
         return userCoordinates;
     }
-
-    /* Other data */
     public ArrayList<UserLocation> getUserLocations() {
         return mUserLocations;
     }
+
+    /* Set USER_ID */
+    //public void setUserID(int USER_ID) { this.USER_ID = USER_ID; }
 
     /* Return LiveData to observe Data Loaded Flags */
     public LiveData<Boolean> isLiveUserDataLoaded() {
@@ -72,29 +82,26 @@ public class RideViewModel extends ViewModel {
         userCoordinates = new LatLng(latitude, longitude);
     }
 
-    /* Loads User Data corresponding to USER_ID */
-    public void loadUserData() {
-        if (!userDataLoaded.getValue()) {
-            new LoadDataTask(null, object -> {
-                if (object == null) {
-                    //Toast.makeText(RideActivity.this, "Network Connection failed", Toast.LENGTH_SHORT).show();
-                } else {
-                    JSONObject jsonObject = (JSONObject) object;
-                    try {
-                        username = jsonObject.getString("USER_NAME");
-                        emailAddress = jsonObject.getString("EMAIL_ADDRESS");
-                        Log.d("loadUserData(): ", username + ", " + emailAddress);
-                        userDataLoaded.setValue(true);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d("loadUserData(): ", "JSONException");
-                        userDataLoaded.setValue(false);
-                    }
-                }
-            }).execute("loadData", String.valueOf(USER_ID));
+
+    public void onUserDataLoaded(String resultString) {
+        try {
+            if (resultString == null) {
+                Log.d(LOG_TAG, "onDataLoaded(): resultString is null");
+                userDataLoaded.setValue(false);
+            }
+            else {
+                JSONObject result = new JSONObject(resultString);
+
+                username = result.getString("USER_NAME");
+                emailAddress = result.getString("EMAIL_ADDRESS");
+                Log.d("loadUserData(): ", username + ", " + emailAddress);
+                userDataLoaded.setValue(true);
+            }
         }
-        else {
-            userDataLoaded.setValue(true);
+        catch (Exception e) {
+            e.printStackTrace();
+            userDataLoaded.setValue(false);
+            Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + resultString);
         }
     }
 

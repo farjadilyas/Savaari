@@ -2,6 +2,9 @@ package com.example.savaari;
 
 import android.util.Log;
 
+import com.example.savaari.ride.RideActivity;
+import com.example.savaari.services.LocationUpdateUtil;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -171,15 +174,38 @@ public class NetworkUtil
         }
     }
 
-    //Find Driver
-    public static JSONObject findDriver(String urladdress, int currentUserID, double latitude, double longitude) {
+    /*
+    *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
+    */
+    public static boolean findDriver(String urladdress, int currentUserID, double latitude, double longitude) {
         try {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
             jsonParam.put("LATITUDE", latitude);
             jsonParam.put("LONGITUDE", longitude);
 
-            return NetworkUtil.sendPost(urladdress, jsonParam, true);
+            return (NetworkUtil.sendPost(urladdress, jsonParam, true).getInt("STATUS_CODE") == 200);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.d("NetworkUtil: ", "findDriver() Exception");
+            return false;
+        }
+    }
+
+    /*
+    * Checks FIND_STATUS for rider
+    * 0 -> Invalid request
+    * 1 -> Driver hasn't responded
+    * 2 -> Driver accepted request
+    * */
+    public static JSONObject checkFindStatus(String urlAddress, int currentUserID) {
+
+        try {
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("USER_ID", currentUserID);
+
+            return (NetworkUtil.sendPost(urlAddress, jsonParam, true));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -188,15 +214,20 @@ public class NetworkUtil
         }
     }
 
+    /*
+    *  END OF RIDER-SIDE MATCHMAKING FUNCTIONS -----------------------------------------------------
+    */
+
     // Sign-Up
     public static boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException
     {
+        Log.d("NetworkUtil: ", "signup() called");
         JSONObject jsonParam = new JSONObject();
         jsonParam.put("username", username);
         jsonParam.put("email_address", emailAddress);
         jsonParam.put("password", password);
 
-        return sendPost(urlAddress, jsonParam, false).getBoolean("result");
+        return (sendPost(urlAddress, jsonParam, true).getInt("STATUS_CODE") == 200);
     }
     // Login
     public static int login(String urlAddress, String username, String password)

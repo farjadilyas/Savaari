@@ -74,7 +74,7 @@ def add_driver():
 @app.route('/login_rider', methods=['POST', 'GET'])
 def login_rider():
     try:
-        _json = request.json
+        _json = request.get_json()
         _username = _json['username']
         _password = _json['password']
         
@@ -104,6 +104,8 @@ def login_rider():
         return results
     except Exception as e:
         print(e)
+        results = {"USER_ID": -1, "STATUS_CODE": 404}
+        return json.dumps(results)
     finally:
         cursor.close() 
         conn.close()
@@ -395,10 +397,9 @@ def findDriver():
         rows = cursor.fetchall()
         conn.commit()
 
-        print(rows)
-
         for row in rows:
             print(row)
+
             _driver_id = row[0]
             data = (_user_id, _latitude, _longitude, _driver_id);
 
@@ -478,9 +479,12 @@ def findRider():
         _json = request.json
         _user_id = _json['USER_ID']
 
-        sql = 'UPDATE DRIVER_DETAILS SET IS_ACTIVE = TRUE WHERE USER_ID = %s'
+        _active_status = _json['ACTIVE_STATUS']
+
+        sql = 'UPDATE DRIVER_DETAILS SET IS_ACTIVE = %s WHERE USER_ID = %s'
 
         data = []
+        data.append(_active_status)
         data.append(_user_id)
 
         # Conection to MYSQL
