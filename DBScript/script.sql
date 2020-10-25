@@ -43,3 +43,4 @@ FROM driver_details D
 LEFT JOIN rider_details R
 ON D.RIDER_ID = R.USER_ID
 WHERE D.RIDE_STATUS = 1;
+

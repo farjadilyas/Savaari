@@ -398,6 +398,8 @@ def findDriver():
         conn.commit()
 
         for row in rows:
+            print(row)
+
             _driver_id = row[0]
             data = (_user_id, _latitude, _longitude, _driver_id);
 
@@ -476,6 +478,7 @@ def findRider():
     try:
         _json = request.json
         _user_id = _json['USER_ID']
+
         _active_status = _json['ACTIVE_STATUS']
 
         sql = 'UPDATE DRIVER_DETAILS SET IS_ACTIVE = %s WHERE USER_ID = %s'
