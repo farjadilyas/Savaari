@@ -1,9 +1,6 @@
-package com.example.savaari;
+package com.example.savaari.services.network;
 
 import android.util.Log;
-
-import com.example.savaari.ride.RideActivity;
-import com.example.savaari.services.LocationUpdateUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -184,7 +181,7 @@ public class NetworkUtil
             jsonParam.put("LATITUDE", latitude);
             jsonParam.put("LONGITUDE", longitude);
 
-            return (NetworkUtil.sendPost(urladdress, jsonParam, true).getInt("STATUS_CODE") == 200);
+            return (NetworkUtil.sendPost(urladdress, jsonParam, true).getInt("STATUS") == 200);
         }
         catch (Exception e) {
             e.printStackTrace();

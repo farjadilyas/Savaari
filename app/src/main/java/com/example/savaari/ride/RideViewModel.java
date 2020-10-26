@@ -1,29 +1,17 @@
 package com.example.savaari.ride;
 
-import android.app.Application;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
-import android.widget.Toast;
 
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.LoadDataTask;
-import com.example.savaari.NetworkUtil;
 import com.example.savaari.OnDataLoadedListener;
 import com.example.savaari.UserLocation;
-import com.example.savaari.auth.signup.SignUpActivity;
-import com.example.savaari.auth.signup.SignUpResponseListener;
-import com.example.savaari.services.network.NetworkServiceUtil;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -108,43 +96,38 @@ public class RideViewModel extends ViewModel {
     /* loads array of UserLocation*/
     public void loadUserLocations() {
         if (!userLocationsLoaded.getValue()) {
-            new LoadDataTask(null, new OnDataLoadedListener()
-            {
-                @Override
-                public void onDataLoaded(Object object)
-                {
-                    try {
-                        JSONArray resultArray = (JSONArray) object;
-                        Log.d(TAG, "loadUserLocations: " + resultArray.toString());
-                        if (resultArray != null)
-                        {
-                            Log.d(TAG, "loadUserLocations: found JSON Array");
-                            for (int i = 0; i < resultArray.length(); i++) {
-                                JSONObject obj = resultArray.getJSONObject(i);
-                                UserLocation userLocation = new UserLocation();
-
-                                // Assigning User Objects
-                                userLocation.setUserID(obj.getInt("USER_ID"));
-                                userLocation.setLatitude(obj.getDouble("LATITUDE"));
-                                userLocation.setLongitude(obj.getDouble("LONGITUDE"));
-                                userLocation.setTimestamp(obj.getString("TIMESTAMP"));
-
-                                // Adding Final Object
-                                mUserLocations.add(userLocation);
-                                Log.d(TAG, "loadUserLocations: userID: " + userLocation.getUserID());
-                                Log.d(TAG, "loadUserLocations: latitude: " + userLocation.getLatitude());
-                                Log.d(TAG, "loadUserLocations: longitude: " + userLocation.getLongitude());
-                                Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
-                            }
-                        }
-                        userLocationsLoaded.setValue(true);
-                    }
-                    catch (Exception e)
+            new LoadDataTask(null, object -> {
+                try {
+                    JSONArray resultArray = (JSONArray) object;
+                    Log.d(TAG, "loadUserLocations: " + resultArray.toString());
+                    if (resultArray != null)
                     {
-                        Log.d(TAG, "Exception in loadUserLocations");
-                        e.printStackTrace();
-                        userLocationsLoaded.setValue(false);
+                        Log.d(TAG, "loadUserLocations: found JSON Array");
+                        for (int i = 0; i < resultArray.length(); i++) {
+                            JSONObject obj = resultArray.getJSONObject(i);
+                            UserLocation userLocation = new UserLocation();
+
+                            // Assigning User Objects
+                            userLocation.setUserID(obj.getInt("USER_ID"));
+                            userLocation.setLatitude(obj.getDouble("LATITUDE"));
+                            userLocation.setLongitude(obj.getDouble("LONGITUDE"));
+                            userLocation.setTimestamp(obj.getString("TIMESTAMP"));
+
+                            // Adding Final Object
+                            mUserLocations.add(userLocation);
+                            Log.d(TAG, "loadUserLocations: userID: " + userLocation.getUserID());
+                            Log.d(TAG, "loadUserLocations: latitude: " + userLocation.getLatitude());
+                            Log.d(TAG, "loadUserLocations: longitude: " + userLocation.getLongitude());
+                            Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
+                        }
                     }
+                    userLocationsLoaded.setValue(true);
+                }
+                catch (Exception e)
+                {
+                    Log.d(TAG, "Exception in loadUserLocations");
+                    e.printStackTrace();
+                    userLocationsLoaded.setValue(false);
                 }
             }).execute("getUserLocations");
         }

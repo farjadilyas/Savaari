@@ -122,10 +122,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private int USER_ID = -1;
     private ArrayList<UserLocation> mUserLocations;
-    private Location mUserLocation;
+    private LatLng userLocation;
+    private LatLng pickupLatLng;
 
     private Button searchRideButton;
     private UserLocation driverLocation = new UserLocation();
+
+    private int FIND_DRIVER_ATTEMPTS = 0;
+    private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
 
 
     // Main onCreate Function to override
@@ -276,12 +280,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             destinationMarker.remove();
         }
 
+        pickupLatLng = latLng;
+
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .title(title);
         destinationMarker = googleMap.addMarker(options);
 
-        calculateDirections(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()), destinationMarker, true);
+        calculateDirections(userLocation, destinationMarker, true);
     }
 
     /*
@@ -354,44 +360,18 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         initializeNavigationBar();
         loadUserData();
         loadUserLocations();
-
         initializeAutocomplete();
 
         searchRideButton = findViewById(R.id.go_btn);
         searchRideButton.setEnabled(false);
 
-        searchRideButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        searchRideButton.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
-                LocationUpdateUtil.stopLocationService(RideActivity.this);
+            LocationUpdateUtil.stopLocationService(RideActivity.this);
 
-                /*
-                new LoadDataTask(null, object ->
-                {
-                    try {
-                        JSONObject results = (JSONObject) object;
-                        driverLocation.setUserID(results.getInt("USER_ID"));
-                        driverLocation.setLatitude(Double.parseDouble(results.getString("LATITUDE")));
-                        driverLocation.setLongitude(Double.parseDouble(results.getString("LONGITUDE")));
-                        ;
-
-                        MarkerOptions options = new MarkerOptions()
-                                .position(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()))
-                                .title("Pickup point");
-                        pickupMarker = googleMap.addMarker(options);
-
-                        calculateDirections(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()),
-                                pickupMarker, false);
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        Log.d("searchRideButton: ", "OnClick: error");
-                    }
-                }).execute("findDriver", String.valueOf(USER_ID), String.valueOf(mUserLocation.getLatitude()),
-                        String.valueOf(mUserLocation.getLongitude()));*/
-            }
+            FIND_DRIVER_ATTEMPTS = 0;
+            findDriver();
         });
 
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
@@ -493,9 +473,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                         // Calling User Location Save Function
                         try
                         {
-                            mUserLocation = currentLocation;
-                            rideViewModel.setUserCoordinates(mUserLocation.getLatitude(), mUserLocation.getLongitude());
-                            LocationUpdateUtil.saveUserLocation(mUserLocation, RideActivity.this);
+                            userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                            rideViewModel.setUserCoordinates(userLocation.latitude, userLocation.longitude);
+                            LocationUpdateUtil.saveUserLocation(userLocation, RideActivity.this);
 
                             // Starting Background Location Service
                             ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -521,20 +501,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /*
      * Calculates directions from userLocation to marker
      */
-    private void calculateDirections(LatLng mUserLocation, Marker marker, boolean sourceToDest){
+    private void calculateDirections(LatLng sourceLocation, Marker destinationMarker, boolean sourceToDest) {
         Log.d(TAG, "calculateDirections: calculating directions.");
 
         com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
-                marker.getPosition().latitude,
-                marker.getPosition().longitude
+                destinationMarker.getPosition().latitude,
+                destinationMarker.getPosition().longitude
         );
         DirectionsApiRequest directions = new DirectionsApiRequest(geoApiContext);
 
         directions.alternatives(false);
         directions.origin(
                 new com.google.maps.model.LatLng(
-                        mUserLocation.latitude,
-                        mUserLocation.longitude
+                        sourceLocation.latitude,
+                        sourceLocation.longitude
                 )
         );
         Log.d(TAG, "calculateDirections: destination: " + destination.toString());
@@ -677,6 +657,23 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
 
+    private void driverFoundAction(int driverID, String driverName, double latitude, double longitude) {
+        driverLocation.setUserID(driverID);
+        driverLocation.setLatitude(latitude);
+        driverLocation.setLongitude(longitude);
+
+        MarkerOptions options = new MarkerOptions()
+                .position(userLocation)
+                .title("Pickup point");
+        pickupMarker = googleMap.addMarker(options);
+
+        calculateDirections(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()),
+                pickupMarker, false);
+        Toast.makeText(RideActivity.this, "Driver found: id: " + driverID + ", name: " + driverName,
+                Toast.LENGTH_SHORT).show();
+    }
+
+
     /*
      * Checks if device's Google Play Services are available
      * TODO: call this before getLocationPermission() in onCreate()
@@ -703,6 +700,28 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
+
+    /* ----------- MATCHMAKING METHODS ------------- */
+
+    private void findDriver() {
+        if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
+            Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
+        }
+        else { // Attempt to find a driver
+            NetworkServiceUtil.findDriver(RideActivity.this, USER_ID,
+                    pickupLatLng.latitude, pickupLatLng.longitude);
+        }
+
+    }
+
+    private void checkFindStatus() {
+        NetworkServiceUtil.checkFindStatus(RideActivity.this, USER_ID);
+    }
+
+    /* -------- END OF MATCHMAKING METHODS --------- */
+
+
+
     /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
 
     /* Receives response from NetworkService methods */
@@ -715,6 +734,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             if (task.equals("loadData")) {
                 rideActionResponseListener = (RideActionResponseListener) context;
                 rideActionResponseListener.onDataLoaded(intent);
+            }
+            else if (task.equals("findDriver")) {
+                rideActionResponseListener = (RideActionResponseListener) context;
+                rideActionResponseListener.onDriverFound(intent);
+            }
+            else if (task.equals("checkFindStatus")) {
+                rideActionResponseListener = (RideActionResponseListener) context;
+                rideActionResponseListener.onFindStatusReceived(intent);
             }
         }
     }
@@ -733,8 +760,59 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     @Override
     public void onDataLoaded(Intent intent) {
         String resultString = intent.getExtras().getString("RESULT");
-
         rideViewModel.onUserDataLoaded(resultString);
+    }
+
+    @Override
+    public void onDriverFound(Intent intent) {
+        boolean driverFound = intent.getExtras().getBoolean("RESULT");
+
+        if (driverFound) {
+            Toast.makeText(RideActivity.this, "Request sent to driver", Toast.LENGTH_SHORT).show();
+            checkFindStatus();
+        }
+        else {
+            FIND_DRIVER_ATTEMPTS++;
+            findDriver();
+        }
+    }
+
+    @Override
+    public void onFindStatusReceived(Intent intent) {
+        try {
+            JSONObject result = new JSONObject(intent.getExtras().getString("RESULT"));
+            String status = result.getString("STATUS");
+
+            switch (status) {
+                case "ERROR":
+                    Log.d(TAG, "onFindStatusReceived(): status error");
+                    checkFindStatus();
+                    break;
+                case "NO_CHANGE":
+                    Log.d(TAG, "onFindStatusReceived(): NO_CHANGE");
+                    checkFindStatus();
+                    break;
+                case "REJECTED":
+                    Log.d(TAG, "onFindStatusReceived(): REJECTED");
+                    FIND_DRIVER_ATTEMPTS++;
+                    Toast.makeText(RideActivity.this, "Rejected. Finding another driver", Toast.LENGTH_SHORT).show();
+                    findDriver();
+                    break;
+                case "FOUND":
+                    Log.d(TAG, "onFindStatusReceived(): FOUND" + result.getString("DRIVER_LAT") + ", "
+                    + result.getString("DRIVER_LAT"));
+                    driverFoundAction(result.getInt("DRIVER_ID"),
+                            result.getString("DRIVER_NAME"),
+                            Double.parseDouble(result.getString("DRIVER_LAT")),
+                            Double.parseDouble(result.getString("DRIVER_LONG")));
+                    break;
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.d(TAG, "onFindStatusReceived(): exception thrown");
+
+        }
     }
 
     /*------------ END OF NETWORKSERVICE & BROADCAST RECEIVER SECTION ----------*/

@@ -5,16 +5,13 @@ import android.util.Log;
 
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
-import com.example.savaari.ride.RideActivity;
-import com.example.savaari.services.LocationUpdateUtil;
+import com.example.savaari.services.network.NetworkUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
@@ -90,16 +87,11 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
 
                 case "checkFindStatus":
                     OPERATION_CODE = CHECK_FIND_STATUS;
-                    stopService.observe((LifecycleOwner) this, new Observer<Boolean>() {
-                        @Override
-                        public void onChanged(Boolean aBoolean) {
-                            if (aBoolean) {
-                                stopCheckFindStatus();
-                            }
+                    stopService.observe((LifecycleOwner) this, aBoolean -> {
+                        if (aBoolean) {
+                            stopCheckFindStatus();
                         }
                     });
-
-                    //return NetworkUtil.checkFindStatus(url + "checkFindStatus", Integer.parseInt(strings[1]));
 
                 default:
                     OPERATION_CODE = LOG_IN;

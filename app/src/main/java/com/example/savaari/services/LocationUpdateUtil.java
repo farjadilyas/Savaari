@@ -9,6 +9,7 @@ import android.os.Build;
 import android.util.Log;
 
 import com.example.savaari.LoadDataTask;
+import com.google.android.gms.maps.model.LatLng;
 
 public class LocationUpdateUtil
 {
@@ -64,7 +65,7 @@ public class LocationUpdateUtil
 
     // Method for Saving User Location
     // Call this function after getting the USER's Locations
-    public static void saveUserLocation(Location mUserLocation, Context context)
+    public static void saveUserLocation(LatLng mUserLocation, Context context)
     {
         Log.d(TAG, "saveUserLocation: inside!");
         if (mUserLocation != null)
@@ -77,8 +78,8 @@ public class LocationUpdateUtil
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
                 // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.getLatitude())
-                        , String.valueOf(mUserLocation.getLongitude()));
+                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.latitude)
+                        , String.valueOf(mUserLocation.longitude));
             }
         }
     }

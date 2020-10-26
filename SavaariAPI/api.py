@@ -431,15 +431,22 @@ def findDriver():
 
 # End of Function
 
+"""
+Checks if a driver has accepted the rider's request
 
-#Checks if a driver has accepted the rider's request
+Returns:
+FIND_STATUS = 2 -> RET FOUND
+FIND_STATUS = 1 -> RET REJECTED
+FIND_STATUS = 0 -> RET: NO_CHANGE
+ELSE: ERROR
+"""
 @app.route('/checkFindStatus', methods = ['POST'])
 def checkFindStatus():
     try:
         _json = request.get_json()
         _user_id = _json['USER_ID']
 
-        getFindStatus = "SELECT R.FIND_STATUS, D.USER_ID, D.USER_NAME, D.LATITUDE AS SOURCE_LAT, D.LONGITUDE AS SOURCE_LONG FROM RIDER_DETAILS R LEFT JOIN DRIVER_DETAILS D ON R.DRIVER_ID = D.USER_ID WHERE R.FIND_STATUS IN (1,2) AND R.USER_ID = %s"
+        getFindStatus = "SELECT R.FIND_STATUS, D.USER_ID, D.USER_NAME, CAST(D.LATITUDE AS CHAR(12)) AS SOURCE_LAT, CAST(D.LONGITUDE AS CHAR(12)) AS SOURCE_LONG FROM RIDER_DETAILS R LEFT JOIN DRIVER_DETAILS D ON R.DRIVER_ID = D.USER_ID WHERE R.FIND_STATUS IN (1,2) AND R.USER_ID = %s"
 
         data = (_user_id)
 
@@ -449,18 +456,22 @@ def checkFindStatus():
         rows = cursor.fetchall()
         conn.commit()
 
-        if (rows[0][0] == 0):
-            results = {"STATUS" : 404}
-        elif (rows[0][0] == 1):
-            results = {"STATUS" : 404}
-        elif (rows[0][0] == 2):
-            results = {"STATUS" : 200, "DRIVER_ID": rows[0][1], "DRIVER_NAME" : rows[0][2], "DRIVER_LAT" : str(rows[0][3]), "DRIVER_LONG": str(rows[0][4])}
+        print("checkFindStatus: rowCount is: ", cursor.rowcount)
+        if (cursor.rowcount > 0):
+            if (rows[0][0] == 0):
+                results = {"STATUS" : "NO_CHANGE"}
+            elif (rows[0][0] == 1):
+                results = {"STATUS" : "REJECTED"}
+            elif (rows[0][0] == 2):
+                results = {"STATUS" : "FOUND", "DRIVER_ID": rows[0][1], "DRIVER_NAME" : rows[0][2], "DRIVER_LAT" : rows[0][3], "DRIVER_LONG": rows[0][4]}
+        else:
+            return json.dumps({"STATUS": "ERROR"})
         
         return json.dumps(results)
 
     except Exception as e:
         print(e)
-        return json.dumps({"STATUS": 404})
+        return json.dumps({"STATUS": "ERROR"})
 
     finally:
         cursor.close() 
@@ -477,6 +488,8 @@ def findRider():
         _json = request.json
         _user_id = _json['USER_ID']
         _active_status = _json['ACTIVE_STATUS']
+
+        print("user_id", _user_id, "active_status", _active_status)
 
         sql = 'UPDATE DRIVER_DETAILS SET IS_ACTIVE = %s WHERE USER_ID = %s'
 

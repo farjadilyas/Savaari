@@ -42,4 +42,26 @@ public class NetworkServiceUtil {
         intent.putExtra("USER_ID", USER_ID);
         context.startService(intent);
     }
+
+    public static void findDriver(Context context, int USER_ID, double latitude, double longitude) {
+        Log.d(LOG_TAG, "findDriver() : called, USER_ID: " + USER_ID + ", " + latitude + ", " + longitude);
+
+        Intent intent = new Intent();
+        intent.setClass(context, NetworkService.class);
+        intent.putExtra("TASK", "findDriver");
+        intent.putExtra("USER_ID", USER_ID);
+        intent.putExtra("LATITUDE", latitude);
+        intent.putExtra("LONGITUDE", longitude);
+        context.startService(intent);
+    }
+
+    public static void checkFindStatus(Context context, int USER_ID) {
+        Log.d(LOG_TAG, "checkFindStatus() : called, USER_ID: " + USER_ID);
+
+        Intent intent = new Intent();
+        intent.setClass(context, NetworkService.class);
+        intent.putExtra("TASK", "checkFindStatus");
+        intent.putExtra("USER_ID", USER_ID);
+        context.startService(intent);
+    }
 }
