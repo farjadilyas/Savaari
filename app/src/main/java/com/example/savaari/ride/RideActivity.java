@@ -35,6 +35,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.savaari.R;
+import com.example.savaari.SavaariApplication;
 import com.example.savaari.user.Driver;
 import com.example.savaari.user.UserLocation;
 import com.example.savaari.Util;
@@ -157,7 +158,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
         else {
             centerGPSButton = findViewById(R.id.user_location);
-            rideViewModel = new ViewModelProvider(this, new RideViewModelFactory(USER_ID)).get(RideViewModel.class);
+            rideViewModel = new ViewModelProvider(this, new RideViewModelFactory(USER_ID,
+                    ((SavaariApplication) this.getApplication()).getRepository())).get(RideViewModel.class);
             getLocationPermission();
         }
     }

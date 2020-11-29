@@ -35,6 +35,7 @@ import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 
+import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
 import com.example.savaari.services.network.NetworkServiceUtil;
 
@@ -58,13 +59,16 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
         Log.d("SignUpActivity", "signUpAction");
         
         loadingProgressBar.setVisibility(View.VISIBLE);
-        NetworkServiceUtil.signup(SignUpActivity.this, nickname, username, password);
+        signUpViewModel.signupAction(nickname, username, password);
+
+        signUpViewModel.isSignUpComplete().observe(this, this::signUpResponseAction);
+        //NetworkServiceUtil.signup(SignUpActivity.this, nickname, username, password);
     }
     
-    private void signUpResponseAction(Intent intent) {
+    private void signUpResponseAction(Boolean result) {
         loadingProgressBar.setVisibility(View.GONE);
 
-        if (intent.getExtras().getBoolean("RESULT")) {
+        if (result) {
             Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
             NavUtils.navigateUpFromSameTask(SignUpActivity.this);
         }
@@ -95,7 +99,8 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
     /* End of onCreate() method */
 
     private void initialize() {
-        signUpViewModel = ViewModelProviders.of(this, new SignUpViewModelFactory())
+        signUpViewModel = ViewModelProviders.of(this,
+                new SignUpViewModelFactory(((SavaariApplication) this.getApplication()).getRepository()))
                 .get(SignUpViewModel.class);
 
         usernameEditText = findViewById(R.id.username);
@@ -263,6 +268,6 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
 
     @Override
     public void onResponseReceived(Intent intent) {
-        signUpResponseAction(intent);
+        signUpResponseAction(false);
     }
 }

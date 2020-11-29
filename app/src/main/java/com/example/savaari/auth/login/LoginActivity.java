@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.savaari.LoadDataTask;
 import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
+import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
 import com.example.savaari.auth.signup.SignUpActivity;
 import com.example.savaari.auth.signup.SignUpResponseListener;
@@ -77,7 +78,8 @@ public class LoginActivity extends Util implements LoginResponseListener {
     }
 
     private void init() {
-        loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
+        loginViewModel = ViewModelProviders.of(this,
+                new LoginViewModelFactory(((SavaariApplication) this.getApplication()).getRepository()))
                 .get(LoginViewModel.class);
 
         usernameEditText = findViewById(R.id.username);
@@ -107,53 +109,44 @@ public class LoginActivity extends Util implements LoginResponseListener {
 
     private void forgotPasswordBannerHandler() {
         // Displays forgot password banner
-        forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        forgotPasswordButton.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
-                emailSentBanner.setVisibility(View.INVISIBLE);
-                recoveryEmailBanner.setVisibility(View.VISIBLE);
-                backFromBanner.setText(R.string.pass_reset_btn_text);
+            emailSentBanner.setVisibility(View.INVISIBLE);
+            recoveryEmailBanner.setVisibility(View.VISIBLE);
+            backFromBanner.setText(R.string.pass_reset_btn_text);
 
-                forgotPasswordBanner.startAnimation(inFromBottomAnimation(250));
-                forgotPasswordBanner.setVisibility(View.VISIBLE);
-            }
+            forgotPasswordBanner.startAnimation(inFromBottomAnimation(250));
+            forgotPasswordBanner.setVisibility(View.VISIBLE);
         });
 
         // Handles forgot-pass banner interactions
-        closeBanner.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        closeBanner.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
+            forgotPasswordBanner.startAnimation(outToBottomAnimation());
+            forgotPasswordBanner.setVisibility(View.INVISIBLE);
+            emailSentBanner.startAnimation(outToRightAnimation(500));
+            isEmailSent = false;
+        });
+
+
+        // [ sends recovery email on first button press ] + [ retracts banner on second press]
+        backFromBanner.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+            if (isEmailSent)
+            {
                 forgotPasswordBanner.startAnimation(outToBottomAnimation());
                 forgotPasswordBanner.setVisibility(View.INVISIBLE);
                 emailSentBanner.startAnimation(outToRightAnimation(500));
                 isEmailSent = false;
             }
-        });
+            else
+            {
+                recoveryProgressBar.setVisibility(View.VISIBLE);
 
-
-        // [ sends recovery email on first button press ] + [ retracts banner on second press]
-        backFromBanner.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-
-                if (isEmailSent)
-                {
-                    forgotPasswordBanner.startAnimation(outToBottomAnimation());
-                    forgotPasswordBanner.setVisibility(View.INVISIBLE);
-                    emailSentBanner.startAnimation(outToRightAnimation(500));
-                    isEmailSent = false;
-                }
-                else
-                {
-                    recoveryProgressBar.setVisibility(View.VISIBLE);
-
-                    //TODO: Handle Password Reset Action
-                }
+                //TODO: Handle Password Reset Action
             }
         });
     }
@@ -162,20 +155,16 @@ public class LoginActivity extends Util implements LoginResponseListener {
     private void loginFormStateWatcher() {
         // Receives and displays input validation messages - for login page
 
-        loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
-
-            @Override
-            public void onChanged(@Nullable LoginFormState loginFormState) {
-                if (loginFormState == null) {
-                    return;
-                }
-                loginButton.setEnabled(loginFormState.isDataValid());
-                if (loginFormState.getUsernameError() != null) {
-                    usernameEditText.setError(getString(loginFormState.getUsernameError()));
-                }
-                if (loginFormState.getPasswordError() != null) {
-                    passwordEditText.setError(getString(loginFormState.getPasswordError()));
-                }
+        loginViewModel.getLoginFormState().observe(this, loginFormState -> {
+            if (loginFormState == null) {
+                return;
+            }
+            loginButton.setEnabled(loginFormState.isDataValid());
+            if (loginFormState.getUsernameError() != null) {
+                usernameEditText.setError(getString(loginFormState.getUsernameError()));
+            }
+            if (loginFormState.getPasswordError() != null) {
+                passwordEditText.setError(getString(loginFormState.getPasswordError()));
             }
         });
 
@@ -206,19 +195,15 @@ public class LoginActivity extends Util implements LoginResponseListener {
 
     private void recoveryFormStateWatcher() {
         // Receives and displays input validation messages - for password recovery banner
-        loginViewModel.getRecoveryFormState().observe(this, new Observer<RecoveryFormState>() {
+        loginViewModel.getRecoveryFormState().observe(this, recoveryFormState -> {
 
-            @Override
-            public void onChanged(@Nullable RecoveryFormState recoveryFormState) {
+            if (recoveryFormState == null)
+                return;
 
-                if (recoveryFormState == null)
-                    return;
+            backFromBanner.setEnabled(recoveryFormState.isDataValid());
 
-                backFromBanner.setEnabled(recoveryFormState.isDataValid());
-
-                if (recoveryFormState.getRecoveryEmailError() != null) {
-                    recoveryEmailEditText.setError(getString(recoveryFormState.getRecoveryEmailError()));
-                }
+            if (recoveryFormState.getRecoveryEmailError() != null) {
+                recoveryEmailEditText.setError(getString(recoveryFormState.getRecoveryEmailError()));
             }
         });
 
@@ -242,41 +227,34 @@ public class LoginActivity extends Util implements LoginResponseListener {
 
     private void loginRequestHandler() {
         // Sends login requests to loginAction()
-        passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-
-                    loginAction(loadingProgressBar, usernameEditText.getText().toString(), passwordEditText.getText().toString());
-                }
-                return false;
-            }
-        });
-
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-
-                InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-
-                View view = getCurrentFocus();
-                if (view == null)
-                    view = new View(getApplicationContext());
-
-                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        passwordEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
 
                 loginAction(loadingProgressBar, usernameEditText.getText().toString(), passwordEditText.getText().toString());
-
             }
+            return false;
+        });
+
+        loginButton.setOnClickListener(v -> {
+
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+            InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+
+            View view = getCurrentFocus();
+            if (view == null)
+                view = new View(getApplicationContext());
+
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+
+            loginAction(loadingProgressBar, usernameEditText.getText().toString(), passwordEditText.getText().toString());
+
         });
     }
 
     @Override
     public void onResponseReceived(Intent intent) {
-        loginResponseAction(intent);
+        loginResponseAction(2109);
     }
 
     /* Receives response from NetworkService methods */
@@ -303,8 +281,7 @@ public class LoginActivity extends Util implements LoginResponseListener {
         registerReceiver(loginReceiver, intentFilter);
     }
 
-    private void loginResponseAction(Intent intent) {
-        int USER_ID = intent.getExtras().getInt("RESULT");
+    private void loginResponseAction(Integer USER_ID) {
         loadingProgressBar.setVisibility(View.GONE);
 
         SharedPreferences sharedPreferences
@@ -334,7 +311,10 @@ public class LoginActivity extends Util implements LoginResponseListener {
     private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
 
         loadingProgressBar.setVisibility(View.VISIBLE);
-        NetworkServiceUtil.login(LoginActivity.this, username, password);
+        loginViewModel.loginAction(username, password);
+
+        loginViewModel.getUserID().observe(this, this::loginResponseAction);
+        //NetworkServiceUtil.login(LoginActivity.this, username, password);
     }
 
     @Override

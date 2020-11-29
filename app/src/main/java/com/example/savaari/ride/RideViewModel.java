@@ -40,6 +40,7 @@ public class RideViewModel extends ViewModel {
     MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>(false);
     MutableLiveData<Driver> pairedDriver = new MutableLiveData<>();
 
+
     public RideViewModel(int USER_ID, Repository repository) {
         this.USER_ID = USER_ID;
         this.repository = repository;

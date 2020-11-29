@@ -42,7 +42,7 @@ public class Repository {
 
 
     // Sign-Up
-    public void signup(OnDataLoadedListener callback, String username, String emailAddress, String password) throws JSONException {
+    public void signup(OnDataLoadedListener callback, String username, String emailAddress, String password) {
         executor.execute(() -> callback.onDataLoaded(NetworkUtil.signup(url, username, emailAddress, password)));
     }
     // Login

@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SavaariApplication extends Application {
-    ExecutorService executorService = Executors.newFixedThreadPool(4);
-    Repository repository = new Repository(executorService);
+    public ExecutorService executorService = Executors.newFixedThreadPool(4);
+    public Repository repository = new Repository(executorService);
+
+    public Repository getRepository() { return repository; }
 }
