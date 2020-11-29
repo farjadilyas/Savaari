@@ -53,56 +53,49 @@ public class LoadDataTask extends AsyncTask<String, Void, Object> {
     @Override
     protected Object doInBackground(String... strings)
     {
-        try
+        // Main URL
+        String url = "https://56cc03fd597d.ngrok.io/";
+        switch (strings[0])
         {
-            // Main URL
-            String url = "https://56cc03fd597d.ngrok.io/";
-            switch (strings[0])
-            {
-                case "signup":
-                    OPERATION_CODE = SIGN_UP;
-                    if (NetworkUtil.signup(url + "add_rider", strings[1], strings[2], strings[3]))
-                    {
-                        return 1;
+            case "signup":
+                OPERATION_CODE = SIGN_UP;
+                if (NetworkUtil.signup(url + "add_rider", strings[1], strings[2], strings[3]))
+                {
+                    return 1;
+                }
+                break;
+
+            case "sendLocation":
+                OPERATION_CODE = LAST_LOCATION;
+                return NetworkUtil.sendLastLocation(url + "saveRiderLocation", Integer.parseInt(strings[1]),
+                        Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
+
+            case "loadData":
+                OPERATION_CODE = USER_DATA;
+                return NetworkUtil.loadUserData(url + "rider_data", Integer.parseInt(strings[1]));
+
+            case "getUserLocations":
+                OPERATION_CODE = USER_LOCATIONS;
+                return NetworkUtil.getUserLocations(url + "getRiderLocations");
+
+            case "findDriver":
+                OPERATION_CODE = FIND_DRIVER;
+                return NetworkUtil.findDriver(url + "findDriver", Integer.parseInt(strings[1]),
+                        Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
+
+            case "checkFindStatus":
+                OPERATION_CODE = CHECK_FIND_STATUS;
+                /*stopService.observe((LifecycleOwner) this, aBoolean -> {
+                    if (aBoolean) {
+                        stopCheckFindStatus();
                     }
-                    break;
+                });*/
 
-                case "sendLocation":
-                    OPERATION_CODE = LAST_LOCATION;
-                    return NetworkUtil.sendLastLocation(url + "saveRiderLocation", Integer.parseInt(strings[1]),
-                            Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
-
-                case "loadData":
-                    OPERATION_CODE = USER_DATA;
-                    return NetworkUtil.loadUserData(url + "rider_data", Integer.parseInt(strings[1]));
-
-                case "getUserLocations":
-                    OPERATION_CODE = USER_LOCATIONS;
-                    return NetworkUtil.getUserLocations(url + "getRiderLocations");
-
-                case "findDriver":
-                    OPERATION_CODE = FIND_DRIVER;
-                    return NetworkUtil.findDriver(url + "findDriver", Integer.parseInt(strings[1]),
-                            Double.parseDouble(strings[2]), Double.parseDouble(strings[3]));
-
-                case "checkFindStatus":
-                    OPERATION_CODE = CHECK_FIND_STATUS;
-                    stopService.observe((LifecycleOwner) this, aBoolean -> {
-                        if (aBoolean) {
-                            stopCheckFindStatus();
-                        }
-                    });
-
-                default:
-                    OPERATION_CODE = LOG_IN;
-                    return NetworkUtil.login(url + "login_rider", strings[1], strings[2]);
-            }
-            // End of Switch
+            default:
+                OPERATION_CODE = LOG_IN;
+                return NetworkUtil.login(url + "login_rider", strings[1], strings[2]);
         }
-        catch (JSONException e)
-        {
-            e.printStackTrace();
-        }
+        // End of Switch
         return -1;
     }// End of Function doInBackground();
 

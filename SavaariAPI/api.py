@@ -371,65 +371,6 @@ def delete_driver(student_id):
         conn.close()
 
 
-#Searches for drivers and sends a request
-@app.route('/findDriver', methods=['POST'])
-def findDriver():
-    try:
-        # Receiving Request Params
-        _json = request.get_json()
-
-        _user_id = _json['USER_ID']
-        _latitude = _json['LATITUDE']
-        _longitude = _json['LONGITUDE']
-
-        sendRequest = "UPDATE DRIVER_DETAILS SET RIDER_ID = %s, RIDE_STATUS = 1, DEST_LAT = %s, DEST_LONG = %s WHERE USER_ID = %s AND IS_ACTIVE = 1 AND RIDE_STATUS = 0"
-
-        driverFound = False
-
-        searchDriver = '''SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE FROM DRIVER_DETAILS'''
-
-        #data = (_latitude-0.1, _latitude+0.1, _longitude-0.1, _longitude+0.1, _latitude, _longitude)
-
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        #cursor.execute(searchDriver, tuple(data))
-        cursor.execute(searchDriver)
-        rows = cursor.fetchall()
-        conn.commit()
-
-        for row in rows:
-            _driver_id = row[0]
-            data = (_user_id, _latitude, _longitude, _driver_id);
-
-            conn = mysql.connect()
-            cursor = conn.cursor()
-            cursor.execute(sendRequest, tuple(data))
-            cursor.fetchall()
-            conn.commit()
-
-            print("Rowcount is", cursor.rowcount)
-
-            if (cursor.rowcount == 1):
-                driverFound = True
-                break
-
-        if (driverFound):
-            results = {"STATUS" :200}
-        else:
-            results = {"STATUS" :404}
-        
-        #results = {"USER_ID" : rows[0][0], "USER_NAME" : rows[0][1], "LATITUDE": rows[0][2], "LONGITUDE" : rows[0][3], "STATUS": 200}
-
-        return json.dumps(results)
-    except Exception as e:
-        print(e)
-        return json.dumps({"STATUS" : 404})
-
-    finally:
-        cursor.close()
-        conn.close()
-
-# End of Function
 
 """
 Checks if a driver has accepted the rider's request
@@ -440,12 +381,9 @@ FIND_STATUS = 1 -> RET REJECTED
 FIND_STATUS = 0 -> RET: NO_CHANGE
 ELSE: ERROR
 """
-@app.route('/checkFindStatus', methods = ['POST'])
-def checkFindStatus():
+#@app.route('/checkFindStatus', methods = ['POST'])
+def checkFindStatus(_user_id):
     try:
-        _json = request.get_json()
-        _user_id = _json['USER_ID']
-
         getFindStatus = "SELECT R.FIND_STATUS, D.USER_ID, D.USER_NAME, CAST(D.LATITUDE AS CHAR(12)) AS SOURCE_LAT, CAST(D.LONGITUDE AS CHAR(12)) AS SOURCE_LONG FROM RIDER_DETAILS R LEFT JOIN DRIVER_DETAILS D ON R.DRIVER_ID = D.USER_ID WHERE R.FIND_STATUS IN (1,2) AND R.USER_ID = %s"
 
         data = (_user_id)
@@ -479,10 +417,109 @@ def checkFindStatus():
 
 
 
+
+"""
+Searches for drivers and sends a request
+
+returns:
+PAIRED -> If driver has been matched
+NOT_PAIRED -> If drivers available but all declined
+NOT_FOUND -> If drivers not available
+"""
+@app.route('/findDriver', methods=['POST'])
+def findDriver():
+
+    REJECTED_ATTEMPT_LIMIT = 5
+    ATTEMPT_LIMIT = 60
+
+    try:
+        # Receiving Request Params
+        _json = request.get_json()
+
+        _user_id = _json['USER_ID']
+        _latitude = _json['LATITUDE']
+        _longitude = _json['LONGITUDE']
+
+        sendRequest = "UPDATE DRIVER_DETAILS SET RIDER_ID = %s, RIDE_STATUS = 1, DEST_LAT = %s, DEST_LONG = %s WHERE USER_ID = %s AND IS_ACTIVE = 1 AND RIDE_STATUS = 0"
+
+        driverFound = False
+        driverPaired = False
+        res = {"STATUS" : "NOT_FOUND"}
+
+        searchDriver = '''SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE FROM DRIVER_DETAILS'''
+
+        #data = (_latitude-0.1, _latitude+0.1, _longitude-0.1, _longitude+0.1, _latitude, _longitude)
+
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute(searchDriver)
+        rows = cursor.fetchall()
+        conn.commit()
+
+        for row in rows:
+            _driver_id = row[0]
+            data = (_user_id, _latitude, _longitude, _driver_id);
+
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.execute(sendRequest, tuple(data))
+            cursor.fetchall()
+            conn.commit()
+
+            print("Rowcount is", cursor.rowcount)
+
+            if (cursor.rowcount == 1):
+                driverFound = True
+                break
+
+        if (driverFound):
+            attempts = 0
+            rejectedAttempts = 0
+
+            while (attempts < ATTEMPT_LIMIT and rejectedAttempts < REJECTED_ATTEMPT_LIMIT):
+                res = checkFindStatus(userID)
+                if (res["STATUS"] == "ERROR"):
+                    print("findDriver() : checkFindStatus() : STATUS ERROR")
+                elif (res["STATUS"] == "NO_CHANGE"):
+                    print("findDriver() : checkFindStatus() : NO_CHANGE")
+                elif (res["STATUS"] == "REJECTED"):
+                    print("findDriver() : checkFindStatus() : REJECTED. Attempting again...")
+                    ++rejectedAttempts
+                elif (res["STATUS"] == "FOUND"):
+                    print("findDriver() : checkFindStatus() : DRIVER FOUND!")
+                    driverPaired = True
+                    break
+                else:
+                    print("findDriver STATUS UNDEFINED ERROR")
+
+                ++attempts
+
+            if (driverPaired):
+                res["STATUS"] = "PAIRED"
+            else:
+                res["STATUS"] = "NOT_PAIRED"
+
+        else:
+            res["STATUS"] = "NOT_FOUND"
+        
+        #results = {"USER_ID" : rows[0][0], "USER_NAME" : rows[0][1], "LATITUDE": rows[0][2], "LONGITUDE" : rows[0][3], "STATUS": 200}
+
+        return json.dumps(res)
+    except Exception as e:
+        print(e)
+        return json.dumps({"STATUS" : "EXCEPTION"})
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# End of Function
+
+
+
 # Sets driver to ACTIVE
 @app.route('/findRider', methods=['POST'])
 def findRider():
-
     # This function is called from the driver and marks it active
     try:
         _json = request.json

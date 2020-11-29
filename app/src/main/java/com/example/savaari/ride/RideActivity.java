@@ -29,16 +29,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
-import com.example.savaari.LoadDataTask;
 import com.example.savaari.R;
-import com.example.savaari.UserLocation;
+import com.example.savaari.user.Driver;
+import com.example.savaari.user.UserLocation;
 import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.services.network.NetworkServiceUtil;
@@ -58,7 +56,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
@@ -71,7 +68,6 @@ import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
-import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 
@@ -84,7 +80,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, RideActionResponseListener {
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private RideViewModel rideViewModel = null;
 
@@ -126,7 +122,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private LatLng pickupLatLng;
 
     private Button searchRideButton;
-    private UserLocation driverLocation = new UserLocation();
+    private Driver driver = new Driver();
 
     private int FIND_DRIVER_ATTEMPTS = 0;
     private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
@@ -141,7 +137,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         setContentView(R.layout.activity_ride);
 
         /* Register Broadcast Receiver for NetworkService */
-        registerRideReceiver();
+        //registerRideReceiver();
 
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
@@ -381,8 +377,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* Loads user data from database */
     private void loadUserData() {
-        NetworkServiceUtil.loadUserData(RideActivity.this, USER_ID);
-
+        rideViewModel.loadUserData();
         rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
 
             if (aBoolean) {
@@ -657,20 +652,18 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
 
-    private void driverFoundAction(int driverID, String driverName, double latitude, double longitude) {
-        driverLocation.setUserID(driverID);
-        driverLocation.setLatitude(latitude);
-        driverLocation.setLongitude(longitude);
+    private void driverFoundAction(Driver driver) {
+        this.driver = driver;
 
         MarkerOptions options = new MarkerOptions()
                 .position(userLocation)
                 .title("Pickup point");
         pickupMarker = googleMap.addMarker(options);
 
-        calculateDirections(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()),
+        calculateDirections(driver.getLatLng(),
                 pickupMarker, false);
-        Toast.makeText(RideActivity.this, "Driver found: id: " + driverID + ", name: " + driverName,
-                Toast.LENGTH_SHORT).show();
+        Toast.makeText(RideActivity.this, "Driver found: id: " + driver.getID()
+                        + ", name: " + driver.getName(), Toast.LENGTH_SHORT).show();
     }
 
 
@@ -708,12 +701,44 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
         }
         else { // Attempt to find a driver
-            NetworkServiceUtil.findDriver(RideActivity.this, USER_ID,
-                    pickupLatLng.latitude, pickupLatLng.longitude);
+            rideViewModel.findDriver(USER_ID, pickupLatLng.latitude, pickupLatLng.longitude);
+
+            // LEARN: Lambda can be replaced with method reference?
+            rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
         }
 
     }
 
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+        drawer.closeDrawer(GravityCompat.START);
+
+        switch (item.getItemId()) {
+            case (R.id.nav_your_trips):
+            case (R.id.nav_help):
+            case (R.id.nav_wallet):
+                break;
+            case (R.id.nav_settings):
+                Intent i = new Intent(RideActivity.this, SettingsActivity.class);
+                startActivity(i);
+                finish();
+                break;
+        }
+        return true;
+    }
+
+    /*
     private void checkFindStatus() {
         NetworkServiceUtil.checkFindStatus(RideActivity.this, USER_ID);
     }
@@ -724,7 +749,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
 
-    /* Receives response from NetworkService methods */
+    /* Receives response from NetworkService methods
     private static class RideReceiver extends BroadcastReceiver {
         private RideActionResponseListener rideActionResponseListener;
 
@@ -744,11 +769,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 rideActionResponseListener.onFindStatusReceived(intent);
             }
         }
-    }
+    }*/
 
-    RideReceiver rideReceiver;
+    //RideReceiver rideReceiver;
 
-    /* Register receiver */
+    /* Register receiver
     public void registerRideReceiver() {
         rideReceiver = new RideReceiver();
         IntentFilter intentFilter = new IntentFilter();
@@ -800,11 +825,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     break;
                 case "FOUND":
                     Log.d(TAG, "onFindStatusReceived(): FOUND" + result.getString("DRIVER_LAT") + ", "
-                    + result.getString("DRIVER_LAT"));
-                    driverFoundAction(result.getInt("DRIVER_ID"),
+                            + result.getString("DRIVER_LAT"));
+                    driverFoundAction(new Driver(result.getInt("DRIVER_ID"),
                             result.getString("DRIVER_NAME"),
-                            Double.parseDouble(result.getString("DRIVER_LAT")),
-                            Double.parseDouble(result.getString("DRIVER_LONG")));
+                            new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
+                                    Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED"));
                     break;
             }
         }
@@ -813,36 +838,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Log.d(TAG, "onFindStatusReceived(): exception thrown");
 
         }
-    }
+    }*/
 
     /*------------ END OF NETWORKSERVICE & BROADCAST RECEIVER SECTION ----------*/
-
-    @Override
-    public void onBackPressed() {
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        }
-        else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-        drawer.closeDrawer(GravityCompat.START);
-
-        switch (item.getItemId()) {
-            case (R.id.nav_your_trips):
-            case (R.id.nav_help):
-            case (R.id.nav_wallet):
-                break;
-            case (R.id.nav_settings):
-                Intent i = new Intent(RideActivity.this, SettingsActivity.class);
-                startActivity(i);
-                finish();
-                break;
-        }
-        return true;
-    }
 }

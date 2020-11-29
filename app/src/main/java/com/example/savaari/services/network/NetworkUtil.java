@@ -140,8 +140,9 @@ public class NetworkUtil
     }
 
     // Send Last Location
-    public static int sendLastLocation(String urladdress, int currentUserID, double latitude, double longitude)
+    public static int sendLastLocation(String urlAddress, int currentUserID, double latitude, double longitude)
     {
+        String url = urlAddress + "saveRiderLocation";
         try
         {
             // TimeStamp
@@ -162,7 +163,7 @@ public class NetworkUtil
             Log.d(TAG, "sendLastLocation: TimeStamp: " + currentTimeStamp);
 
             // Sending JSON
-            return NetworkUtil.sendPost(urladdress, jsonParam, false).getBoolean("result") ? 1 : 0;
+            return NetworkUtil.sendPost(url, jsonParam, false).getBoolean("result") ? 1 : 0;
         }
         catch (JSONException e)
         {
@@ -174,19 +175,20 @@ public class NetworkUtil
     /*
     *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
     */
-    public static boolean findDriver(String urladdress, int currentUserID, double latitude, double longitude) {
+    public static JSONObject findDriver(String urlAddress, int currentUserID, double latitude, double longitude) {
+        String url = urlAddress + "findDriver";
         try {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
             jsonParam.put("LATITUDE", latitude);
             jsonParam.put("LONGITUDE", longitude);
 
-            return (NetworkUtil.sendPost(urladdress, jsonParam, true).getInt("STATUS") == 200);
+            return NetworkUtil.sendPost(url, jsonParam, true);
         }
         catch (Exception e) {
             e.printStackTrace();
             Log.d("NetworkUtil: ", "findDriver() Exception");
-            return false;
+            return null;
         }
     }
 
@@ -197,12 +199,12 @@ public class NetworkUtil
     * 2 -> Driver accepted request
     * */
     public static JSONObject checkFindStatus(String urlAddress, int currentUserID) {
-
+        String url = urlAddress + "checkFindStatus";
         try {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
 
-            return (NetworkUtil.sendPost(urlAddress, jsonParam, true));
+            return (NetworkUtil.sendPost(url, jsonParam, true));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -216,19 +218,27 @@ public class NetworkUtil
     */
 
     // Sign-Up
-    public static boolean signup(String urlAddress, String username, String emailAddress, String password) throws JSONException
+    public static boolean signup(String urlAddress, String username, String emailAddress, String password)
     {
-        Log.d("NetworkUtil: ", "signup() called");
-        JSONObject jsonParam = new JSONObject();
-        jsonParam.put("username", username);
-        jsonParam.put("email_address", emailAddress);
-        jsonParam.put("password", password);
+        try {
+            String url = urlAddress + "add_rider";
+            Log.d("NetworkUtil: ", "signup() called");
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("username", username);
+            jsonParam.put("email_address", emailAddress);
+            jsonParam.put("password", password);
 
-        return (sendPost(urlAddress, jsonParam, true).getInt("STATUS_CODE") == 200);
+            return (sendPost(url, jsonParam, true).getInt("STATUS_CODE") == 200);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     // Login
     public static int login(String urlAddress, String username, String password)
     {
+        String url = urlAddress + "login_rider";
         try
         {
             // Creating the JSON Object
@@ -237,7 +247,7 @@ public class NetworkUtil
             jsonParam.put("password", password);
 
             // Sending Request
-            JSONObject results = sendPost(urlAddress, jsonParam, true);
+            JSONObject results = sendPost(url, jsonParam, true);
 
             return results.getInt("USER_ID");
         } catch (Exception e)
@@ -249,11 +259,12 @@ public class NetworkUtil
     // Loading User Data
     public static JSONObject loadUserData(String urlAddress, int currentUserID)
     {
+        String url = urlAddress + "rider_data";
         JSONObject jsonParam = new JSONObject();
         try
         {
             jsonParam.put("USER_ID", currentUserID);
-            return sendPost(urlAddress, jsonParam, true);
+            return sendPost(url, jsonParam, true);
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -264,6 +275,7 @@ public class NetworkUtil
     // Get User Locations
     public static JSONArray getUserLocations(String urlAddress)
     {
+        String url = urlAddress + "getRiderLocations";
         JSONObject jsonParam = new JSONObject();
         try
         {

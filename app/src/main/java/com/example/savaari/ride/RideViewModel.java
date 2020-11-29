@@ -6,12 +6,13 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnDataLoadedListener;
-import com.example.savaari.UserLocation;
+import com.example.savaari.Repository;
+import com.example.savaari.user.Driver;
+import com.example.savaari.user.UserLocation;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import static android.content.ContentValues.TAG;
 public class RideViewModel extends ViewModel {
 
     private static String LOG_TAG = RideViewModel.class.getSimpleName();
+    private final Repository repository;
 
     /* CCredentials for netowrk operations */
     private int USER_ID = -1;
@@ -36,9 +38,11 @@ public class RideViewModel extends ViewModel {
     /* Data Loaded status flags */
     MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>(false);
     MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>(false);
+    MutableLiveData<Driver> pairedDriver = new MutableLiveData<>();
 
-    public RideViewModel(int USER_ID) {
+    public RideViewModel(int USER_ID, Repository repository) {
         this.USER_ID = USER_ID;
+        this.repository = repository;
     }
 
     /* Get user data */
@@ -63,6 +67,7 @@ public class RideViewModel extends ViewModel {
         return userDataLoaded;
     }
     public LiveData<Boolean> isLiveUserLocationsLoaded() { return userLocationsLoaded; }
+    public LiveData<Driver> isDriverPaired() { return pairedDriver; }
 
 
     /* Need a setter since coordinates are received from activity */
@@ -70,33 +75,36 @@ public class RideViewModel extends ViewModel {
         userCoordinates = new LatLng(latitude, longitude);
     }
 
+    public void loadUserData() {
+        repository.loadUserData(object -> {
+            JSONObject result = null;
+            try {
+                if (object == null) {
+                    Log.d(LOG_TAG, "onDataLoaded(): resultString is null");
+                    userDataLoaded.setValue(false);
+                }
+                else {
+                    result = (JSONObject) object;
 
-    public void onUserDataLoaded(String resultString) {
-        try {
-            if (resultString == null) {
-                Log.d(LOG_TAG, "onDataLoaded(): resultString is null");
+                    username = result.getString("USER_NAME");
+                    emailAddress = result.getString("EMAIL_ADDRESS");
+                    Log.d("loadUserData(): ", username + ", " + emailAddress);
+                    userDataLoaded.setValue(true);
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
                 userDataLoaded.setValue(false);
+                Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + result.toString());
             }
-            else {
-                JSONObject result = new JSONObject(resultString);
-
-                username = result.getString("USER_NAME");
-                emailAddress = result.getString("EMAIL_ADDRESS");
-                Log.d("loadUserData(): ", username + ", " + emailAddress);
-                userDataLoaded.setValue(true);
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            userDataLoaded.setValue(false);
-            Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + resultString);
-        }
+        }, USER_ID);
     }
 
     /* loads array of UserLocation*/
     public void loadUserLocations() {
         if (!userLocationsLoaded.getValue()) {
-            new LoadDataTask(null, object -> {
+
+            repository.getUserLocations(object -> {
                 try {
                     JSONArray resultArray = (JSONArray) object;
                     Log.d(TAG, "loadUserLocations: " + resultArray.toString());
@@ -129,10 +137,51 @@ public class RideViewModel extends ViewModel {
                     e.printStackTrace();
                     userLocationsLoaded.setValue(false);
                 }
-            }).execute("getUserLocations");
+            });
         }
         else {
             userLocationsLoaded.setValue(true);
         }
+    }
+
+    public void findDriver(int USER_ID, double latitude, double longitude) {
+
+        repository.findDriver(object -> {
+            JSONObject result;
+            Driver driver = new Driver();
+
+            try {
+                result = (JSONObject) object;
+                String status = result.getString("STATUS");
+
+                switch (status) {
+                    case "PAIRED":
+                        Log.d(LOG_TAG, "findDriver(): PAIRED");
+                        driver.Initialize(result.getInt("DRIVER_ID"),
+                                result.getString("DRIVER_NAME"),
+                                new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
+                                Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED");
+                        break;
+                    case "NOT_PAIRED":
+                        Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
+                        driver.setStatus("NOT_PAIRED");
+                        break;
+                    case "NOT_FOUND":
+                        Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
+                        driver.setStatus("NOT_FOUND");
+                        break;
+                    default:
+                        Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
+                        driver.setStatus("STATUS_ERROR");
+                        break;
+                }
+                pairedDriver.setValue(driver);
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+                Log.d(LOG_TAG, "findDriver(): JSONException");
+            }
+
+        }, USER_ID, latitude, longitude);
     }
 }
