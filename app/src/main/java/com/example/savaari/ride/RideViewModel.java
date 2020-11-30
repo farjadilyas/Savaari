@@ -101,6 +101,7 @@ public class RideViewModel extends ViewModel {
         }, USER_ID);
     }
 
+
     /* loads array of UserLocation*/
     public void loadUserLocations() {
         if (!userLocationsLoaded.getValue()) {

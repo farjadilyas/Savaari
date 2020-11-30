@@ -391,6 +391,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     /* Function for loading User Location Data */
+
     private void loadUserLocations() {
         rideViewModel.loadUserLocations();
         rideViewModel.isLiveUserLocationsLoaded().observe(this, this::onUserLocationsLoaded);
@@ -450,6 +451,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         Toast.makeText(RideActivity.this, findStatusMessage, Toast.LENGTH_SHORT).show();
     }
+    // End of Function: loadUserLocations()
 
 
     /*

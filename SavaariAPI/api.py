@@ -1,4 +1,3 @@
-  
 """
     Savaari Application Programming Interface
     Nabeel Danish               18I-0579

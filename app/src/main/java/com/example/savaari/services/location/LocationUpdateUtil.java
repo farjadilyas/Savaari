@@ -1,4 +1,4 @@
-package com.example.savaari.services;
+package com.example.savaari.services.location;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -35,7 +35,7 @@ public class LocationUpdateUtil
         // Iterating over all services to check if the service is running
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
         {
-            if ("com.example.savaari.services.LocationUpdateService".equals(service.service.getClassName()))
+            if ("com.example.savaari.services.location.LocationUpdateService".equals(service.service.getClassName()))
             {
                 Log.d(TAG, "isLocationServiceRunning: location service is running");
                 return true;
@@ -85,7 +85,7 @@ public class LocationUpdateUtil
             if (currentUserID != -1)
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
-
+                
                 LocationUpdateUtil.repository.sendLastLocation(currentUserID, mUserLocation.latitude, mUserLocation.longitude);
             }
         }
