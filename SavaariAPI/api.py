@@ -520,8 +520,8 @@ def findDriver():
 
 
 # Sets driver to ACTIVE
-@app.route('/findRider', methods=['POST'])
-def findRider():
+@app.route('/setMarkActive', methods=['POST'])
+def setMarkActive():
     # This function is called from the driver and marks it active
     try:
         _json = request.json

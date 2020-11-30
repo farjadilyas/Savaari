@@ -2,9 +2,11 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
     </style>
 
-    <style name="BlackTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="BlackTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FF121212</item>
         <item name="foregroundColor">#000000</item>
@@ -17,7 +19,7 @@
         <item name = "foregroundItemColor">#15FFFFFF</item>
     </style>
 
-    <style name="RedTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="RedTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FFFFFF</item>
         <item name="foregroundColor">#FF2559</item>
@@ -30,7 +32,7 @@
         <item name = "foregroundItemColor">#FFFFFF</item>
     </style>
 
-    <style name="DimRedTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="DimRedTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FF121212</item>
         <item name="foregroundColor">#FF2559</item>
@@ -43,7 +45,7 @@
         <item name = "foregroundItemColor">#15FFFFFF</item>
     </style>
 
-    <style name="DarkBlueTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="DarkBlueTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FF121212</item>
         <item name="foregroundColor">#1757B7</item>
@@ -58,7 +60,7 @@
 
 
 
-    <style name="TodoTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="TodoTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FFFFFF</item>
         <item name="foregroundColor">#1757B7</item>
@@ -71,7 +73,7 @@
         <item name = "foregroundItemColor">#FFFFFF</item>
     </style>
 
-    <style name="BlueTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="BlueTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
         <item name="backgroundColor">#FFFFFF</item>
         <item name="foregroundColor">#8E24AA</item>

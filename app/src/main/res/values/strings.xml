@@ -107,6 +107,14 @@
     <string name="no_more_tasks">Relax! No pending tasks</string>
 
 
+    <!-- BOOK A RIDE SECTION -->
+    <string name = "add_source">Add pickup point</string>
+    <string name = "add_dest">Add destination</string>
+    <string name = "add_stop">Add stop</string>
+    <string name = "search_ride">GO</string>
+    <string name = "searching_ride">Finding  a driver for you</string>
+
+
     <!-- ==================Settings Section ============== -->
 
     <!-- Theme Setting-->

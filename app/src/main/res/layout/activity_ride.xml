@@ -24,55 +24,74 @@
             android:name="com.google.android.gms.maps.SupportMapFragment" >
         </androidx.fragment.app.FragmentContainerView>
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/search_bar"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_alignParentBottom="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/white_border"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/menu_btn"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/rounded_box"
             android:elevation="10dp"
-            android:gravity="bottom">
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/autocomplete_fragment"
+                android:id="@+id/autocomplete_fragment_src"
                 android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="50dp"/>
 
-        </RelativeLayout>
+            <View
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:background="?android:attr/listDivider"
+                android:backgroundTint="?attr/textColor" />
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/autocomplete_fragment_dest"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/menu_btn"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:tint="?attr/textColor"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:elevation="10dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/menu_btn"
             android:backgroundTint="?attr/backgroundColor"
             android:baselineAlignBottom="false"
-            android:scaleX="1.2"
-            android:scaleY="1.2"
-            android:src="@drawable/ic_menu" />
+            android:elevation="20dp"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:src="@drawable/ic_menu"
+            android:tint="?attr/textColor" />
 
         <ImageButton
             android:id="@+id/user_location"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_alignStart="@+id/search_bar"
             android:layout_alignEnd="@+id/search_bar"
-            android:layout_alignParentBottom="true"
-            android:layout_marginStart="342dp"
+            android:layout_centerVertical="true"
             android:layout_marginEnd="0dp"
-            android:layout_marginBottom="80dp"
+            android:background="@drawable/menu_btn"
             android:backgroundTint="?attr/backgroundColor"
             android:baselineAlignBottom="false"
             android:elevation="10dp"
+            android:maxWidth="50dp"
+            android:maxHeight="50dp"
             android:scaleX="1.2"
             android:scaleY="1.2"
             android:src="@drawable/ic_gps"
@@ -80,16 +99,21 @@
 
         <Button
             android:id="@+id/go_btn"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_centerHorizontal="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:layout_marginBottom="80dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="36dp"
             android:background="@drawable/go_btn"
-            android:outlineProvider="background"
             android:elevation="30dp"
-            android:textSize="18dp"
-            android:text="GO" />
+            android:minWidth="240dp"
+            android:outlineProvider="background"
+            android:padding="15dp"
+            android:text="@string/search_ride"
+            android:textAllCaps="false"
+            android:textSize="18dp" />
     </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView

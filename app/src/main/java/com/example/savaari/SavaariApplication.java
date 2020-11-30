@@ -2,7 +2,7 @@ package com.example.savaari;
 
 import android.app.Application;
 
-import com.example.savaari.services.LocationUpdateUtil;
+import com.example.savaari.services.location.LocationUpdateUtil;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

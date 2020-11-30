@@ -30,7 +30,8 @@ public class RideViewModel extends ViewModel {
     /* User account data*/
     private String username;
     private String emailAddress;
-    private LatLng userCoordinates = new LatLng(0,0);
+    private LatLng userCoordinates;
+    private Ride ride;
 
     /* User locations data for pinging */
     private ArrayList<UserLocation> mUserLocations = new ArrayList<>();
@@ -44,6 +45,10 @@ public class RideViewModel extends ViewModel {
     public RideViewModel(int USER_ID, Repository repository) {
         this.USER_ID = USER_ID;
         this.repository = repository;
+        username = "";
+        emailAddress = "";
+        userCoordinates = new LatLng(0,0);
+        ride = new Ride();
     }
 
     /* Get user data */
@@ -59,6 +64,7 @@ public class RideViewModel extends ViewModel {
     public ArrayList<UserLocation> getUserLocations() {
         return mUserLocations;
     }
+    public Ride getRide() { return ride; }
 
     /* Set USER_ID */
     //public void setUserID(int USER_ID) { this.USER_ID = USER_ID; }
@@ -152,7 +158,7 @@ public class RideViewModel extends ViewModel {
     * NOT_PAIRED -> If drivers available but all declined
     * NOT_FOUND -> If drivers not available
     * */
-    public void findDriver(int USER_ID, double latitude, double longitude) {
+    public void findDriver(int USER_ID, LatLng pickupLocation) {
 
         repository.findDriver(object -> {
             JSONObject result;
@@ -195,6 +201,6 @@ public class RideViewModel extends ViewModel {
                 Log.d(LOG_TAG, "findDriver(): JSONException");
             }
 
-        }, USER_ID, latitude, longitude);
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude);
     }
 }
