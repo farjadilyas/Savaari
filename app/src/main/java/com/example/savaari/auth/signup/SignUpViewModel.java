@@ -2,13 +2,13 @@ package com.example.savaari.auth.signup;
 
 import android.util.Log;
 
-import com.example.savaari.Repository;
-import com.example.savaari.auth.AuthInputValidator;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.R;
+import com.example.savaari.Repository;
+import com.example.savaari.auth.AuthInputValidator;
 
 public class SignUpViewModel extends ViewModel {
 
@@ -26,12 +26,12 @@ public class SignUpViewModel extends ViewModel {
     }
     LiveData<Boolean> isSignUpComplete() { return signUpComplete; }
 
-    public void signupAction(String username, String password, String nickname) {
+    public void signupAction(String nickname, String username, String password) {
         repository.signup(object -> {
             boolean result;
             try {
                 result = (boolean) object;
-                signUpComplete.setValue(result);
+                signUpComplete.postValue(result);
             }
             catch (Exception e) {
                 e.printStackTrace();

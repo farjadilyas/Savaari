@@ -13,6 +13,8 @@ from flask import jsonify
 from flask import flash, request, redirect, url_for
 from hashlib import sha256
 
+import time
+
 # create User			
 @app.route('/add_rider', methods=['POST'])
 def add_rider():
@@ -403,13 +405,13 @@ def checkFindStatus(_user_id):
             elif (rows[0][0] == 2):
                 results = {"STATUS" : "FOUND", "DRIVER_ID": rows[0][1], "DRIVER_NAME" : rows[0][2], "DRIVER_LAT" : rows[0][3], "DRIVER_LONG": rows[0][4]}
         else:
-            return json.dumps({"STATUS": "ERROR"})
+            return {"STATUS": "ERROR"}
         
-        return json.dumps(results)
+        return results
 
     except Exception as e:
         print(e)
-        return json.dumps({"STATUS": "ERROR"})
+        return {"STATUS": "ERROR"}
 
     finally:
         cursor.close() 
@@ -477,7 +479,7 @@ def findDriver():
             rejectedAttempts = 0
 
             while (attempts < ATTEMPT_LIMIT and rejectedAttempts < REJECTED_ATTEMPT_LIMIT):
-                res = checkFindStatus(userID)
+                res = checkFindStatus(_user_id)
                 if (res["STATUS"] == "ERROR"):
                     print("findDriver() : checkFindStatus() : STATUS ERROR")
                 elif (res["STATUS"] == "NO_CHANGE"):
@@ -493,6 +495,7 @@ def findDriver():
                     print("findDriver STATUS UNDEFINED ERROR")
 
                 ++attempts
+                time.sleep(2)
 
             if (driverPaired):
                 res["STATUS"] = "PAIRED"
@@ -794,4 +797,4 @@ def not_found(error=None):
 
 # Running the Main App
 if __name__ == "__main__":
-    app.run(host = '0.0.0.0', port = 5000)
+    app.run(host = '0.0.0.0', port = 4000)

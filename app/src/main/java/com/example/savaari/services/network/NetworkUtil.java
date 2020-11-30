@@ -193,27 +193,6 @@ public class NetworkUtil
     }
 
     /*
-    * Checks FIND_STATUS for rider
-    * 0 -> Invalid request
-    * 1 -> Driver hasn't responded
-    * 2 -> Driver accepted request
-    * */
-    public static JSONObject checkFindStatus(String urlAddress, int currentUserID) {
-        String url = urlAddress + "checkFindStatus";
-        try {
-            JSONObject jsonParam = new JSONObject();
-            jsonParam.put("USER_ID", currentUserID);
-
-            return (NetworkUtil.sendPost(url, jsonParam, true));
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            Log.d("NetworkUtil: ", "findDriver() Exception");
-            return null;
-        }
-    }
-
-    /*
     *  END OF RIDER-SIDE MATCHMAKING FUNCTIONS -----------------------------------------------------
     */
 

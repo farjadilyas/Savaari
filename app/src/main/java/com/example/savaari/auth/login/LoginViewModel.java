@@ -2,14 +2,13 @@ package com.example.savaari.auth.login;
 
 import android.util.Log;
 
-import com.example.savaari.Repository;
-import com.example.savaari.auth.AuthInputValidator;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.R;
-import com.example.savaari.ride.RideViewModel;
+import com.example.savaari.Repository;
+import com.example.savaari.auth.AuthInputValidator;
 
 public class LoginViewModel extends ViewModel {
 
@@ -37,7 +36,7 @@ public class LoginViewModel extends ViewModel {
             Integer ID;
             try {
                 ID = (Integer) object;
-                userID.setValue(ID);
+                userID.postValue(ID);
             }
             catch (Exception e) {
                 e.printStackTrace();

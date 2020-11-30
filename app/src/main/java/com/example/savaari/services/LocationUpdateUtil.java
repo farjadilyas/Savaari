@@ -4,23 +4,28 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Build;
 import android.util.Log;
 
-import com.example.savaari.LoadDataTask;
+import com.example.savaari.Repository;
 import com.google.android.gms.maps.model.LatLng;
 
 public class LocationUpdateUtil
 {
     // Main Attributes
+    private static final String LOG_TAG = LocationUpdateUtil.class.getSimpleName();
     private static final LocationUpdateUtil locationUpdateUtil = new LocationUpdateUtil();
+    private static Repository repository = null;
     private static final String TAG = "LocationUpdateUtil";
 
     // Main Constructor
     private LocationUpdateUtil()
     {
         // Empty
+    }
+
+    public static void setRepository(Repository repository) {
+        LocationUpdateUtil.repository = repository;
     }
 
     // Methods
@@ -68,6 +73,9 @@ public class LocationUpdateUtil
     public static void saveUserLocation(LatLng mUserLocation, Context context)
     {
         Log.d(TAG, "saveUserLocation: inside!");
+        if (repository == null) {
+            Log.d(LOG_TAG, "saveUserLocation: REPOSITORY is null!");
+        }
         if (mUserLocation != null)
         {
             // Function for Networking POST
@@ -77,9 +85,8 @@ public class LocationUpdateUtil
             if (currentUserID != -1)
             {
                 Log.d(TAG, "saveUserLocation: Executing sendLocationFunction");
-                // Creating new Task
-                new LoadDataTask(null, null).execute("sendLocation", String.valueOf(currentUserID), String.valueOf(mUserLocation.latitude)
-                        , String.valueOf(mUserLocation.longitude));
+
+                LocationUpdateUtil.repository.sendLastLocation(currentUserID, mUserLocation.latitude, mUserLocation.longitude);
             }
         }
     }

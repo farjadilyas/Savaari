@@ -82,7 +82,7 @@ public class RideViewModel extends ViewModel {
             try {
                 if (object == null) {
                     Log.d(LOG_TAG, "onDataLoaded(): resultString is null");
-                    userDataLoaded.setValue(false);
+                    userDataLoaded.postValue(false);
                 }
                 else {
                     result = (JSONObject) object;
@@ -90,12 +90,12 @@ public class RideViewModel extends ViewModel {
                     username = result.getString("USER_NAME");
                     emailAddress = result.getString("EMAIL_ADDRESS");
                     Log.d("loadUserData(): ", username + ", " + emailAddress);
-                    userDataLoaded.setValue(true);
+                    userDataLoaded.postValue(true);
                 }
             }
             catch (Exception e) {
                 e.printStackTrace();
-                userDataLoaded.setValue(false);
+                userDataLoaded.postValue(false);
                 Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + result.toString());
             }
         }, USER_ID);
@@ -130,21 +130,27 @@ public class RideViewModel extends ViewModel {
                             Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
                         }
                     }
-                    userLocationsLoaded.setValue(true);
+                    userLocationsLoaded.postValue(true);
                 }
                 catch (Exception e)
                 {
                     Log.d(TAG, "Exception in loadUserLocations");
                     e.printStackTrace();
-                    userLocationsLoaded.setValue(false);
+                    userLocationsLoaded.postValue(false);
                 }
             });
         }
         else {
-            userLocationsLoaded.setValue(true);
+            userLocationsLoaded.postValue(true);
         }
     }
 
+    /*
+    * sets driver status to:
+    * PAIRED -> If driver has been matched
+    * NOT_PAIRED -> If drivers available but all declined
+    * NOT_FOUND -> If drivers not available
+    * */
     public void findDriver(int USER_ID, double latitude, double longitude) {
 
         repository.findDriver(object -> {
@@ -152,31 +158,36 @@ public class RideViewModel extends ViewModel {
             Driver driver = new Driver();
 
             try {
-                result = (JSONObject) object;
-                String status = result.getString("STATUS");
-
-                switch (status) {
-                    case "PAIRED":
-                        Log.d(LOG_TAG, "findDriver(): PAIRED");
-                        driver.Initialize(result.getInt("DRIVER_ID"),
-                                result.getString("DRIVER_NAME"),
-                                new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
-                                Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED");
-                        break;
-                    case "NOT_PAIRED":
-                        Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
-                        driver.setStatus("NOT_PAIRED");
-                        break;
-                    case "NOT_FOUND":
-                        Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
-                        driver.setStatus("NOT_FOUND");
-                        break;
-                    default:
-                        Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
-                        driver.setStatus("STATUS_ERROR");
-                        break;
+                if (object == null) {
+                    driver.setStatus("STATUS_ERROR");
                 }
-                pairedDriver.setValue(driver);
+                else {
+                    result = (JSONObject) object;
+                    String status = result.getString("STATUS");
+
+                    switch (status) {
+                        case "PAIRED":
+                            Log.d(LOG_TAG, "findDriver(): PAIRED");
+                            driver.Initialize(result.getInt("DRIVER_ID"),
+                                    result.getString("DRIVER_NAME"),
+                                    new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
+                                            Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED");
+                            break;
+                        case "NOT_PAIRED":
+                            Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
+                            driver.setStatus("NOT_PAIRED");
+                            break;
+                        case "NOT_FOUND":
+                            Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
+                            driver.setStatus("NOT_FOUND");
+                            break;
+                        default:
+                            Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
+                            driver.setStatus("STATUS_ERROR");
+                            break;
+                    }
+                }
+                pairedDriver.postValue(driver);
             }
             catch (JSONException e) {
                 e.printStackTrace();

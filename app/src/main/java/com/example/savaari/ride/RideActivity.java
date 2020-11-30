@@ -4,11 +4,8 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -25,23 +22,22 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
-import com.example.savaari.user.Driver;
-import com.example.savaari.user.UserLocation;
 import com.example.savaari.Util;
 import com.example.savaari.services.LocationUpdateUtil;
-import com.example.savaari.services.network.NetworkServiceUtil;
 import com.example.savaari.settings.SettingsActivity;
+import com.example.savaari.user.Driver;
+import com.example.savaari.user.UserLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -71,8 +67,6 @@ import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -377,48 +371,84 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     }
 
+    /* VIEWMODEL CALLS & LIVEDATA OBSERVER METHODS*/
+
     /* Loads user data from database */
     private void loadUserData() {
         rideViewModel.loadUserData();
-        rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
-
-            if (aBoolean) {
-                navUsername.setText(rideViewModel.getUsername());
-                navEmail.setText(rideViewModel.getEmailAddress());
-                Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
-            }
-            else
-            {
-                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        rideViewModel.isLiveUserDataLoaded().observe(this, this::onUserDataLoaded);
+    }
+    private void onUserDataLoaded(Boolean dataLoaded) {
+        if (dataLoaded) {
+            navUsername.setText(rideViewModel.getUsername());
+            navEmail.setText(rideViewModel.getEmailAddress());
+            Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /* Function for loading User Location Data */
-    private void loadUserLocations()
-    {
+    private void loadUserLocations() {
         rideViewModel.loadUserLocations();
-        rideViewModel.isLiveUserLocationsLoaded().observe(this, aBoolean -> {
+        rideViewModel.isLiveUserLocationsLoaded().observe(this, this::onUserLocationsLoaded);
+    }
+    private void onUserLocationsLoaded(Boolean locationsLoaded) {
+        if (locationsLoaded) {
+            mUserLocations = rideViewModel.getUserLocations();
+            Log.d(TAG, "loadUserLocations: Started!");
 
-            if (aBoolean) {
-                mUserLocations = rideViewModel.getUserLocations();
-                Log.d(TAG, "loadUserLocations: Started!");
+            // Testing Code
+            Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
+            for (int i = 0; i < mUserLocations.size(); ++i) {
+                Log.d(TAG, "loadUserLocations: setting Markers");
+                MarkerOptions option = new MarkerOptions()
+                        .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                googleMap.addMarker(option);
+            }
+            Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
+        }
+    }
 
-                // Testing Code
-                Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
-                for (int i = 0; i < mUserLocations.size(); ++i) {
-                    Log.d(TAG, "loadUserLocations: setting Markers");
-                    MarkerOptions option = new MarkerOptions()
-                            .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
-                    googleMap.addMarker(option);
-                }
-                Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
-            }
-        });
+    private void findDriver() {
+        if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
+            Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
+        }
+        else { // Attempt to find a driver
+            rideViewModel.findDriver(USER_ID, pickupLatLng.latitude, pickupLatLng.longitude);
+            rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
+        }
+    }
+    private void driverFoundAction(Driver driver) {
+        this.driver = driver;
+        String findStatusMessage = "";
+
+        switch (driver.getStatus()) {
+            case "PAIRED":
+                MarkerOptions options = new MarkerOptions().position(userLocation)
+                        .title("Pickup point");
+                pickupMarker = googleMap.addMarker(options);
+                calculateDirections(driver.getLatLng(), pickupMarker, false);
+
+                findStatusMessage = "Driver found: id: " + driver.getID() + ", name: " + driver.getName();
+                break;
+            case "NOT_PAIRED":
+                findStatusMessage = "Sorry, we couldn't find you a ride. Try again";
+                break;
+            case "NOT_FOUND":
+                findStatusMessage = "Few rides available. Try again soon!";
+                break;
+            default:
+                findStatusMessage = "There was a problem in finding a ride";
+                break;
+        }
+
+        Toast.makeText(RideActivity.this, findStatusMessage, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -654,21 +684,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
 
-    private void driverFoundAction(Driver driver) {
-        this.driver = driver;
-
-        MarkerOptions options = new MarkerOptions()
-                .position(userLocation)
-                .title("Pickup point");
-        pickupMarker = googleMap.addMarker(options);
-
-        calculateDirections(driver.getLatLng(),
-                pickupMarker, false);
-        Toast.makeText(RideActivity.this, "Driver found: id: " + driver.getID()
-                        + ", name: " + driver.getName(), Toast.LENGTH_SHORT).show();
-    }
-
-
     /*
      * Checks if device's Google Play Services are available
      * TODO: call this before getLocationPermission() in onCreate()
@@ -693,22 +708,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Toast.makeText(this, "Error. Map services unavailable", Toast.LENGTH_SHORT).show();
             return false;
         }
-    }
-
-
-    /* ----------- MATCHMAKING METHODS ------------- */
-
-    private void findDriver() {
-        if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
-            Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
-        }
-        else { // Attempt to find a driver
-            rideViewModel.findDriver(USER_ID, pickupLatLng.latitude, pickupLatLng.longitude);
-
-            // LEARN: Lambda can be replaced with method reference?
-            rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
-        }
-
     }
 
     @Override
@@ -739,108 +738,4 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
         return true;
     }
-
-    /*
-    private void checkFindStatus() {
-        NetworkServiceUtil.checkFindStatus(RideActivity.this, USER_ID);
-    }
-
-    /* -------- END OF MATCHMAKING METHODS --------- */
-
-
-
-    /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
-
-    /* Receives response from NetworkService methods
-    private static class RideReceiver extends BroadcastReceiver {
-        private RideActionResponseListener rideActionResponseListener;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String task = intent.getExtras().getString("TASK");
-            if (task.equals("loadData")) {
-                rideActionResponseListener = (RideActionResponseListener) context;
-                rideActionResponseListener.onDataLoaded(intent);
-            }
-            else if (task.equals("findDriver")) {
-                rideActionResponseListener = (RideActionResponseListener) context;
-                rideActionResponseListener.onDriverFound(intent);
-            }
-            else if (task.equals("checkFindStatus")) {
-                rideActionResponseListener = (RideActionResponseListener) context;
-                rideActionResponseListener.onFindStatusReceived(intent);
-            }
-        }
-    }*/
-
-    //RideReceiver rideReceiver;
-
-    /* Register receiver
-    public void registerRideReceiver() {
-        rideReceiver = new RideReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("RESULT");
-
-        registerReceiver(rideReceiver, intentFilter);
-    }
-
-    @Override
-    public void onDataLoaded(Intent intent) {
-        String resultString = intent.getExtras().getString("RESULT");
-        rideViewModel.onUserDataLoaded(resultString);
-    }
-
-    @Override
-    public void onDriverFound(Intent intent) {
-        boolean driverFound = intent.getExtras().getBoolean("RESULT");
-
-        if (driverFound) {
-            Toast.makeText(RideActivity.this, "Request sent to driver", Toast.LENGTH_SHORT).show();
-            checkFindStatus();
-        }
-        else {
-            FIND_DRIVER_ATTEMPTS++;
-            findDriver();
-        }
-    }
-
-    @Override
-    public void onFindStatusReceived(Intent intent) {
-        try {
-            JSONObject result = new JSONObject(intent.getExtras().getString("RESULT"));
-            String status = result.getString("STATUS");
-
-            switch (status) {
-                case "ERROR":
-                    Log.d(TAG, "onFindStatusReceived(): status error");
-                    checkFindStatus();
-                    break;
-                case "NO_CHANGE":
-                    Log.d(TAG, "onFindStatusReceived(): NO_CHANGE");
-                    checkFindStatus();
-                    break;
-                case "REJECTED":
-                    Log.d(TAG, "onFindStatusReceived(): REJECTED");
-                    FIND_DRIVER_ATTEMPTS++;
-                    Toast.makeText(RideActivity.this, "Rejected. Finding another driver", Toast.LENGTH_SHORT).show();
-                    findDriver();
-                    break;
-                case "FOUND":
-                    Log.d(TAG, "onFindStatusReceived(): FOUND" + result.getString("DRIVER_LAT") + ", "
-                            + result.getString("DRIVER_LAT"));
-                    driverFoundAction(new Driver(result.getInt("DRIVER_ID"),
-                            result.getString("DRIVER_NAME"),
-                            new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
-                                    Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED"));
-                    break;
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            Log.d(TAG, "onFindStatusReceived(): exception thrown");
-
-        }
-    }*/
-
-    /*------------ END OF NETWORKSERVICE & BROADCAST RECEIVER SECTION ----------*/
 }

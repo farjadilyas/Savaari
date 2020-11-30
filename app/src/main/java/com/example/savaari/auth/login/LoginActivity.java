@@ -1,16 +1,12 @@
 package com.example.savaari.auth.login;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.HapticFeedbackConstants;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -18,25 +14,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.example.savaari.LoadDataTask;
-import com.example.savaari.OnAuthenticationListener;
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
 import com.example.savaari.auth.signup.SignUpActivity;
-import com.example.savaari.auth.signup.SignUpResponseListener;
 import com.example.savaari.ride.RideActivity;
-import com.example.savaari.services.network.NetworkServiceUtil;
 
-public class LoginActivity extends Util implements LoginResponseListener {
+public class LoginActivity extends Util {
 
     private LoginViewModel loginViewModel;      // input validation
     private EditText usernameEditText, passwordEditText, recoveryEmailEditText;
@@ -57,7 +46,6 @@ public class LoginActivity extends Util implements LoginResponseListener {
         setContentView(R.layout.activity_login);
 
         /* Initialize members & register receiver */
-        registerLoginResponseReceiver();
         init();
 
         forgotPasswordBannerHandler();;
@@ -252,35 +240,15 @@ public class LoginActivity extends Util implements LoginResponseListener {
         });
     }
 
-    @Override
-    public void onResponseReceived(Intent intent) {
-        loginResponseAction(2109);
+
+    /* ViewModel Call and observer */
+    // Method: Handles Login Request
+    private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
+
+        loadingProgressBar.setVisibility(View.VISIBLE);
+        loginViewModel.loginAction(username, password);
+        loginViewModel.getUserID().observe(this, this::loginResponseAction);
     }
-
-    /* Receives response from NetworkService methods */
-    private static class LoginReceiver extends BroadcastReceiver {
-        private LoginResponseListener loginResponseListener;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getExtras().getString("TASK").equals("login")) {
-                loginResponseListener = (LoginResponseListener) context;
-                loginResponseListener.onResponseReceived(intent);
-            }
-        }
-    }
-
-    LoginReceiver loginReceiver;
-
-    /* Register receiver */
-    public void registerLoginResponseReceiver() {
-        loginReceiver = new LoginReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("RESULT");
-
-        registerReceiver(loginReceiver, intentFilter);
-    }
-
     private void loginResponseAction(Integer USER_ID) {
         loadingProgressBar.setVisibility(View.GONE);
 
@@ -305,16 +273,6 @@ public class LoginActivity extends Util implements LoginResponseListener {
             startActivity(i);
             finish();
         }
-    }
-
-    // Method: Handles Login Request
-    private void loginAction(final ProgressBar loadingProgressBar, final String username, final String password) {
-
-        loadingProgressBar.setVisibility(View.VISIBLE);
-        loginViewModel.loginAction(username, password);
-
-        loginViewModel.getUserID().observe(this, this::loginResponseAction);
-        //NetworkServiceUtil.login(LoginActivity.this, username, password);
     }
 
     @Override
