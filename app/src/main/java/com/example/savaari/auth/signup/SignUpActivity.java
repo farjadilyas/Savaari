@@ -1,21 +1,7 @@
 package com.example.savaari.auth.signup;
 
 import android.app.Activity;
-
-import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.NavUtils;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -31,15 +17,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.savaari.R;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.NavUtils;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
+import com.example.savaari.R;
+import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
-import com.example.savaari.services.network.NetworkServiceUtil;
 
 import java.util.Objects;
 
 
-public class SignUpActivity extends Util implements SignUpResponseListener {
+public class SignUpActivity extends Util {
 
     private com.example.savaari.auth.signup.SignUpViewModel signUpViewModel;
     ProgressBar loadingProgressBar;
@@ -50,23 +42,6 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
     Button backToLogin;
     Button backFromBanner;
     ConstraintLayout successBanner;
-
-    private void signupAction(final ConstraintLayout successBanner, final ProgressBar loadingProgressBar, final String username, final String password, final String nickname)
-    {
-        Log.d("SignUpActivity", "signUpAction");
-        
-        loadingProgressBar.setVisibility(View.VISIBLE);
-        NetworkServiceUtil.signup(SignUpActivity.this, nickname, username, password);
-    }
-    
-    private void signUpResponseAction(Intent intent) {
-        loadingProgressBar.setVisibility(View.GONE);
-
-        if (intent.getExtras().getBoolean("RESULT")) {
-            Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
-            NavUtils.navigateUpFromSameTask(SignUpActivity.this);
-        }
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,8 +57,6 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        registerSignUpReceiver();
-
         initialize();
         backToLoginHandler();
         signUpFormStateWatcher();
@@ -93,7 +66,8 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
     /* End of onCreate() method */
 
     private void initialize() {
-        signUpViewModel = ViewModelProviders.of(this, new SignUpViewModelFactory())
+        signUpViewModel = ViewModelProviders.of(this,
+                new SignUpViewModelFactory(((SavaariApplication) this.getApplication()).getRepository()))
                 .get(SignUpViewModel.class);
 
         usernameEditText = findViewById(R.id.username);
@@ -223,6 +197,26 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
     }
 
 
+    /* ViewModel Call and observer */
+    private void signupAction(final ConstraintLayout successBanner, final ProgressBar loadingProgressBar, final String username, final String password, final String nickname)
+    {
+        Log.d("SignUpActivity", "signUpAction");
+
+        loadingProgressBar.setVisibility(View.VISIBLE);
+        signUpViewModel.signupAction(nickname, username, password);
+        signUpViewModel.isSignUpComplete().observe(this, this::signUpResponseAction);
+    }
+
+    private void signUpResponseAction(Boolean result) {
+        loadingProgressBar.setVisibility(View.GONE);
+
+        if (result) {
+            Toast.makeText(getApplicationContext(), R.string.sign_up_success, Toast.LENGTH_LONG).show();
+            NavUtils.navigateUpFromSameTask(SignUpActivity.this);
+        }
+    }
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -233,34 +227,5 @@ public class SignUpActivity extends Util implements SignUpResponseListener {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    /* Receives response from NetworkService methods */
-    private static class SignUpReceiver extends BroadcastReceiver {
-        private SignUpResponseListener signUpResponseListener;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getExtras().getString("TASK").equals("signup")) {
-                signUpResponseListener = (SignUpResponseListener) context;
-                signUpResponseListener.onResponseReceived(intent);
-            }
-        }
-    }
-
-    SignUpReceiver signUpReceiver;
-
-    /* Register receiver */
-    public void registerSignUpReceiver() {
-        signUpReceiver = new SignUpReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("RESULT");
-
-        registerReceiver(signUpReceiver, intentFilter);
-    }
-
-    @Override
-    public void onResponseReceived(Intent intent) {
-        signUpResponseAction(intent);
     }
 }

@@ -1,19 +1,43 @@
 package com.example.savaari.auth.signup;
 
 import android.util.Log;
-import com.example.savaari.auth.AuthInputValidator;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.R;
+import com.example.savaari.Repository;
+import com.example.savaari.auth.AuthInputValidator;
 
 public class SignUpViewModel extends ViewModel {
 
-    private MutableLiveData<SignUpFormState> signupFormState = new MutableLiveData<>();
+    private final static String LOG_TAG = SignUpViewModel.class.getSimpleName();
+    private final Repository repository;
+    private final MutableLiveData<SignUpFormState> signupFormState = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> signUpComplete = new MutableLiveData<>(false);
+
+    public SignUpViewModel(Repository repository) {
+        this.repository = repository;
+    }
 
     LiveData<SignUpFormState> getSignUpFormState() {
         return signupFormState;
+    }
+    LiveData<Boolean> isSignUpComplete() { return signUpComplete; }
+
+    public void signupAction(String nickname, String username, String password) {
+        repository.signup(object -> {
+            boolean result;
+            try {
+                result = (boolean) object;
+                signUpComplete.postValue(result);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                Log.d(LOG_TAG, "signupAction(): exception");
+            }
+        }, nickname, username, password);
     }
 
     public void signUpDataChanged(String username, String password, String nickname)

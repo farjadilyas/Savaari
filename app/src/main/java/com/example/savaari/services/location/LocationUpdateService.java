@@ -13,14 +13,17 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
 
 public class LocationUpdateService extends Service {
     // Main Attributes
@@ -45,7 +48,7 @@ public class LocationUpdateService extends Service {
                 // Call Save User
                 try
                 {
-                    LocationUpdateUtil.saveUserLocation(location, LocationUpdateService.this);
+                    LocationUpdateUtil.saveUserLocation(new LatLng(location.getLatitude(), location.getLongitude()), LocationUpdateService.this);
                 } catch (Exception e)
                 {
                     e.printStackTrace();

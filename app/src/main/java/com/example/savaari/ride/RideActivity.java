@@ -4,11 +4,8 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -25,6 +22,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -34,12 +32,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.savaari.R;
-import com.example.savaari.UserLocation;
+import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
-import com.example.savaari.services.location.LocationUpdateUtil;
-import com.example.savaari.services.network.NetworkService;
-import com.example.savaari.services.network.NetworkServiceUtil;
+import com.example.savaari.services.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
+import com.example.savaari.user.Driver;
+import com.example.savaari.user.UserLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -77,7 +75,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, RideActionResponseListener {
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private RideViewModel rideViewModel = null;
 
@@ -115,10 +113,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private int USER_ID = -1;
     private ArrayList<UserLocation> mUserLocations;
-    private Location mUserLocation;
+    private LatLng userLocation;
+    private LatLng pickupLatLng;
 
     private Button searchRideButton;
-    private UserLocation driverLocation = new UserLocation();
+    private Driver driver = new Driver();
+
+    private int FIND_DRIVER_ATTEMPTS = 0;
+    private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
 
 
     // Main onCreate Function to override
@@ -130,7 +132,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         setContentView(R.layout.activity_ride);
 
         /* Register Broadcast Receiver for NetworkService */
-        registerRideReceiver();
+        //registerRideReceiver();
 
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
@@ -150,7 +152,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
         else {
             centerGPSButton = findViewById(R.id.user_location);
-            rideViewModel = new ViewModelProvider(this, new RideViewModelFactory(USER_ID)).get(RideViewModel.class);
+            rideViewModel = new ViewModelProvider(this, new RideViewModelFactory(USER_ID,
+                    ((SavaariApplication) this.getApplication()).getRepository())).get(RideViewModel.class);
             getLocationPermission();
         }
     }
@@ -269,12 +272,14 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             destinationMarker.remove();
         }
 
+        pickupLatLng = latLng;
+
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .title(title);
         destinationMarker = googleMap.addMarker(options);
 
-        calculateDirections(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()), destinationMarker, true);
+        calculateDirections(userLocation, destinationMarker, true);
     }
 
     /*
@@ -347,44 +352,18 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         initializeNavigationBar();
         loadUserData();
         loadUserLocations();
-
         initializeAutocomplete();
 
         searchRideButton = findViewById(R.id.go_btn);
         searchRideButton.setEnabled(false);
 
-        searchRideButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        searchRideButton.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
-                LocationUpdateUtil.stopLocationService(RideActivity.this);
+            LocationUpdateUtil.stopLocationService(RideActivity.this);
 
-                /*
-                new LoadDataTask(null, object ->
-                {
-                    try {
-                        JSONObject results = (JSONObject) object;
-                        driverLocation.setUserID(results.getInt("USER_ID"));
-                        driverLocation.setLatitude(Double.parseDouble(results.getString("LATITUDE")));
-                        driverLocation.setLongitude(Double.parseDouble(results.getString("LONGITUDE")));
-                        ;
-
-                        MarkerOptions options = new MarkerOptions()
-                                .position(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()))
-                                .title("Pickup point");
-                        pickupMarker = googleMap.addMarker(options);
-
-                        calculateDirections(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()),
-                                pickupMarker, false);
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        Log.d("searchRideButton: ", "OnClick: error");
-                    }
-                }).execute("findDriver", String.valueOf(USER_ID), String.valueOf(mUserLocation.getLatitude()),
-                        String.valueOf(mUserLocation.getLongitude()));*/
-            }
+            FIND_DRIVER_ATTEMPTS = 0;
+            findDriver();
         });
 
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
@@ -392,51 +371,85 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     }
 
+    /* VIEWMODEL CALLS & LIVEDATA OBSERVER METHODS*/
+
     /* Loads user data from database */
     private void loadUserData() {
-        NetworkServiceUtil.loadUserData(RideActivity.this, USER_ID);
-
-        rideViewModel.isLiveUserDataLoaded().observe(this, aBoolean -> {
-
-            if (aBoolean) {
-                navUsername.setText(rideViewModel.getUsername());
-                navEmail.setText(rideViewModel.getEmailAddress());
-                Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
-            }
-            else
-            {
-                Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        rideViewModel.loadUserData();
+        rideViewModel.isLiveUserDataLoaded().observe(this, this::onUserDataLoaded);
+    }
+    private void onUserDataLoaded(Boolean dataLoaded) {
+        if (dataLoaded) {
+            navUsername.setText(rideViewModel.getUsername());
+            navEmail.setText(rideViewModel.getEmailAddress());
+            Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /* Function for loading User Location Data */
-    private void loadUserLocations()
-    {
-        NetworkServiceUtil.getUserLocations(RideActivity.this);
-        rideViewModel.isLiveUserLocationsLoaded().observe(this, aBoolean -> {
 
-            if (aBoolean)
-            {
-                mUserLocations = rideViewModel.getUserLocations();
-                Log.d(TAG, "loadUserLocations: Started!");
+    private void loadUserLocations() {
+        rideViewModel.loadUserLocations();
+        rideViewModel.isLiveUserLocationsLoaded().observe(this, this::onUserLocationsLoaded);
+    }
+    private void onUserLocationsLoaded(Boolean locationsLoaded) {
+        if (locationsLoaded) {
+            mUserLocations = rideViewModel.getUserLocations();
+            Log.d(TAG, "loadUserLocations: Started!");
 
-                // Testing Code
-                Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
-                for (int i = 0; i < mUserLocations.size(); ++i) {
-                    Log.d(TAG, "loadUserLocations: setting Markers");
-                    MarkerOptions option = new MarkerOptions()
-                            .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
-                    googleMap.addMarker(option);
-                }
-                Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+            // Testing Code
+            Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
+            for (int i = 0; i < mUserLocations.size(); ++i) {
+                Log.d(TAG, "loadUserLocations: setting Markers");
+                MarkerOptions option = new MarkerOptions()
+                        .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                googleMap.addMarker(option);
             }
-            else
-            {
-                Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
-            }
-        });
+            Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void findDriver() {
+        if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
+            Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
+        }
+        else { // Attempt to find a driver
+            rideViewModel.findDriver(USER_ID, pickupLatLng.latitude, pickupLatLng.longitude);
+            rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
+        }
+    }
+    private void driverFoundAction(Driver driver) {
+        this.driver = driver;
+        String findStatusMessage = "";
+
+        switch (driver.getStatus()) {
+            case "PAIRED":
+                MarkerOptions options = new MarkerOptions().position(userLocation)
+                        .title("Pickup point");
+                pickupMarker = googleMap.addMarker(options);
+                calculateDirections(driver.getLatLng(), pickupMarker, false);
+
+                findStatusMessage = "Driver found: id: " + driver.getID() + ", name: " + driver.getName();
+                break;
+            case "NOT_PAIRED":
+                findStatusMessage = "Sorry, we couldn't find you a ride. Try again";
+                break;
+            case "NOT_FOUND":
+                findStatusMessage = "Few rides available. Try again soon!";
+                break;
+            default:
+                findStatusMessage = "There was a problem in finding a ride";
+                break;
+        }
+
+        Toast.makeText(RideActivity.this, findStatusMessage, Toast.LENGTH_SHORT).show();
     }
     // End of Function: loadUserLocations()
 
@@ -489,9 +502,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                         // Calling User Location Save Function
                         try
                         {
-                            mUserLocation = currentLocation;
-                            rideViewModel.setUserCoordinates(mUserLocation.getLatitude(), mUserLocation.getLongitude());
-                            LocationUpdateUtil.saveUserLocation(mUserLocation, RideActivity.this);
+                            userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                            rideViewModel.setUserCoordinates(userLocation.latitude, userLocation.longitude);
+                            LocationUpdateUtil.saveUserLocation(userLocation, RideActivity.this);
 
                             // Starting Background Location Service
                             ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -517,20 +530,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /*
      * Calculates directions from userLocation to marker
      */
-    private void calculateDirections(LatLng mUserLocation, Marker marker, boolean sourceToDest){
+    private void calculateDirections(LatLng sourceLocation, Marker destinationMarker, boolean sourceToDest) {
         Log.d(TAG, "calculateDirections: calculating directions.");
 
         com.google.maps.model.LatLng destination = new com.google.maps.model.LatLng(
-                marker.getPosition().latitude,
-                marker.getPosition().longitude
+                destinationMarker.getPosition().latitude,
+                destinationMarker.getPosition().longitude
         );
         DirectionsApiRequest directions = new DirectionsApiRequest(geoApiContext);
 
         directions.alternatives(false);
         directions.origin(
                 new com.google.maps.model.LatLng(
-                        mUserLocation.latitude,
-                        mUserLocation.longitude
+                        sourceLocation.latitude,
+                        sourceLocation.longitude
                 )
         );
         Log.d(TAG, "calculateDirections: destination: " + destination.toString());
@@ -698,54 +711,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             return false;
         }
     }
-
-    /* ----------- NETWORKSERVICE & BROADCAST RECEIVER FOR NETWORK OPERATIONS ----*/
-
-    /* Receives response from NetworkService methods */
-    private static class RideReceiver extends BroadcastReceiver
-    {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String task = intent.getExtras().getString("TASK");
-            RideActionResponseListener rideActionResponseListener;
-            rideActionResponseListener = (RideActionResponseListener) context;
-
-            // Calling Appropriate Listener Function based on the Result received.
-            if (task.equals("loadData")) {
-                rideActionResponseListener.onDataLoaded(intent);
-            }
-            else if (task.equals("getUserLocations"))
-            {
-                rideActionResponseListener.onLocationsLoaded(intent);
-            }
-        }
-    }
-
-    RideReceiver rideReceiver;
-
-    /* Register receiver */
-    public void registerRideReceiver() {
-        rideReceiver = new RideReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("RESULT");
-
-        registerReceiver(rideReceiver, intentFilter);
-    }
-
-    @Override
-    public void onDataLoaded(Intent intent) {
-        String resultString = intent.getExtras().getString("RESULT");
-        rideViewModel.onUserDataLoaded(resultString);
-    }
-
-    @Override
-    public void onLocationsLoaded(Intent intent)
-    {
-        String result = intent.getExtras().getString("RESULT");
-        rideViewModel.onUserLocationsLoaded(result);
-    }
-
-    /*------------ END OF NETWORK SERVICE & BROADCAST RECEIVER SECTION ----------*/
 
     @Override
     public void onBackPressed() {
