@@ -14,6 +14,9 @@ from flask import flash, request, redirect, url_for
 from hashlib import sha256
 import time
 
+class Singleton:
+    cls.__instance = Singleton()
+    
 controller = Controller()
 
 # create User			
