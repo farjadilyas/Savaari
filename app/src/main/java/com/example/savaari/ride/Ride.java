@@ -6,7 +6,9 @@ import java.util.ArrayList;
 
 public class Ride {
     private LatLng pickupLocation;
+    private String pickupTitle;
     private LatLng dropoffLocation;
+    private String dropoffTitle;
     private ArrayList<LatLng> stops;
 
     Ride() {
@@ -19,7 +21,7 @@ public class Ride {
         return pickupLocation;
     }
 
-    public void setPickupLocation(LatLng pickupLocation) {
+    public void setPickupLocation(LatLng pickupLocation, String pickupTitle) {
         this.pickupLocation = pickupLocation;
     }
 
@@ -27,7 +29,7 @@ public class Ride {
         return dropoffLocation;
     }
 
-    public void setDropoffLocation(LatLng dropoffLocation) {
+    public void setDropoffLocation(LatLng dropoffLocation, String dropoffTitle) {
         this.dropoffLocation = dropoffLocation;
     }
 

@@ -473,11 +473,11 @@ def findDriver():
                 driverFound = True
                 break
 
-        if (driverFound):
+        if driverFound:
             attempts = 0
             rejectedAttempts = 0
 
-            while (attempts < ATTEMPT_LIMIT and rejectedAttempts < REJECTED_ATTEMPT_LIMIT):
+            while attempts < ATTEMPT_LIMIT and rejectedAttempts < REJECTED_ATTEMPT_LIMIT:
                 res = checkFindStatus(_user_id)
                 if (res["STATUS"] == "ERROR"):
                     print("findDriver() : checkFindStatus() : STATUS ERROR")
@@ -485,18 +485,19 @@ def findDriver():
                     print("findDriver() : checkFindStatus() : NO_CHANGE")
                 elif (res["STATUS"] == "REJECTED"):
                     print("findDriver() : checkFindStatus() : REJECTED. Attempting again...")
-                    ++rejectedAttempts
+                    rejectedAttempts = rejectedAttempts + 1
                 elif (res["STATUS"] == "FOUND"):
                     print("findDriver() : checkFindStatus() : DRIVER FOUND!")
                     driverPaired = True
                     break
                 else:
                     print("findDriver STATUS UNDEFINED ERROR")
-
-                ++attempts
+                
+                attempts = attempts + 1
+                print("attempt no: " + str(attempts))
                 time.sleep(2)
 
-            if (driverPaired):
+            if driverPaired:
                 res["STATUS"] = "PAIRED"
             else:
                 res["STATUS"] = "NOT_PAIRED"

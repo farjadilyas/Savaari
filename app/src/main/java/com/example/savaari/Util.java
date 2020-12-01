@@ -50,9 +50,9 @@ public class Util extends AppCompatActivity {
         return inFromBottom;
     }
 
-    public static Animation outToBottomAnimation() {
+    public static Animation outToBottomAnimation(int duration) {
         Animation outToBottom = new TranslateAnimation(Animation.RELATIVE_TO_PARENT, 0.0f, Animation.RELATIVE_TO_PARENT, 0.0f, Animation.RELATIVE_TO_PARENT, 0.0f, Animation.RELATIVE_TO_PARENT, 1.0f);
-        outToBottom.setDuration(250);
+        outToBottom.setDuration(duration);
         outToBottom.setInterpolator(new AccelerateInterpolator());
         return outToBottom;
     }

@@ -23,6 +23,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -105,6 +107,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* Nav Views */
     private DrawerLayout drawer;
+    LinearLayout searchBar;
+    LinearLayout rideSelectPanel;
+    ProgressBar progressBar;
     private ImageButton menuButton;
     private NavigationView navigationView;
     private View headerView;
@@ -210,7 +215,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
         }
         else { // Attempt to find a driver
-            rideViewModel.findDriver(USER_ID, ride.getPickupLocation());
+            rideViewModel.findDriver(USER_ID, ride.getDropoffLocation());
             rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
         }
     }
@@ -226,15 +231,19 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 calculateDirections(driver.getLatLng(), pickupMarker, false);
 
                 findStatusMessage = "Driver found: id: " + driver.getID() + ", name: " + driver.getName();
+                startRideAction();
                 break;
             case "NOT_PAIRED":
                 findStatusMessage = "Sorry, we couldn't find you a ride. Try again";
+                backToSearchRide();
                 break;
             case "NOT_FOUND":
                 findStatusMessage = "Few rides available. Try again soon!";
+                backToSearchRide();
                 break;
             default:
                 findStatusMessage = "There was a problem in finding a ride";
+                backToSearchRide();
                 break;
         }
 
@@ -354,28 +363,25 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void setRoute(LatLng src, LatLng dest, String title) {
         //Update ride with the updated pickup/dropoff location
         if (src != null) {
-            ride.setPickupLocation(src);
+            ride.setPickupLocation(src, title);
         }
         if (dest != null) {
-            ride.setDropoffLocation(dest);
+            ride.setDropoffLocation(dest, title);
+
+            if (destinationMarker != null) {
+                destinationMarker.remove();
+            }
+
+            MarkerOptions options = new MarkerOptions()
+                    .position(ride.getDropoffLocation())
+                    .title(title);
+            destinationMarker = googleMap.addMarker(options);
         }
+
+        Log.d("RideActivity: ", "setRoute: pickup: " + (ride.getPickupLocation() == null) + ", dropoff: " + (ride.getDropoffLocation() == null));
 
         //If ride has valid pickup & dropoff locations, draw route
         if (ride.getPickupLocation() != null && ride.getDropoffLocation() != null) {
-
-            // If destination isn't null, it has been updated
-            // Remove and replace destinationMarker
-            if (dest != null) {
-                if (destinationMarker != null) {
-                    destinationMarker.remove();
-                }
-
-                MarkerOptions options = new MarkerOptions()
-                        .position(ride.getDropoffLocation())
-                        .title(title);
-                destinationMarker = googleMap.addMarker(options);
-            }
-
             moveCamera(ride.getDropoffLocation(), DEFAULT_ZOOM, title);
             calculateDirections(ride.getPickupLocation(), destinationMarker, true);
         }
@@ -408,13 +414,16 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         EditText srcTextInput = srcFragmentView.findViewById(R.id.places_autocomplete_search_input),
         destTextInput = destFragmentView.findViewById(R.id.places_autocomplete_search_input);
         srcTextInput.setHint(R.string.add_source);
+        srcTextInput.setTextSize(18);
         destTextInput.setHint(R.string.add_dest);
+        destTextInput.setTextSize(18);
 
         // Source selected listener
         autocompleteFragmentSrc.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(@NonNull Place place) {
                 //TODO: set source
+                Log.d("HERE!!!", "SOURCE SELECTED");
                 setRoute(place.getLatLng(), null, "");
             }
 
@@ -430,6 +439,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             @Override
             public void onPlaceSelected(@NonNull Place place) {
 
+                Log.d("HERE!!!", "DEST SELECTED");
                 String title = ((place.getName() == null)?
                         ((place.getAddress() == null)?  "" : place.getAddress()) : place.getName());
 
@@ -463,6 +473,40 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 drawer.openDrawer(GravityCompat.START);
             }
         });
+
+        searchBar = findViewById(R.id.search_bar);
+        rideSelectPanel = findViewById(R.id.ride_select_panel);
+        progressBar = findViewById(R.id.progressBar);
+    }
+
+
+    private void startRideAction() {
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+    private void backToSearchRide() {
+        progressBar.setVisibility(View.INVISIBLE);
+        rideSelectPanel.setAnimation(inFromBottomAnimation(400));
+        rideSelectPanel.setVisibility(View.VISIBLE);
+    }
+
+    private void onSearchRideAction() {
+        if (ride.getPickupLocation() == null) {
+            ride.setPickupLocation(userLocation, "Current location");
+        }
+        if (ride.getDropoffLocation() == null) {
+            Toast.makeText(RideActivity.this, "Add dropoff location!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            setRoute(null, null, "");
+            rideSelectPanel.setAnimation(outToBottomAnimation(400));
+            rideSelectPanel.setVisibility(View.GONE);
+            progressBar.setVisibility(View.VISIBLE);
+
+            LocationUpdateUtil.stopLocationService(RideActivity.this);
+
+            FIND_DRIVER_ATTEMPTS = 0;
+            findDriver();
+        }
     }
 
 
@@ -486,18 +530,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         searchRideButton.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-
-            ride.setPickupLocation(userLocation);
-            ride.setDropoffLocation(null);
-
-            LocationUpdateUtil.stopLocationService(RideActivity.this);
-            searchRideButton.setText(R.string.searching_ride);
-            searchRideButton.setPadding(10,10,10,10);
-
-            FIND_DRIVER_ATTEMPTS = 0;
-            //findDriver();
+            onSearchRideAction();
         });
-
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
 
 

@@ -112,7 +112,7 @@ public class LoginActivity extends Util {
         closeBanner.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
-            forgotPasswordBanner.startAnimation(outToBottomAnimation());
+            forgotPasswordBanner.startAnimation(outToBottomAnimation(250));
             forgotPasswordBanner.setVisibility(View.INVISIBLE);
             emailSentBanner.startAnimation(outToRightAnimation(500));
             isEmailSent = false;
@@ -125,7 +125,7 @@ public class LoginActivity extends Util {
 
             if (isEmailSent)
             {
-                forgotPasswordBanner.startAnimation(outToBottomAnimation());
+                forgotPasswordBanner.startAnimation(outToBottomAnimation(250));
                 forgotPasswordBanner.setVisibility(View.INVISIBLE);
                 emailSentBanner.startAnimation(outToRightAnimation(500));
                 isEmailSent = false;
@@ -278,7 +278,7 @@ public class LoginActivity extends Util {
     @Override
     public void onBackPressed() {
         if (isEmailSent) {
-            forgotPasswordBanner.startAnimation(outToBottomAnimation());
+            forgotPasswordBanner.startAnimation(outToBottomAnimation(250));
             forgotPasswordBanner.setVisibility(View.INVISIBLE);
             emailSentBanner.startAnimation(outToRightAnimation(500));
             isEmailSent = false;
