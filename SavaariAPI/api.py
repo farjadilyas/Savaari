@@ -11,7 +11,6 @@ from Controller import Controller
 from config import mysql
 from flask import jsonify
 from flask import flash, request, redirect, url_for
-from hashlib import sha256
 import time
 
 class Singleton:
@@ -27,7 +26,7 @@ def add_rider():
     _username = _json['username']
     _password = _json['password']
 
-    return controller.add_rider(_username, _email_address, _password)
+    return controller.addRider(_username, _email_address, _password)
 
 # create Driver		
 @app.route('/add_driver', methods=['POST'])
@@ -37,7 +36,7 @@ def add_driver():
     _username = _json['username']
     _password = _json['password']
 
-    return controller.add_driver(_username, _email_address, _password)
+    return controller.addDriver(_username, _email_address, _password)
 
 # Login User
 @app.route('/login_rider', methods=['POST', 'GET'])
@@ -46,7 +45,7 @@ def login_rider():
     _username = _json['username']
     _password = _json['password']
     
-    controller.login_rider(_username, _password)
+    controller.loginRider(_username, _password)
 
 
 # Login User
@@ -56,18 +55,18 @@ def login_driver():
         _username = _json['username']
         _password = _json['password']
         
-        controller.login_driver(_username, _password)
+        controller.loginDriver(_username, _password)
 
 # Get Method for User Details
 @app.route('/rider_details')
 def rider_details():
-    return controller.rider_details()
+    return controller.riderDetails()
 
 
 # Get Method for User Details
 @app.route('/driver_details')
 def driver_details():
-    return controller.driver_details()
+    return controller.driverDetails()
 
 
 # Load User Dat
@@ -76,17 +75,17 @@ def rider_data():
     _json = request.get_json()
     _user_id = _json['USER_ID']
 
-    return controller.rider_data(_user_id)
+    return controller.riderData(_user_id)
         
 
 
 # Load User Dat
 @app.route('/driver_data', methods=['POST', 'GET'])
-def driver_data():
+def driverData():
     _json = request.get_json()
     _user_id = _json['USER_ID']
     
-    return controller.driver_data(_user_id)
+    return controller.driverData(_user_id)
 
 
 """
@@ -103,7 +102,7 @@ def update_rider():
     _email_address = _json.get("email_address")
     _user_id = _json.get("user_id");
 
-    controller.update_rider(_user_id, _username, _email_address, _password)
+    controller.updateRider(_user_id, _username, _email_address, _password)
 
 
 
@@ -113,7 +112,7 @@ def delete_rider(student_id):
     _json = request.json
     _userID = _json.get('USER_ID')
     
-    return controller.delete_rider(_userID)
+    return controller.deleteRider(_userID)
 
 
 # Delete record from the Database
@@ -122,7 +121,7 @@ def delete_driver(student_id):
     _json = request.json
     _userID = _json.get('USER_ID')
     
-    return controller.delete_driver(_userID)
+    return controller.deleteDriver(_userID)
 
 
 
@@ -164,8 +163,8 @@ def setMarkActive():
 # This function is called from the driver and checks Ride Status
 @app.route('/checkRideStatus', methods = ['POST'])
 def checkRideStatus():
-    json = request.get_json()
-	_user_id = _json['USER_ID']
+    _json = request.get_json()
+    _user_id = _json['USER_ID']
 	
     return controller.checkRideStatus(_user_id)
 
@@ -173,7 +172,7 @@ def checkRideStatus():
 # This function is called from the driver and confirms the ride request assigned
 @app.route('/confirmRideRequest', methods=['POST'])
 def confirmRideRequest():
-     _json = request.get_json()
+    _json = request.get_json()
 
     _driver_id = _json['USER_ID']
     _found_status = _json['FOUND_STATUS']

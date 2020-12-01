@@ -19,6 +19,7 @@ class Driver(User):
 
 		# Class attributes
 		self.__last_location = kwargs.get('last_location')
+		self.__activeStatus = kwargs.get('')
 
 	# End of __init__
 
