@@ -10,6 +10,7 @@ public class User
 	private String firstName;
 	private String lastName;
 	private String phoneNo;
+	Location lastLocation;
 	
 	// Main Constructors
 	public User() {
@@ -18,7 +19,7 @@ public class User
 	
 	// Parameterized Constructor
 	public User(Integer userID, String username, String password, String emailAddress, String firstName,
-			String lastName, String phoneNo) {
+			String lastName, String phoneNo, Location lastLocation) {
 		super();
 		this.userID = userID;
 		this.username = username;
@@ -27,6 +28,7 @@ public class User
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.phoneNo = phoneNo;
+		this.lastLocation = lastLocation;
 	}
 	
 	// Getters and Setters
@@ -71,5 +73,11 @@ public class User
 	}
 	public void setPhoneNo(String phoneNo) {
 		this.phoneNo = phoneNo;
+	}
+	public Location getLastLocation() {
+		return lastLocation;
+	}
+	public void setLastLocation(Location lastLocation) {
+		this.lastLocation = lastLocation;
 	}
 }

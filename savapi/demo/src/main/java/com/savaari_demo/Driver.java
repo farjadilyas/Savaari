@@ -3,7 +3,6 @@ package com.savaari_demo;
 public class Driver extends User 
 {
 	// Main Attributes
-	Location lastLocation;
 	Boolean isActive;
 	Boolean isTakingRide;
 	
@@ -19,12 +18,6 @@ public class Driver extends User
 	}
 	
 	// Getters and Setters
-	public Location getLastLocation() {
-		return lastLocation;
-	}
-	public void setLastLocation(Location lastLocation) {
-		this.lastLocation = lastLocation;
-	}
 	public Boolean getIsActive() {
 		return isActive;
 	}
