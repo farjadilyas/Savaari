@@ -78,6 +78,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener {
@@ -120,9 +121,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* State variables - references to ViewModel variables */
     private int USER_ID = -1;
     private ArrayList<UserLocation> mUserLocations;
-    Ride ride = null;
+
+    /* User Objects, driver & rider references to instances belonging to Ride Object*/
+    private Ride ride = null;
+    private Marker driverMarker;
     private LatLng userLocation;    //Updated location of device
-    private Driver driver = new Driver();   //TODO: incorporate in Rider object
+
 
     private int FIND_DRIVER_ATTEMPTS = 0;
     private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
@@ -176,8 +180,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
     private void onUserDataLoaded(Boolean dataLoaded) {
         if (dataLoaded) {
-            navUsername.setText(rideViewModel.getUsername());
-            navEmail.setText(rideViewModel.getEmailAddress());
+            navUsername.setText(rideViewModel.getRide().getRider().getUsername());
+            navEmail.setText(rideViewModel.getRide().getRider().getEmailAddress());
             Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
         }
         else
@@ -215,23 +219,23 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
         }
         else { // Attempt to find a driver
-            rideViewModel.findDriver(USER_ID, ride.getDropoffLocation());
+            rideViewModel.findDriver(USER_ID, ride.getPickupLocation(), ride.getDropoffLocation());
             rideViewModel.isDriverPaired().observe(this, this::driverFoundAction);
         }
     }
     private void driverFoundAction(Driver driver) {
-        this.driver = driver;
-        String findStatusMessage = "";
+        ride.setDriver(driver);
+        String findStatusMessage;
 
         switch (driver.getStatus()) {
             case "PAIRED":
                 MarkerOptions options = new MarkerOptions().position(ride.getPickupLocation())
                         .title("Pickup point");
                 pickupMarker = googleMap.addMarker(options);
-                calculateDirections(driver.getLatLng(), pickupMarker, false);
+                calculateDirections(driver.getCurrentLocation(), pickupMarker, false);
 
-                findStatusMessage = "Driver found: id: " + driver.getID() + ", name: " + driver.getName();
-                startRideAction();
+                findStatusMessage = "Driver found: id: " + driver.getUserID() + ", name: " + driver.getName();
+                startPickupAction();
                 break;
             case "NOT_PAIRED":
                 findStatusMessage = "Sorry, we couldn't find you a ride. Try again";
@@ -479,10 +483,35 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         progressBar = findViewById(R.id.progressBar);
     }
 
-
+    // Method called once driver arrives at pickup point & rider is in the vehicle
     private void startRideAction() {
 
+    }
+
+   /*
+   * Launches thread that fetches driver location updates
+   * Sets & updates driver location Marker
+   * provides UI elements for editing ride options
+   *
+   * Executes From: Driver & Rider matched
+   * To: Driver arrives at pickup point
+   * */
+    private void startPickupAction() {
         progressBar.setVisibility(View.INVISIBLE);
+
+        ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay((Runnable) () -> rideViewModel.fetchDriverLocation(),
+                0L, 6L, TimeUnit.SECONDS);
+
+        MarkerOptions options = new MarkerOptions()
+                .position(ride.getDriver().getCurrentLocation())
+                .title("Driver: " + ride.getDriver().getName());
+        driverMarker = googleMap.addMarker(options);
+
+        rideViewModel.isDriverLocationFetched().observe(RideActivity.this, isFetched -> {
+            if (isFetched) {
+                driverMarker.setPosition(rideViewModel.getRide().getDriver().getCurrentLocation());
+            }
+        });
     }
 
     private void backToSearchRide() {
@@ -511,7 +540,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-
     /*
      * Initializes View Objects including:
      * centerGPSButton
@@ -524,7 +552,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         initializeNavigationBar();
         loadUserData();
         loadUserLocations();
+
+        //Initialize user objects
         ride = rideViewModel.getRide();
+
         initializeAutocomplete();
 
         searchRideButton = findViewById(R.id.go_btn);
@@ -535,8 +566,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             onSearchRideAction();
         });
         centerGPSButton.setOnClickListener(v -> getDeviceLocation()); //moveCamera to user location
-
-
     }
 
     /*
@@ -824,5 +853,23 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 break;
         }
         return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        //Cancel scheduled but not started task, and avoid new ones
+        ((SavaariApplication) getApplication()).scheduledExecutor.shutdown();
+
+        //Wait for the running tasks
+        try {
+            ((SavaariApplication) getApplication()).scheduledExecutor.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        //Interrupt the threads and shutdown the scheduler
+        ((SavaariApplication) getApplication()).scheduledExecutor.shutdownNow();
     }
 }

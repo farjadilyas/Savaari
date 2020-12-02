@@ -15,8 +15,11 @@ public class Repository {
 
 
     //Find Driver
-    public void findDriver(OnDataLoadedListener callback, int currentUserID, double latitude, double longitude) {
-        executor.execute(() -> callback.onDataLoaded(NetworkUtil.findDriver(url, currentUserID, latitude, longitude)));
+    public void findDriver(OnDataLoadedListener callback, int currentUserID, double srcLatitude,
+                           double srcLongitude, double destLatitude, double destLongitude) {
+        
+        executor.execute(() -> callback.onDataLoaded(NetworkUtil.findDriver(url, currentUserID,
+                srcLatitude, srcLongitude, destLatitude, destLongitude)));
     }
 
     // Sign-Up
@@ -41,5 +44,9 @@ public class Repository {
     public void sendLastLocation(int currentUserID, double latitude, double longitude) {
         executor.execute(() ->
                 NetworkUtil.sendLastLocation(url, currentUserID, latitude, longitude));
+    }
+
+    public void getDriverLocation(OnDataLoadedListener callback, int driverID) {
+        callback.onDataLoaded(NetworkUtil.getDriverLocation(url, driverID));
     }
 }

@@ -17,7 +17,7 @@ public class NetworkUtil
 {
     // Main Attributes
     private static final NetworkUtil networkUtil = new NetworkUtil();
-    private static final String TAG = "NetworkUtil";
+    private static final String TAG = NetworkUtil.class.getSimpleName();
 
     // Private Constructor
     private NetworkUtil()
@@ -175,13 +175,16 @@ public class NetworkUtil
     /*
     *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
     */
-    public static JSONObject findDriver(String urlAddress, int currentUserID, double latitude, double longitude) {
+    public static JSONObject findDriver(String urlAddress, int currentUserID, double srcLatitude,
+                                        double srcLongitude, double destLatitude, double destLongitude) {
         String url = urlAddress + "findDriver";
         try {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
-            jsonParam.put("LATITUDE", latitude);
-            jsonParam.put("LONGITUDE", longitude);
+            jsonParam.put("SOURCE_LAT", srcLatitude);
+            jsonParam.put("SOURCE_LONG", srcLongitude);
+            jsonParam.put("DEST_LAT", destLatitude);
+            jsonParam.put("DEST_LONG", destLongitude);
 
             return NetworkUtil.sendPost(url, jsonParam, true);
         }
@@ -259,11 +262,28 @@ public class NetworkUtil
         try
         {
             jsonParam.put("Dummy", 0);
-            return sendPostArray(urlAddress, jsonParam, true);
+            return sendPostArray(url, jsonParam, true);
         }
         catch (Exception e)
         {
             e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Get paired driver Location
+    public static JSONObject getDriverLocation(String urlAddress, int driverID) {
+        Log.d(TAG, " :getDriverLocation called!");
+        String url = urlAddress + "getDriverLocation";
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("USER_ID", driverID);
+            return sendPost(url, jsonParam, true);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :getDriverLocation() - JSONException");
             return null;
         }
     }

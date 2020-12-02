@@ -28,8 +28,6 @@ public class RideViewModel extends ViewModel {
     private int USER_ID = -1;
 
     /* User account data*/
-    private String username;
-    private String emailAddress;
     private LatLng userCoordinates;
     private Ride ride;
 
@@ -39,25 +37,17 @@ public class RideViewModel extends ViewModel {
     /* Data Loaded status flags */
     MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>(false);
     MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>(false);
+    MutableLiveData<Boolean> driverLocationFetched = new MutableLiveData<>(false);
     MutableLiveData<Driver> pairedDriver = new MutableLiveData<>();
 
 
     public RideViewModel(int USER_ID, Repository repository) {
         this.USER_ID = USER_ID;
         this.repository = repository;
-        username = "";
-        emailAddress = "";
-        userCoordinates = new LatLng(0,0);
         ride = new Ride();
     }
 
     /* Get user data */
-    public String getUsername() {
-        return username;
-    }
-    public String getEmailAddress() {
-        return emailAddress;
-    }
     public LatLng getUserCoordinates() {
         return userCoordinates;
     }
@@ -74,6 +64,7 @@ public class RideViewModel extends ViewModel {
         return userDataLoaded;
     }
     public LiveData<Boolean> isLiveUserLocationsLoaded() { return userLocationsLoaded; }
+    public LiveData<Boolean> isDriverLocationFetched() { return driverLocationFetched; }
     public LiveData<Driver> isDriverPaired() { return pairedDriver; }
 
 
@@ -93,9 +84,9 @@ public class RideViewModel extends ViewModel {
                 else {
                     result = (JSONObject) object;
 
-                    username = result.getString("USER_NAME");
-                    emailAddress = result.getString("EMAIL_ADDRESS");
-                    Log.d("loadUserData(): ", username + ", " + emailAddress);
+                    ride.getRider().setUsername(result.getString("USER_NAME"));
+                    ride.getRider().setEmailAddress(result.getString("EMAIL_ADDRESS"));
+                    Log.d("loadUserData(): ", result.getString("USER_NAME"));
                     userDataLoaded.postValue(true);
                 }
             }
@@ -105,6 +96,35 @@ public class RideViewModel extends ViewModel {
                 Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + result.toString());
             }
         }, USER_ID);
+    }
+
+    public void fetchDriverLocation() {
+        Log.d(LOG_TAG, "fetchDriverLocation called!");
+        int driverID = ride.getDriver().getUserID();
+
+        if (driverID > 0) {
+            repository.getDriverLocation(object -> {
+                if (object != null) {
+                    try {
+                        JSONObject result = (JSONObject) object;
+                        if (result.getInt("STATUS_CODE") == 200) {
+
+                            Log.d(LOG_TAG, " fetchDriverLocation: Got driver location!");
+                            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("LATITUDE"),
+                                    result.getDouble("LONGITUDE")));
+                            driverLocationFetched.postValue(true);
+                        }
+                        else {
+                            Log.d(LOG_TAG, " fetchDriverLocation: Failed to fetch driver location");
+                        }
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        Log.d(LOG_TAG, "fetchDriverLocation(): Exception");
+                    }
+                }
+            }, driverID);
+        }
     }
 
 
@@ -158,7 +178,7 @@ public class RideViewModel extends ViewModel {
     * NOT_PAIRED -> If drivers available but all declined
     * NOT_FOUND -> If drivers not available
     * */
-    public void findDriver(int USER_ID, LatLng pickupLocation) {
+    public void findDriver(int USER_ID, LatLng pickupLocation, LatLng dropoffLocation) {
 
         repository.findDriver(object -> {
             JSONObject result;
@@ -173,8 +193,8 @@ public class RideViewModel extends ViewModel {
                     String status = result.getString("STATUS");
 
                     switch (status) {
-                        case "PAIRED":
-                            Log.d(LOG_TAG, "findDriver(): PAIRED");
+                        case "FOUND":
+                            Log.d(LOG_TAG, "findDriver(): FOUND");
                             driver.Initialize(result.getInt("DRIVER_ID"),
                                     result.getString("DRIVER_NAME"),
                                     new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
@@ -201,6 +221,6 @@ public class RideViewModel extends ViewModel {
                 Log.d(LOG_TAG, "findDriver(): JSONException");
             }
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude);
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude);
     }
 }

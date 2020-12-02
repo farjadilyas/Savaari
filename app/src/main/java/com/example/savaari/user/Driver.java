@@ -3,39 +3,39 @@ package com.example.savaari.user;
 import com.google.android.gms.maps.model.LatLng;
 
 public class Driver {
-    int ID;
+    int userID;
     String name;
-    LatLng latLng;
+    LatLng currentLocation;
     String status;
 
     public Driver() {
         reset();
     }
 
-    public Driver(int ID, String name, LatLng latLng, String status) {
-        Initialize(ID, name, latLng, status);
+    public Driver(int userID, String name, LatLng currentLocation, String status) {
+        Initialize(userID, name, currentLocation, status);
     }
 
-    public void Initialize(int ID, String name, LatLng latLng, String status) {
-        this.ID = ID;
+    public void Initialize(int userID, String name, LatLng currentLocation, String status) {
+        this.userID = userID;
         this.name = name;
-        this.latLng = latLng;
+        this.currentLocation = currentLocation;
         this.status = status;
     }
 
     public void reset() {
-        ID = -1;
+        userID = -1;
         name = "";
-        latLng = null;
+        currentLocation = null;
         status = "NOT_FOUND";
     }
 
-    public int getID() {
-        return ID;
+    public int getUserID() {
+        return userID;
     }
 
-    public void setID(int ID) {
-        this.ID = ID;
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 
     public String getName() {
@@ -46,12 +46,12 @@ public class Driver {
         this.name = name;
     }
 
-    public LatLng getLatLng() {
-        return latLng;
+    public LatLng getCurrentLocation() {
+        return currentLocation;
     }
 
-    public void setLatLng(LatLng latLng) {
-        this.latLng = latLng;
+    public void setCurrentLocation(LatLng currentLocation) {
+        this.currentLocation = currentLocation;
     }
 
     public String getStatus() {
