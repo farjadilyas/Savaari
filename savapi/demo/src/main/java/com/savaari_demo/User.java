@@ -15,6 +15,7 @@ public class User
 	// Main Constructors
 	public User() {
 		super();
+		userID = 0;
 	}
 	
 	// Parameterized Constructor

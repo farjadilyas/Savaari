@@ -15,7 +15,17 @@ public interface DBHandler {
     Boolean updateRider();
     Boolean deleteRider();
     Boolean deleteDriver();
+    boolean markDriverActive(Driver driver);
     JSONObject checkFindStatus(Rider rider);
+    Ride checkRideStatus(Driver driver);
+    boolean confirmRideRequest(Ride ride);
     JSONArray searchDriverForRide();
-    boolean sendRideRequest();
+    boolean sendRideRequest(Ride rideRequest);
+
+    boolean saveRiderLocation(Rider rider);
+    boolean saveDriverLocation(Driver driver);
+    Rider getRiderLocation(Rider rider);
+    Driver getDriverLocation(Driver driver);
+    JSONArray getRiderLocations();
+    JSONArray getDriverLocations();
 }

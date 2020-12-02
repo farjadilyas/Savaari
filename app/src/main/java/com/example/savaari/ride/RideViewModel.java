@@ -124,10 +124,10 @@ public class RideViewModel extends ViewModel {
                             UserLocation userLocation = new UserLocation();
 
                             // Assigning User Objects
-                            userLocation.setUserID(obj.getInt("USER_ID"));
+                            //userLocation.setUserID(obj.getInt("USER_ID"));
                             userLocation.setLatitude(obj.getDouble("LATITUDE"));
                             userLocation.setLongitude(obj.getDouble("LONGITUDE"));
-                            userLocation.setTimestamp(obj.getString("TIMESTAMP"));
+                            //userLocation.setTimestamp(obj.getString("TIMESTAMP"));
 
                             // Adding Final Object
                             mUserLocations.add(userLocation);

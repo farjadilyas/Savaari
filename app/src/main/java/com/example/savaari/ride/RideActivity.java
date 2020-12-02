@@ -206,7 +206,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
         }
         else {
-            //Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -481,8 +481,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     private void startRideAction() {
+
         progressBar.setVisibility(View.INVISIBLE);
     }
+
     private void backToSearchRide() {
         progressBar.setVisibility(View.INVISIBLE);
         rideSelectPanel.setAnimation(inFromBottomAnimation(400));
