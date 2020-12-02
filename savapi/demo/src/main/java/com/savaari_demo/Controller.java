@@ -3,6 +3,8 @@ package com.savaari_demo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Objects;
+
 public class Controller
 {
     // Main Attributes
@@ -16,8 +18,11 @@ public class Controller
 
 
     /* Networking Operation Methods */
+
+    // Adding a new Rider Account
     public JSONObject addRider(String username, String email_address, String password)
     {
+        // TODO add logic of if Rider Exists already
         Rider rider = new Rider();
         rider.setUsername(username);
         rider.setEmailAddress(email_address);
@@ -37,6 +42,7 @@ public class Controller
     // Add a new inactive Driver method
     public JSONObject addDriver(String username, String email_address, String password) {
 
+        // TODO Add logic of if Driver exists already
         Driver driver = new Driver();
         driver.setUsername(username);
         driver.setEmailAddress(email_address);
@@ -60,7 +66,8 @@ public class Controller
         rider.setPassword(password);
 
         JSONObject result = new JSONObject();
-        result.append("USER_ID", dbHandler.loginRider(rider));
+        Integer user_id = dbHandler.loginRider(rider);
+        result.append("USER_ID", Objects.requireNonNullElse(user_id, -1));
 
         return result;
     }
@@ -72,23 +79,88 @@ public class Controller
         driver.setPassword(password);
 
         JSONObject result = new JSONObject();
-        result.append("USER_ID", dbHandler.loginDriver(driver));
+        Integer user_id = dbHandler.loginDriver(driver);
+        result.append("USER_ID", Objects.requireNonNullElse(user_id, -1));
 
         return result;
     }
 
-    public JSONArray riderDetails() { return dbHandler.riderDetails(); }
-
-    public JSONArray driverDetails() { return dbHandler.driverDetails(); }
-
-    public JSONObject riderData() {
-        return null;
+    public JSONArray riderDetails()
+    {
+        JSONArray jsonArray =  dbHandler.riderDetails();
+        if (jsonArray != null)
+        {
+            return jsonArray;
+        }
+        else
+        {
+            JSONArray temp = new JSONArray();
+            JSONObject temp1 = new JSONObject();
+            temp1.append("STATUS", 404);
+            temp.put(temp1);
+            return temp;
+        }
     }
 
-    public JSONObject driverData() {
-        return null;
+    public JSONArray driverDetails()
+    {
+        JSONArray jsonArray =  dbHandler.driverDetails();
+        if (jsonArray != null)
+        {
+            return jsonArray;
+        }
+        else
+        {
+            JSONArray temp = new JSONArray();
+            JSONObject temp1 = new JSONObject();
+            temp1.append("STATUS", 404);
+            temp.put(temp1);
+            return temp;
+        }
     }
 
+    public JSONObject riderData(String userID)
+    {
+        Rider rider = new Rider();
+        rider.setUserID(Integer.valueOf(userID));
+
+        Rider result = dbHandler.riderData(rider);
+        JSONObject returnObj = new JSONObject();
+        if (result != null)
+        {
+            returnObj.append("STATUS", 200);
+            returnObj.append("USER_NAME", result.getUsername());
+            returnObj.append("EMAIL_ADDRESS", result.getEmailAddress());
+
+        }
+        else
+        {
+            returnObj.append("STATUS", 404);
+        }
+        return returnObj;
+    }
+
+    public JSONObject driverData(String userID) {
+        Driver driver = new Driver();
+        driver.setUserID(Integer.valueOf(userID));
+
+        Driver result = dbHandler.driverData(driver);
+        JSONObject returnObj = new JSONObject();
+
+        if (result != null)
+        {
+            returnObj.append("STATUS", 200);
+            returnObj.append("USER_NAME", result.getUsername());
+            returnObj.append("EMAIL_ADDRESS", result.getEmailAddress());
+        }
+        else
+        {
+            returnObj.append("STATUS", 404);
+        }
+        return returnObj;
+    }
+
+    // TODO Handle them in API
     public JSONObject updateRide() {
         return null;
     }

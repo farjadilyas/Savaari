@@ -2,12 +2,19 @@
   <library name="Maven: ch.qos.logback:logback-classic:1.2.3">
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3.jar!/" />
+      <root url="file://$USER_HOME$/Downloads" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3-javadoc.jar!/" />
     </JAVADOC>
+    <NATIVE>
+      <root url="file://$USER_HOME$/Downloads" />
+    </NATIVE>
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3-sources.jar!/" />
+      <root url="file://$USER_HOME$/Downloads" />
     </SOURCES>
+    <jarDirectory url="file://$USER_HOME$/Downloads" recursive="false" />
+    <jarDirectory url="file://$USER_HOME$/Downloads" recursive="false" type="SOURCES" />
   </library>
 </component>

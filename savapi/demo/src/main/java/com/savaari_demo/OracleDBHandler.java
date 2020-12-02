@@ -186,7 +186,7 @@ public class OracleDBHandler implements DBHandler {
     public Rider riderData(Rider rider) {
 
         try {
-            String sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM RIDER_DETAILS WHERE USER_ID = %s";
+            String sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM RIDER_DETAILS WHERE USER_ID = " + rider.getUserID();
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
             if (resultSet.next()) {
