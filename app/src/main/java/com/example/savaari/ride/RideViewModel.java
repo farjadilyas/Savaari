@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.Repository;
-import com.example.savaari.user.Driver;
 import com.example.savaari.user.UserLocation;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -28,8 +27,6 @@ public class RideViewModel extends ViewModel {
     private int USER_ID = -1;
 
     /* User account data*/
-    private String username;
-    private String emailAddress;
     private LatLng userCoordinates;
     private Ride ride;
 
@@ -37,27 +34,21 @@ public class RideViewModel extends ViewModel {
     private ArrayList<UserLocation> mUserLocations = new ArrayList<>();
 
     /* Data Loaded status flags */
-    MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>(false);
-    MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>(false);
-    MutableLiveData<Driver> pairedDriver = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> driverLocationFetched = new MutableLiveData<>(false);
+    private final MutableLiveData<Ride> rideFound = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> rideStatusChanged = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> closeToPickup = new MutableLiveData<>();
 
 
     public RideViewModel(int USER_ID, Repository repository) {
         this.USER_ID = USER_ID;
         this.repository = repository;
-        username = "";
-        emailAddress = "";
-        userCoordinates = new LatLng(0,0);
         ride = new Ride();
     }
 
     /* Get user data */
-    public String getUsername() {
-        return username;
-    }
-    public String getEmailAddress() {
-        return emailAddress;
-    }
     public LatLng getUserCoordinates() {
         return userCoordinates;
     }
@@ -74,7 +65,9 @@ public class RideViewModel extends ViewModel {
         return userDataLoaded;
     }
     public LiveData<Boolean> isLiveUserLocationsLoaded() { return userLocationsLoaded; }
-    public LiveData<Driver> isDriverPaired() { return pairedDriver; }
+    public LiveData<Boolean> isDriverLocationFetched() { return driverLocationFetched; }
+    public LiveData<Ride> isRideFound() { return rideFound; }
+    public LiveData<Boolean> isRideStatusChanged() { return rideStatusChanged; }
 
 
     /* Need a setter since coordinates are received from activity */
@@ -93,9 +86,9 @@ public class RideViewModel extends ViewModel {
                 else {
                     result = (JSONObject) object;
 
-                    username = result.getString("USER_NAME");
-                    emailAddress = result.getString("EMAIL_ADDRESS");
-                    Log.d("loadUserData(): ", username + ", " + emailAddress);
+                    ride.getRider().setUsername(result.getString("USER_NAME"));
+                    ride.getRider().setEmailAddress(result.getString("EMAIL_ADDRESS"));
+                    Log.d("loadUserData(): ", result.getString("USER_NAME"));
                     userDataLoaded.postValue(true);
                 }
             }
@@ -107,10 +100,10 @@ public class RideViewModel extends ViewModel {
         }, USER_ID);
     }
 
-
     /* loads array of UserLocation*/
     public void loadUserLocations() {
-        if (!userLocationsLoaded.getValue()) {
+        //if (!userLocationsLoaded.getValue())
+        {
 
             repository.getUserLocations(object -> {
                 try {
@@ -124,10 +117,10 @@ public class RideViewModel extends ViewModel {
                             UserLocation userLocation = new UserLocation();
 
                             // Assigning User Objects
-                            userLocation.setUserID(obj.getInt("USER_ID"));
+                            //userLocation.setUserID(obj.getInt("USER_ID"));
                             userLocation.setLatitude(obj.getDouble("LATITUDE"));
                             userLocation.setLongitude(obj.getDouble("LONGITUDE"));
-                            userLocation.setTimestamp(obj.getString("TIMESTAMP"));
+                            //userLocation.setTimestamp(obj.getString("TIMESTAMP"));
 
                             // Adding Final Object
                             mUserLocations.add(userLocation);
@@ -147,9 +140,10 @@ public class RideViewModel extends ViewModel {
                 }
             });
         }
+        /*
         else {
             userLocationsLoaded.postValue(true);
-        }
+        }*/
     }
 
     /*
@@ -158,49 +152,173 @@ public class RideViewModel extends ViewModel {
     * NOT_PAIRED -> If drivers available but all declined
     * NOT_FOUND -> If drivers not available
     * */
-    public void findDriver(int USER_ID, LatLng pickupLocation) {
+    public void findDriver(int USER_ID, LatLng pickupLocation, LatLng dropoffLocation) {
 
         repository.findDriver(object -> {
             JSONObject result;
-            Driver driver = new Driver();
 
             try {
                 if (object == null) {
-                    driver.setStatus("STATUS_ERROR");
+                    ride.setMatchStatus(Ride.STATUS_ERROR);
                 }
                 else {
                     result = (JSONObject) object;
                     String status = result.getString("STATUS");
 
                     switch (status) {
-                        case "PAIRED":
-                            Log.d(LOG_TAG, "findDriver(): PAIRED");
-                            driver.Initialize(result.getInt("DRIVER_ID"),
-                                    result.getString("DRIVER_NAME"),
-                                    new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
-                                            Double.parseDouble(result.getString("DRIVER_LONG"))), "PAIRED");
+                        case "FOUND":
+                            Log.d(LOG_TAG, "findDriver(): FOUND");
+                            setRide(result);
+                            ride.setMatchStatus(Ride.PAIRED);
                             break;
                         case "NOT_PAIRED":
                             Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
-                            driver.setStatus("NOT_PAIRED");
+                            ride.setMatchStatus(Ride.NOT_PAIRED);
                             break;
                         case "NOT_FOUND":
                             Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
-                            driver.setStatus("NOT_FOUND");
+                            ride.setMatchStatus(Ride.NOT_FOUND);
                             break;
                         default:
                             Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
-                            driver.setStatus("STATUS_ERROR");
+                            ride.setMatchStatus(Ride.STATUS_ERROR);
                             break;
                     }
                 }
-                pairedDriver.postValue(driver);
+                rideFound.postValue(ride);
             }
             catch (JSONException e) {
                 e.printStackTrace();
                 Log.d(LOG_TAG, "findDriver(): JSONException");
             }
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude);
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude);
+    }
+
+    public void getRideStatus() {
+        Log.d(LOG_TAG, "getRideStatus called!");
+
+        if (ride.getRideID() > 0) {
+            repository.getRideStatus(object -> {
+                if (object == null) {
+                    Log.d(LOG_TAG, "getRideStatus: null recieved");
+                }
+                else {
+                    JSONObject result = (JSONObject) object;
+
+                    try {
+                        if (result.getInt("STATUS_CODE") == 200 && ride.getRideStatus() != result.getInt("RIDE_STATUS")) {
+                            ride.setRideStatus(result.getInt("RIDE_STATUS"));
+                            rideStatusChanged.postValue(true);
+                        }
+                    }
+                    catch (JSONException e) {
+                        Log.d(LOG_TAG, ":getRideStatus: JSONException");
+                    }
+                }
+            }, ride.getRideID());
+
+        }
+    }
+
+    public void fetchDriverLocation() {
+        Log.d(LOG_TAG, "fetchDriverLocation called!");
+        int driverID = ride.getDriver().getUserID();
+
+        if (driverID > 0) {
+            repository.getDriverLocation(object -> {
+                if (object != null) {
+                    try {
+                        JSONObject result = (JSONObject) object;
+                        if (result.getInt("STATUS_CODE") == 200) {
+
+                            Log.d(LOG_TAG, " fetchDriverLocation: Got driver location!");
+                            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("LATITUDE"),
+                                    result.getDouble("LONGITUDE")));
+                            driverLocationFetched.postValue(true);
+
+                            if (ride.closeToPickup()) {
+                                closeToPickup.postValue(true);
+                            }
+                        }
+                        else {
+                            Log.d(LOG_TAG, " fetchDriverLocation: Failed to fetch driver location");
+                        }
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        Log.d(LOG_TAG, "fetchDriverLocation(): Exception");
+                    }
+                }
+            }, driverID);
+        }
+    }
+
+    public void loadRide() {
+        Log.d(LOG_TAG, ":loadRide() called!");
+
+        if (USER_ID > 0) {
+            repository.getRide(object -> {
+                try {
+                    if (object == null) {
+                        Log.d(LOG_TAG, " getRide: Failed to fetch ride");
+                    }
+                    else {
+                        JSONObject result = (JSONObject) object;
+
+                        if (result.getInt("STATUS_CODE") == 200) {
+
+                            if (result.getBoolean("IS_TAKING_RIDE")) {
+                                Log.d(LOG_TAG, " getRide: Is taking a ride!");
+                                ride.setMatchStatus(Ride.ALREADY_PAIRED);
+                                setRide(result);
+                            }
+                            else {
+                                Log.d(LOG_TAG, "getRide: Is NOT taking a ride");
+                            }
+                        }
+                        else {
+                            Log.d(LOG_TAG, "getRide: STATUS ERROR: " + result.getInt("STATUS_CODE"));
+
+                        }
+
+                        // If taking ride, driver status PAIRED, else DEFAULT
+                        rideFound.postValue(ride);
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Log.d(LOG_TAG, "loadRide(): Exception");
+                }
+            }, USER_ID);
+        }
+    }
+
+    private void setRide(JSONObject result) {
+        try {
+            ride.setRideID(result.getInt("RIDE_ID"));
+
+            ride.getDriver().setUserID(result.getInt("DRIVER_ID"));
+            ride.getDriver().setUsername(result.getString("DRIVER_NAME"));
+            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("DRIVER_LAT"),
+                    result.getDouble("DRIVER_LONG")));
+
+            ride.getPayment().setPaymentID(result.getInt("PAYMENT_ID"));
+
+            ride.setPickupLocation(new LatLng(result.getDouble("SOURCE_LAT"),
+                    result.getDouble("SOURCE_LONG")), "");
+            ride.setDropoffLocation(new LatLng(result.getDouble("DEST_LAT"),
+                    result.getDouble("DEST_LONG")), "");
+
+            ride.setStartTime(result.getLong("START_TIME"));
+
+            ride.setRideType(result.getInt("RIDE_TYPE"));
+            ride.setEstimatedFare(result.getInt("ESTIMATED_FARE"));
+            ride.setRideStatus(result.getInt("RIDE_STATUS"));
+        }
+        catch (JSONException e) {
+            Log.d(TAG, "setRide(): JSONException");
+            e.printStackTrace();
+        }
     }
 }

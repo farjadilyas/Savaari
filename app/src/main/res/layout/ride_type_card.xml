@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ride_type_config"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:gravity="start|center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp">
+
+    <ImageView
+        android:id="@+id/ride_type_img"
+        android:layout_width="70dp"
+        android:layout_height="45dp"
+        android:gravity="center_vertical|start"
+        android:scaleX="0.7"
+        android:scaleY="0.7"
+        android:src="@drawable/ic_rtype_bike"
+        app:tint="?attr/textColor" />
+
+    <TextView
+        android:id="@+id/ride_type_name"
+        android:layout_width="160dp"
+        android:layout_height="50dp"
+        android:gravity="center_vertical|start"
+        android:paddingStart="16dp"
+        android:text="Bike"
+        android:textAlignment="viewStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+        android:textColor="?attr/textColor"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/ride_type_price"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="0dp"
+        android:gravity="center_vertical|end"
+        android:paddingEnd="10dp"
+        android:text="PKR 81"
+        android:textAlignment="viewEnd"
+        android:textColor="?attr/textColor"
+        android:textSize="16sp" />
+</LinearLayout>

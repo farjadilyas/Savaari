@@ -6,7 +6,7 @@ import com.example.savaari.services.network.OnDataLoadedListener;
 import java.util.concurrent.Executor;
 
 public class Repository {
-    private static final String url = "https://12c3377db210.ngrok.io/";
+    private static final String url = "https://cabf1349dc0e.ngrok.io/";
     private Executor executor;
 
     Repository(Executor executor) {
@@ -15,8 +15,11 @@ public class Repository {
 
 
     //Find Driver
-    public void findDriver(OnDataLoadedListener callback, int currentUserID, double latitude, double longitude) {
-        executor.execute(() -> callback.onDataLoaded(NetworkUtil.findDriver(url, currentUserID, latitude, longitude)));
+    public void findDriver(OnDataLoadedListener callback, int currentUserID, double srcLatitude,
+                           double srcLongitude, double destLatitude, double destLongitude) {
+        
+        executor.execute(() -> callback.onDataLoaded(NetworkUtil.findDriver(url, currentUserID,
+                srcLatitude, srcLongitude, destLatitude, destLongitude)));
     }
 
     // Sign-Up
@@ -41,5 +44,17 @@ public class Repository {
     public void sendLastLocation(int currentUserID, double latitude, double longitude) {
         executor.execute(() ->
                 NetworkUtil.sendLastLocation(url, currentUserID, latitude, longitude));
+    }
+
+    public void getDriverLocation(OnDataLoadedListener callback, int driverID) {
+        callback.onDataLoaded(NetworkUtil.getDriverLocation(url, driverID));
+    }
+
+    public void getRide(OnDataLoadedListener callback, int riderID) {
+        executor.execute(() -> callback.onDataLoaded(NetworkUtil.getRide(url, riderID)));
+    }
+
+    public void getRideStatus(OnDataLoadedListener callback, int rideID) {
+        callback.onDataLoaded(NetworkUtil.getRideStatus(url, rideID));
     }
 }

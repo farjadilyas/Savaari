@@ -17,7 +17,7 @@ public class NetworkUtil
 {
     // Main Attributes
     private static final NetworkUtil networkUtil = new NetworkUtil();
-    private static final String TAG = "NetworkUtil";
+    private static final String TAG = NetworkUtil.class.getSimpleName();
 
     // Private Constructor
     private NetworkUtil()
@@ -139,49 +139,19 @@ public class NetworkUtil
         }
     }
 
-    // Send Last Location
-    public static int sendLastLocation(String urlAddress, int currentUserID, double latitude, double longitude)
-    {
-        String url = urlAddress + "saveRiderLocation";
-        try
-        {
-            // TimeStamp
-            long tsLong = System.currentTimeMillis() / 1000;
-            String currentTimeStamp = Long.toString(tsLong);
-
-            // JSON
-            JSONObject jsonParam = new JSONObject();
-            jsonParam.put("USER_ID", currentUserID);
-            jsonParam.put("LATITUDE", latitude);
-            jsonParam.put("LONGITUDE", longitude);
-            jsonParam.put("TIMESTAMP", currentTimeStamp);
-
-            // Logging
-            Log.d(TAG, "sendLastLocation: User_ID: " + currentUserID);
-            Log.d(TAG, "sendLastLocation: Latitude: " + latitude);
-            Log.d(TAG, "sendLastLocation: Longitude: " + longitude);
-            Log.d(TAG, "sendLastLocation: TimeStamp: " + currentTimeStamp);
-
-            // Sending JSON
-            return NetworkUtil.sendPost(url, jsonParam, false).getBoolean("result") ? 1 : 0;
-        }
-        catch (JSONException e)
-        {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
     /*
     *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
     */
-    public static JSONObject findDriver(String urlAddress, int currentUserID, double latitude, double longitude) {
+    public static JSONObject findDriver(String urlAddress, int currentUserID, double srcLatitude,
+                                        double srcLongitude, double destLatitude, double destLongitude) {
         String url = urlAddress + "findDriver";
         try {
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("USER_ID", currentUserID);
-            jsonParam.put("LATITUDE", latitude);
-            jsonParam.put("LONGITUDE", longitude);
+            jsonParam.put("SOURCE_LAT", srcLatitude);
+            jsonParam.put("SOURCE_LONG", srcLongitude);
+            jsonParam.put("DEST_LAT", destLatitude);
+            jsonParam.put("DEST_LONG", destLongitude);
 
             return NetworkUtil.sendPost(url, jsonParam, true);
         }
@@ -251,6 +221,39 @@ public class NetworkUtil
         }
     }
 
+    // Send Last Location
+    public static int sendLastLocation(String urlAddress, int currentUserID, double latitude, double longitude)
+    {
+        String url = urlAddress + "saveRiderLocation";
+        try
+        {
+            // TimeStamp
+            long tsLong = System.currentTimeMillis() / 1000;
+            String currentTimeStamp = Long.toString(tsLong);
+
+            // JSON
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("USER_ID", currentUserID);
+            jsonParam.put("LATITUDE", latitude);
+            jsonParam.put("LONGITUDE", longitude);
+            jsonParam.put("TIMESTAMP", currentTimeStamp);
+
+            // Logging
+            Log.d(TAG, "sendLastLocation: User_ID: " + currentUserID);
+            Log.d(TAG, "sendLastLocation: Latitude: " + latitude);
+            Log.d(TAG, "sendLastLocation: Longitude: " + longitude);
+            Log.d(TAG, "sendLastLocation: TimeStamp: " + currentTimeStamp);
+
+            // Sending JSON
+            return NetworkUtil.sendPost(url, jsonParam, false).getBoolean("result") ? 1 : 0;
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
     // Get User Locations
     public static JSONArray getUserLocations(String urlAddress)
     {
@@ -259,7 +262,7 @@ public class NetworkUtil
         try
         {
             jsonParam.put("Dummy", 0);
-            return sendPostArray(urlAddress, jsonParam, true);
+            return sendPostArray(url, jsonParam, true);
         }
         catch (Exception e)
         {
@@ -267,4 +270,60 @@ public class NetworkUtil
             return null;
         }
     }
+
+
+    /* In-ride methods */
+
+    public static JSONObject getRide(String urlAddress, int riderID) {
+        Log.d(TAG, ":getRide() called!");
+        String url = urlAddress + "getRideForRider";
+
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("USER_ID", riderID);
+            return sendPost(url, jsonParam, true);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :getRide() - JSONException");
+            return null;
+        }
+    }
+
+    public static JSONObject getRideStatus(String urlAddress, int rideID) {
+        Log.d(TAG, " :getRideStatus called!");
+        String url = urlAddress + "getRideStatus";
+
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("RIDE_ID", rideID);
+            return sendPost(url, jsonParam, true);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :getRideStatus() - JSONException");
+            return null;
+        }
+    }
+
+    // Get paired driver Location
+    public static JSONObject getDriverLocation(String urlAddress, int driverID) {
+        Log.d(TAG, " :getDriverLocation called!");
+        String url = urlAddress + "getDriverLocation";
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("USER_ID", driverID);
+            return sendPost(url, jsonParam, true);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :getDriverLocation() - JSONException");
+            return null;
+        }
+    }
+
+    /* End of section */
 }
