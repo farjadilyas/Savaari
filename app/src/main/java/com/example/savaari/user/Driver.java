@@ -12,22 +12,21 @@ public class Driver {
         reset();
     }
 
-    public Driver(int userID, String name, LatLng currentLocation, String status) {
-        Initialize(userID, name, currentLocation, status);
+    public Driver(int userID, String name, LatLng currentLocation) {
+        Initialize(userID, name, currentLocation);
     }
 
-    public void Initialize(int userID, String name, LatLng currentLocation, String status) {
+    public void Initialize(int userID, String name, LatLng currentLocation) {
         this.userID = userID;
         this.name = name;
         this.currentLocation = currentLocation;
-        this.status = status;
     }
 
     public void reset() {
         userID = -1;
         name = "";
         currentLocation = null;
-        status = "NOT_FOUND";
+        status = "DEFAULT";
     }
 
     public int getUserID() {

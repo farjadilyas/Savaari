@@ -1,4 +1,4 @@
-package com.savaari_demo.entity;
+package com.example.savaari.ride.entity;
 
 public class Payment {
 

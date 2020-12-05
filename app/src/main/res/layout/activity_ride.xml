@@ -91,12 +91,12 @@
             android:id="@+id/user_location"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_alignEnd="@+id/search_bar"
             android:layout_centerVertical="true"
-            android:layout_marginEnd="0dp"
+            android:layout_marginEnd="20dp"
             android:background="@drawable/menu_btn"
             android:backgroundTint="?attr/backgroundColor"
             android:baselineAlignBottom="false"
+            android:layout_alignParentEnd="true"
             android:elevation="10dp"
             android:maxWidth="50dp"
             android:maxHeight="50dp"
@@ -105,6 +105,109 @@
             android:src="@drawable/ic_gps"
             android:tint="?attr/textColor" />
 
+        <LinearLayout
+            android:id="@+id/ride_details_panel"
+            android:layout_width="match_parent"
+            android:layout_height="296dp"
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_box_2"
+            android:visibility="visible">
+
+            <View android:id="@+id/sticky_top"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="0dp"
+                android:layout_width="60dp"
+                android:layout_height="8dp"
+                android:layout_gravity="center"
+                android:background="@drawable/rounded_box"
+                android:backgroundTint= "?attr/lightTextColor" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="Arrives in 6 minutes"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textColor="?attr/textColor"
+                android:textSize="22dp"
+                android:textStyle="bold" />
+
+            <View android:id="@+id/tile_divider"
+                android:layout_width="match_parent"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
+                android:layout_height="1dp"
+                android:background="?android:attr/dividerHorizontal"
+                android:backgroundTint="?attr/textColor" />
+
+            <LinearLayout
+                android:layout_width="360dp"
+                android:layout_height="140dp"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="85dp"
+                    android:layout_height="85dp"
+                    app:cardCornerRadius="70dp"
+                    app:cardBackgroundColor="@color/color_transparent"
+                    android:layout_gravity="center">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        app:cardCornerRadius="40dp"
+                        android:layout_gravity="center">
+
+                        <ImageView
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:src="@drawable/ic_account_box"
+                            android:scaleType="centerCrop"/>
+
+                    </androidx.cardview.widget.CardView>
+
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:paddingTop="25dp"
+                        android:text="Nabeel Danish"
+                        android:paddingStart="5dp"
+                        android:textAlignment="viewStart"
+                        android:textColor="?attr/textColor"
+                        android:textSize="22sp" />
+
+                    <RatingBar
+                        android:id="@+id/rating"
+                        style="@android:attr/ratingBarStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleX=".5"
+                        android:scaleY=".5"
+                        android:transformPivotX="0dp"
+                        android:transformPivotY="0dp"
+                        android:isIndicator="true"
+                        android:numStars="5"
+                        android:progressTint="@color/success_green"
+                        android:indeterminateTint="@color/success_green"
+                        android:max="5" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <!-- RIDE SELECT AND 'GO' SECTION
         TODO: CONVERT TO SEPARATE LAYOUT-->
@@ -113,7 +216,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/ride_config"

@@ -5,7 +5,8 @@ public class Driver extends User
 	// Main Attributes
 	Boolean isActive;
 	Boolean isTakingRide;
-	
+	int rideRequestStatus;
+
 	// Main Constructors
 	public Driver() {
 		super();
@@ -29,5 +30,13 @@ public class Driver extends User
 	}
 	public void setIsTakingRide(Boolean isTakingRide) {
 		this.isTakingRide = isTakingRide;
+	}
+
+	public int getRideRequestStatus() {
+		return rideRequestStatus;
+	}
+
+	public void setRideRequestStatus(int rideRequestStatus) {
+		this.rideRequestStatus = rideRequestStatus;
 	}
 }

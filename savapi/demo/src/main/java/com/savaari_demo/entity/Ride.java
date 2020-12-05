@@ -1,17 +1,42 @@
 package com.savaari_demo.entity;
 
+import java.sql.Timestamp;
+
 public class Ride {
+    int rideID;
     private Rider rider;
     private Driver driver;
     private Vehicle vehicle;
     private Payment payment;
     private Location pickupLocation;
     private Location dropoffLocation;
-    private String rideType;        //TODO: Decide type later (ride type class?)
+    private Timestamp startTime;
+    private Timestamp endTime;
+    private int rideType;        //TODO: Decide type later (ride type class?)
     private double estimatedFare;
     private int rideStatus;         //TODO: Ensure it's in correct range (ride status class?)
     private int findStatus;
     private Object paymentMethod;   //TODO: Ensure it's one of a few types
+
+    public Timestamp getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Timestamp startTime) {
+        this.startTime = startTime;
+    }
+
+    public Timestamp getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Timestamp endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setRideID(int rideID) { this.rideID = rideID; }
+
+    public int getRideID() { return rideID; }
 
     public Rider getRider() {
         return rider;
@@ -61,11 +86,11 @@ public class Ride {
         this.dropoffLocation = dropoffLocation;
     }
 
-    public String getRideType() {
+    public int getRideType() {
         return rideType;
     }
 
-    public void setRideType(String rideType) {
+    public void setRideType(int rideType) {
         this.rideType = rideType;
     }
 

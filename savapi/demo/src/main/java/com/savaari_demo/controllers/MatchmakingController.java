@@ -6,6 +6,7 @@ import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Location;
 import com.savaari_demo.entity.Ride;
 import com.savaari_demo.entity.Rider;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -119,7 +120,7 @@ public class MatchmakingController {
 
         if (dbHandler.markDriverActive(driver))
         {
-            JSONObject json = checkRideStatus(driver);
+            JSONObject json = checkRideRequestStatus(driver);
             if (json == null) {
                 json = new JSONObject();
                 json.put("STATUS", 404);
@@ -134,12 +135,12 @@ public class MatchmakingController {
         }
     }
 
-    private JSONObject checkRideStatus(Driver driver)
+    private JSONObject checkRideRequestStatus(Driver driver)
     {
         // TODO: Implement policy of checking rides
         while(true)
         {
-            Ride ride = dbHandler.checkRideStatus(driver);
+            Ride ride = dbHandler.checkRideRequestStatus(driver);
             if (ride != null)
             {
                 JSONObject jsonObject = new JSONObject();
@@ -192,6 +193,34 @@ public class MatchmakingController {
         return jsonObject;
     }
 
-    //TODO: Check if already taking ride, and return ride object
-    //TODO: Check ride status continuously (cancelled? arrived at pickup? arrived at dest?)
+
+    public JSONObject getRide(String riderID) {
+        Rider rider = new Rider();
+        rider.setUserID(Integer.valueOf(riderID));
+
+        Ride ride = dbHandler.checkRideRequestStatus(rider);
+
+        JSONObject result = new JSONObject();
+
+        if (ride == null) {
+            result.put("STATUS_CODE", 404);
+            result.put("IS_TAKING_RIDE", false);
+        }
+        else if (ride.getRider().getFindStatus() != 2) {
+            result.put("STATUS_CODE", 200);
+            result.put("IS_TAKING_RIDE", false);
+        }
+        else {
+            result = dbHandler.getRide(ride);
+            result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
+        }
+
+        return result;
+    }
+
+    public JSONObject getRideStatus(String rideID) {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(rideID));
+        return dbHandler.getRideStatus(ride);
+    }
 }

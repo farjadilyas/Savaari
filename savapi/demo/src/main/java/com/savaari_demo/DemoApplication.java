@@ -1,8 +1,9 @@
 
 package com.savaari_demo;
 import com.savaari_demo.controllers.CRUDController;
-import com.savaari_demo.controllers.MatchmakingController;
 import com.savaari_demo.controllers.LocationController;
+import com.savaari_demo.controllers.MatchmakingController;
+
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -146,6 +147,25 @@ public class DemoApplication
 
 		return matchmakingController.confirmRideRequest(userID, found_status, riderID).toString();
 	}
+	/* End of section */
+
+
+	/* Ride system calls */
+
+	@RequestMapping(value = "/getRideForRider", method = RequestMethod.POST)
+	public String getRideForRider(@RequestBody Map<String, String> allParams)
+	{
+		String riderID = allParams.get("USER_ID");
+		return matchmakingController.getRide(riderID).toString();
+	}
+
+	@RequestMapping(value = "/getRideStatus", method = RequestMethod.POST)
+	public String getRideStatus(@RequestBody Map<String, String> allParams)
+	{
+		String rideID = allParams.get("RIDE_ID");
+		return matchmakingController.getRideStatus(rideID).toString();
+	}
+
 	/* End of section */
 
 
