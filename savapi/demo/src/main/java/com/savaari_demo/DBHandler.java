@@ -18,9 +18,13 @@ public interface DBHandler {
     Boolean deleteRider();
     Boolean deleteDriver();
 
+    /* Driver Side Matchmaking Database Calls*/
     boolean markDriverActive(Driver driver);
     Ride checkRideRequestStatus(Driver driver);
     boolean confirmRideRequest(Ride ride);
+    boolean markDriverArrival(Ride ride);
+    boolean startRideDriver(Ride ride);
+    boolean endRideDriver(Ride ride);
 
     /* Rider-side matchmaking DB calls*/
     JSONArray searchDriverForRide();

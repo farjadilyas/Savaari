@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.Repository;
-import com.example.savaari.user.Driver;
 import com.example.savaari.user.UserLocation;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -40,6 +39,7 @@ public class RideViewModel extends ViewModel {
     private final MutableLiveData<Boolean> driverLocationFetched = new MutableLiveData<>(false);
     private final MutableLiveData<Ride> rideFound = new MutableLiveData<>();
     private final MutableLiveData<Boolean> rideStatusChanged = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> closeToPickup = new MutableLiveData<>();
 
 
     public RideViewModel(int USER_ID, Repository repository) {
@@ -156,7 +156,6 @@ public class RideViewModel extends ViewModel {
 
         repository.findDriver(object -> {
             JSONObject result;
-            Driver driver = new Driver();
 
             try {
                 if (object == null) {
@@ -169,10 +168,7 @@ public class RideViewModel extends ViewModel {
                     switch (status) {
                         case "FOUND":
                             Log.d(LOG_TAG, "findDriver(): FOUND");
-                            driver.Initialize(result.getInt("DRIVER_ID"),
-                                    result.getString("DRIVER_NAME"),
-                                    new LatLng(Double.parseDouble(result.getString("DRIVER_LAT")),
-                                            Double.parseDouble(result.getString("DRIVER_LONG"))));
+                            setRide(result);
                             ride.setMatchStatus(Ride.PAIRED);
                             break;
                         case "NOT_PAIRED":
@@ -189,7 +185,6 @@ public class RideViewModel extends ViewModel {
                             break;
                     }
                 }
-                ride.setDriver(driver);
                 rideFound.postValue(ride);
             }
             catch (JSONException e) {
@@ -241,6 +236,10 @@ public class RideViewModel extends ViewModel {
                             ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("LATITUDE"),
                                     result.getDouble("LONGITUDE")));
                             driverLocationFetched.postValue(true);
+
+                            if (ride.closeToPickup()) {
+                                closeToPickup.postValue(true);
+                            }
                         }
                         else {
                             Log.d(LOG_TAG, " fetchDriverLocation: Failed to fetch driver location");
@@ -271,27 +270,8 @@ public class RideViewModel extends ViewModel {
 
                             if (result.getBoolean("IS_TAKING_RIDE")) {
                                 Log.d(LOG_TAG, " getRide: Is taking a ride!");
-
                                 ride.setMatchStatus(Ride.ALREADY_PAIRED);
-                                ride.setRideID(result.getInt("RIDE_ID"));
-
-                                ride.getDriver().setUserID(result.getInt("DRIVER_ID"));
-                                ride.getDriver().setName(result.getString("DRIVER_NAME"));
-                                ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("DRIVER_LAT"),
-                                        result.getDouble("DRIVER_LONG")));
-
-                                ride.getPayment().setPaymentID(result.getInt("PAYMENT_ID"));
-
-                                ride.setPickupLocation(new LatLng(result.getDouble("SOURCE_LAT"),
-                                        result.getDouble("SOURCE_LONG")), "");
-                                ride.setDropoffLocation(new LatLng(result.getDouble("DEST_LAT"),
-                                        result.getDouble("DEST_LONG")), "");
-
-                                ride.setStartTime(result.getLong("START_TIME"));
-
-                                ride.setRideType(result.getInt("RIDE_TYPE"));
-                                ride.setEstimatedFare(result.getInt("ESTIMATED_FARE"));
-                                ride.setRideStatus(result.getInt("RIDE_STATUS"));
+                                setRide(result);
                             }
                             else {
                                 Log.d(LOG_TAG, "getRide: Is NOT taking a ride");
@@ -311,6 +291,34 @@ public class RideViewModel extends ViewModel {
                     Log.d(LOG_TAG, "loadRide(): Exception");
                 }
             }, USER_ID);
+        }
+    }
+
+    private void setRide(JSONObject result) {
+        try {
+            ride.setRideID(result.getInt("RIDE_ID"));
+
+            ride.getDriver().setUserID(result.getInt("DRIVER_ID"));
+            ride.getDriver().setUsername(result.getString("DRIVER_NAME"));
+            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("DRIVER_LAT"),
+                    result.getDouble("DRIVER_LONG")));
+
+            ride.getPayment().setPaymentID(result.getInt("PAYMENT_ID"));
+
+            ride.setPickupLocation(new LatLng(result.getDouble("SOURCE_LAT"),
+                    result.getDouble("SOURCE_LONG")), "");
+            ride.setDropoffLocation(new LatLng(result.getDouble("DEST_LAT"),
+                    result.getDouble("DEST_LONG")), "");
+
+            ride.setStartTime(result.getLong("START_TIME"));
+
+            ride.setRideType(result.getInt("RIDE_TYPE"));
+            ride.setEstimatedFare(result.getInt("ESTIMATED_FARE"));
+            ride.setRideStatus(result.getInt("RIDE_STATUS"));
+        }
+        catch (JSONException e) {
+            Log.d(TAG, "setRide(): JSONException");
+            e.printStackTrace();
         }
     }
 }

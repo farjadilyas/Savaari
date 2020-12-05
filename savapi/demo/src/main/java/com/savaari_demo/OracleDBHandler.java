@@ -1,12 +1,16 @@
 package com.savaari_demo;
 
-import com.savaari_demo.entity.*;
-
 import com.savaari_demo.entity.Driver;
+import com.savaari_demo.entity.Location;
+import com.savaari_demo.entity.Ride;
+import com.savaari_demo.entity.Rider;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class OracleDBHandler implements DBHandler {
 
@@ -402,7 +406,7 @@ public class OracleDBHandler implements DBHandler {
             PreparedStatement sqlQuery = connect.prepareStatement(
                     "SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG"
                     + " FROM DRIVER_DETAILS D LEFT JOIN RIDER_DETAILS R ON D.RIDER_ID = R.USER_ID"
-                    + " WHERE D.RIDE_STATUS = 1 AND D.USER_ID = ?");
+                    + " WHERE D.USER_ID = ?");
 
             sqlQuery.setInt(1, driver.getUserID());
 
@@ -411,9 +415,11 @@ public class OracleDBHandler implements DBHandler {
 
             if (resultSet.next()) {
                 if (resultSet.getInt(1) == 0) {
+                    System.out.println("db:checkRideReqStat: op1");
                     return null;
                 }
-                if (resultSet.getInt(1) == 1) {
+                if (resultSet.getInt(1) > 0) {
+                    System.out.println("db:checkRideReqStat: op2");
                     Ride ride = new Ride();
 
                     Rider rider = new Rider();
@@ -436,6 +442,7 @@ public class OracleDBHandler implements DBHandler {
                 }
             }
             else {
+                System.out.println("db:checkRideReqStat: op3");
                 return null;
             }
         }
@@ -477,6 +484,51 @@ public class OracleDBHandler implements DBHandler {
         }
     }
 
+    @Override
+    public boolean markDriverArrival(Ride ride) {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 12 WHERE RIDE_ID = ?");
+
+            sqlQuery.setInt(1, ride.getRideID());
+            int numRowsUpdates = sqlQuery.executeUpdate();
+            return numRowsUpdates > 0;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean startRideDriver(Ride ride) {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 14 WHERE RIDE_ID = ?");
+
+            sqlQuery.setInt(1, ride.getRideID());
+            int numRowsUpdated = sqlQuery.executeUpdate();
+            return numRowsUpdated > 0;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean endRideDriver(Ride ride) {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15 WHERE RIDE_ID = ?");
+
+            sqlQuery.setInt(1, ride.getRideID());
+            int numRowsUpdated = sqlQuery.executeUpdate();
+            return numRowsUpdated > 0;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /* End of section*/
 
 
@@ -487,7 +539,7 @@ public class OracleDBHandler implements DBHandler {
             PreparedStatement sqlQuery = connect.prepareStatement("INSERT INTO RIDES " +
                     "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, NULL AS PAYMENT_ID, " +
                     "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, " +
-                    "1 AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, 1 AS STATUS " +
+                    "1 AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, 11 AS STATUS " +
                     "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
                     "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getDriver().getUserID() +
                     " AND D.RIDER_ID = " + ride.getRider().getUserID());
@@ -502,37 +554,6 @@ public class OracleDBHandler implements DBHandler {
             return false;
         }
     }
-
-
-    /* In-Ride methods
-    public Ride getRideRequestStatus(Driver driver) {
-        String sqlQuery = "SELECT RIDE_STATUS, RIDER_ID FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
-
-        try {
-            ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
-            Ride ride;
-
-            if (resultSet.next()) {
-
-                ride = new Ride();
-                ride.setDriver(driver);
-                ride.setRider(new Rider());
-
-                ride.getDriver().setRideRequestStatus(resultSet.getInt(1));
-                ride.getRider().setUserID(resultSet.getInt(2));
-            }
-            else {
-                ride = null;
-            }
-
-            return ride;
-        }
-        catch (Exception e) {
-            System.out.println("Exception in DBHandler: getRideRequestStatus(driver)");
-            e.printStackTrace();
-            return null;
-        }
-    }*/
 
     public Ride checkRideRequestStatus(Rider rider) {
         String sqlQuery = "SELECT FIND_STATUS, DRIVER_ID FROM RIDER_DETAILS WHERE USER_ID = " + rider.getUserID();
@@ -567,7 +588,7 @@ public class OracleDBHandler implements DBHandler {
                 "FROM RIDES RD, RIDER_DETAILS R, DRIVER_DETAILS D\n" +
                 "WHERE RD.RIDER_ID = " + ride.getRider().getUserID() +
                 " AND RD.DRIVER_ID = " + ride.getDriver().getUserID() +
-                " AND RD.RIDER_ID = R.USER_ID AND RD.DRIVER_ID = D.USER_ID";
+                " AND RD.RIDER_ID = R.USER_ID AND RD.DRIVER_ID = D.USER_ID AND RD.STATUS <> 20";
 
         JSONObject result = new JSONObject();
 
@@ -579,6 +600,7 @@ public class OracleDBHandler implements DBHandler {
 
                 result.put("STATUS_CODE", 200);
                 result.put("RIDE_ID", resultSet.getInt(1));
+                result.put("RIDER_ID", ride.getRider().getUserID());
                 result.put("DRIVER_ID", ride.getDriver().getUserID());
                 result.put("RIDER_NAME", resultSet.getString(2));
                 result.put("DRIVER_NAME", resultSet.getString(3));

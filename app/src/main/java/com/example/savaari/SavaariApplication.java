@@ -11,7 +11,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class SavaariApplication extends Application {
     public ExecutorService executorService;
     public Repository repository;
-    public ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1);
+    public ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(6);
 
     public SavaariApplication() {
         executorService = Executors.newFixedThreadPool(4);

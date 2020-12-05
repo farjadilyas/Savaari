@@ -50,6 +50,7 @@ public class Ride {
         dropoffLocation = null;
         stops = new ArrayList<>();
         matchStatus = DEFAULT;
+        rideStatus = -1;
     }
 
     public Rider getRider() {
@@ -106,6 +107,11 @@ public class Ride {
 
     public void setDropoffLocation(LatLng dropoffLocation, String dropoffTitle) {
         this.dropoffLocation = dropoffLocation;
+    }
+
+    public boolean closeToPickup() {
+        return (driver.getCurrentLocation().latitude - pickupLocation.latitude < 0.2
+        && driver.getCurrentLocation().longitude - pickupLocation.longitude < 0.2);
     }
 
     public long getStartTime() {

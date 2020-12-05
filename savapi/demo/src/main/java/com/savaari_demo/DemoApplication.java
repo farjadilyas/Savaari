@@ -138,6 +138,12 @@ public class DemoApplication
 		return matchmakingController.setMarkActive(userID, activeStatus).toString();
 	}
 
+	@RequestMapping(value = "/checkRideStatus", method = RequestMethod.POST)
+	public String checkRideStatus(@RequestBody Map<String, String> allParams)
+	{
+		return matchmakingController.getRideForDriver(allParams.get("USER_ID")).toString();
+	}
+
 	@RequestMapping(value = "/confirmRideRequest", method = RequestMethod.POST)
 	public String confirmRideRequest(@RequestBody Map<String, String> allParams)
 	{
@@ -147,6 +153,24 @@ public class DemoApplication
 
 		return matchmakingController.confirmRideRequest(userID, found_status, riderID).toString();
 	}
+	@RequestMapping(value = "/markArrival", method = RequestMethod.POST)
+	public String markDriverArrival(@RequestBody Map<String, String> allParams)
+	{
+		return matchmakingController.markDriverArrival(allParams.get("RIDE_ID")).toString();
+	}
+
+	@RequestMapping(value = "/startRideDriver", method = RequestMethod.POST)
+	public String startRideDriver(@RequestBody Map<String, String> allParams)
+	{
+		return matchmakingController.startRideDriver(allParams.get("RIDE_ID")).toString();
+	}
+
+	@RequestMapping(value = "/endRideDriver", method = RequestMethod.POST)
+	public String endRideDriver(@RequestBody Map<String, String> allParams)
+	{
+		return matchmakingController.endRideDriver(allParams.get("RIDE_ID")).toString();
+	}
+
 	/* End of section */
 
 
@@ -156,7 +180,7 @@ public class DemoApplication
 	public String getRideForRider(@RequestBody Map<String, String> allParams)
 	{
 		String riderID = allParams.get("USER_ID");
-		return matchmakingController.getRide(riderID).toString();
+		return matchmakingController.getRideForRider(riderID).toString();
 	}
 
 	@RequestMapping(value = "/getRideStatus", method = RequestMethod.POST)
@@ -167,7 +191,6 @@ public class DemoApplication
 	}
 
 	/* End of section */
-
 
 	/* Location update methods*/
 	@RequestMapping(value = "/saveDriverLocation", method = RequestMethod.POST)

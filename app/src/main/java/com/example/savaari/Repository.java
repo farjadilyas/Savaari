@@ -55,6 +55,6 @@ public class Repository {
     }
 
     public void getRideStatus(OnDataLoadedListener callback, int rideID) {
-        executor.execute(() -> callback.onDataLoaded(NetworkUtil.getRideStatus(url, rideID)));
+        callback.onDataLoaded(NetworkUtil.getRideStatus(url, rideID));
     }
 }

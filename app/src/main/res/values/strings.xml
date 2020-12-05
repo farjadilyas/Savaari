@@ -113,6 +113,7 @@
     <string name = "add_stop">Add stop</string>
     <string name = "search_ride">GO</string>
     <string name = "searching_ride">Finding  a driver for you</string>
+    <string name = "select_ride_type">Select a ride type</string>
 
 
     <!-- ==================Settings Section ============== -->

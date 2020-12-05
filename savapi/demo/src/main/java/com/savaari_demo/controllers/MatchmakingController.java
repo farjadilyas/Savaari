@@ -78,7 +78,14 @@ public class MatchmakingController {
                     ++rejectedAttempts;
                 }
                 else if (findStatusResult.get("STATUS") == "FOUND") {
+
+                    // Make a Ride object and retrieve complete ride info
+                    ride.setDriver(new Driver());
+                    ride.getDriver().setUserID(findStatusResult.getInt("DRIVER_ID"));
+                    findStatusResult = getRide(ride);
+
                     System.out.println("findDriver() : checkFindStatus() : DRIVER FOUND!");
+
                     driverPaired = true;
                     break;
                 }
@@ -146,7 +153,7 @@ public class MatchmakingController {
                 JSONObject jsonObject = new JSONObject();
 
                 jsonObject.put("STATUS", 200);
-                jsonObject.put("USER_NAME", ride.getRider().getUsername());
+                jsonObject.put("RIDER_NAME", ride.getRider().getUsername());
                 jsonObject.put("RIDER_ID", ride.getRider().getUserID());
                 jsonObject.put("SOURCE_LAT", ride.getPickupLocation().getLatitude());
                 jsonObject.put("SOURCE_LONG", ride.getPickupLocation().getLongitude());
@@ -193,8 +200,46 @@ public class MatchmakingController {
         return jsonObject;
     }
 
+    public JSONObject markDriverArrival(String rideID) {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(rideID));
 
-    public JSONObject getRide(String riderID) {
+        JSONObject jsonObject = new JSONObject();
+        if (dbHandler.markDriverArrival(ride)) {
+            jsonObject.put("STATUS", 200);
+        } else {
+            jsonObject.put("STATUS", 404);
+        }
+        return jsonObject;
+    }
+
+    public JSONObject startRideDriver(String rideID) {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(rideID));
+
+        JSONObject jsonObject = new JSONObject();
+        if (dbHandler.startRideDriver(ride)) {
+            jsonObject.put("STATUS", 200);
+        } else {
+            jsonObject.put("STATUS", 404);
+        }
+        return jsonObject;
+    }
+
+    public JSONObject endRideDriver(String rideID) {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(rideID));
+
+        JSONObject jsonObject = new JSONObject();
+        if (dbHandler.endRideDriver(ride)) {
+            jsonObject.put("STATUS", 200);
+        } else {
+            jsonObject.put("STATUS", 404);
+        }
+        return jsonObject;
+    }
+
+    public JSONObject getRideForRider(String riderID) {
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(riderID));
 
@@ -211,16 +256,43 @@ public class MatchmakingController {
             result.put("IS_TAKING_RIDE", false);
         }
         else {
-            result = dbHandler.getRide(ride);
-            result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
+            result = getRide(ride);
         }
 
         return result;
+    }
+
+    public JSONObject getRide(Ride ride) {
+        JSONObject result = new JSONObject();
+        result = dbHandler.getRide(ride);
+        result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
+        return result;
+
     }
 
     public JSONObject getRideStatus(String rideID) {
         Ride ride = new Ride();
         ride.setRideID(Integer.parseInt(rideID));
         return dbHandler.getRideStatus(ride);
+    }
+
+    public JSONObject getRideForDriver(String driverID){
+        Driver driver = new Driver();
+        driver.setUserID(Integer.valueOf(driverID));
+
+        Ride ride = dbHandler.checkRideRequestStatus(driver);
+        JSONObject result = new JSONObject();
+
+        if (ride == null) {
+            result.put("STATUS_CODE", 404);
+            result.put("IS_TAKING_RIDE", false);
+        }
+        else {
+            ride.setDriver(driver);
+            result = dbHandler.getRide(ride);
+            result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
+        }
+
+        return result;
     }
 }
