@@ -1,6 +1,9 @@
 package com.savaari_demo.entity;
 
-public class Driver extends User 
+import org.json.JSONObject;
+import com.savaari_demo.DBHandler;
+
+public class Driver extends User
 {
 	// Main Attributes
 	Boolean isActive;
@@ -31,12 +34,31 @@ public class Driver extends User
 	public void setIsTakingRide(Boolean isTakingRide) {
 		this.isTakingRide = isTakingRide;
 	}
-
 	public int getRideRequestStatus() {
 		return rideRequestStatus;
 	}
-
 	public void setRideRequestStatus(int rideRequestStatus) {
 		this.rideRequestStatus = rideRequestStatus;
 	}
+
+	// Main Methods for System Interactions
+	public JSONObject setMarkActive(DBHandler dbHandler)
+	{
+		if (dbHandler.markDriverActive(driver))
+		{
+			JSONObject json = checkRideRequestStatus(driver);
+			if (json == null) {
+				json = new JSONObject();
+				json.put("STATUS", 404);
+			}
+			return json;
+		}
+		else
+		{
+			JSONObject json = new JSONObject();
+			json.put("STATUS", 404);
+			return json;
+		}
+	}
+
 }

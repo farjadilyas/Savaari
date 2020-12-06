@@ -20,6 +20,7 @@ public class MatchmakingController {
     {
         dbHandler = DBHandlerFactory.getDBHandler("Oracle");
     }
+
     /*
      * Rider-side matchmaking method
      * Shortlists potential drivers, sends request to ideal
@@ -42,7 +43,6 @@ public class MatchmakingController {
         ride.getRider().setUserID(Integer.valueOf(riderID));
         ride.setPickupLocation(new Location(Double.valueOf(sourceLatitude), Double.valueOf(sourceLongitude), null));
         ride.setDropoffLocation(new Location(Double.valueOf(destinationLatitude), Double.valueOf(destinationLongitude), null));
-
 
         // Search for drivers that match criteria, TODO: Add criteria
         JSONArray drivers = dbHandler.searchDriverForRide();
@@ -125,21 +125,7 @@ public class MatchmakingController {
         driver.setIsActive(Boolean.valueOf(activeStatus));
         driver.setUserID(Integer.valueOf(userID));
 
-        if (dbHandler.markDriverActive(driver))
-        {
-            JSONObject json = checkRideRequestStatus(driver);
-            if (json == null) {
-                json = new JSONObject();
-                json.put("STATUS", 404);
-            }
-            return json;
-        }
-        else
-        {
-            JSONObject json = new JSONObject();
-            json.put("STATUS", 404);
-            return json;
-        }
+        return driver.setMarkActive(dbHandler);
     }
 
     private JSONObject checkRideRequestStatus(Driver driver)
@@ -262,13 +248,13 @@ public class MatchmakingController {
         return result;
     }
 
+    /*
     public JSONObject getRide(Ride ride) {
         JSONObject result = new JSONObject();
         result = dbHandler.getRide(ride);
         result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
         return result;
-
-    }
+    }*/
 
     public JSONObject getRideStatus(String rideID) {
         Ride ride = new Ride();

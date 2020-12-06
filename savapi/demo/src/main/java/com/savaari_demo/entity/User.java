@@ -1,5 +1,8 @@
 package com.savaari_demo.entity;
 
+import com.savaari_demo.DBHandler;
+import org.json.JSONObject;
+
 public class User {
     // Main Attributes
     private Integer userID;
@@ -94,5 +97,16 @@ public class User {
 
     public void setLastLocation(Location lastLocation) {
         this.lastLocation = lastLocation;
+    }
+
+
+    // Methods for system interactions
+
+    public JSONObject getRide(DBHandler dbHandler, Ride ride) {
+        JSONObject result = new JSONObject();
+        result = dbHandler.getRide(ride);
+        result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
+        return result;
+
     }
 }
