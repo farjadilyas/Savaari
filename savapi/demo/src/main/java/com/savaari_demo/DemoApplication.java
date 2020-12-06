@@ -79,7 +79,7 @@ public class DemoApplication
 	/* End of section*/
 
 
-	/* Fetch user data methods*/
+	/* Fetch user data methods
 	@GetMapping("/rider_details")
 	public String riderDetails()
 	{
@@ -91,7 +91,7 @@ public class DemoApplication
 	public String driverDetails()
 	{
 		return crudController.driverDetails().toString();
-	}
+	}*/
 
 	@RequestMapping(value = "/rider_data", method = RequestMethod.POST)
 	public String riderData(@RequestBody Map<String, String> allParams)

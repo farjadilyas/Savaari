@@ -25,9 +25,9 @@ public class LocationController
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(riderID));
         rider.setLastLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
-                new Timestamp(Long.valueOf(timestamp))));
+                new Timestamp(Long.parseLong(timestamp))));
 
-        return dbHandler.saveRiderLocation(rider);
+        return rider.saveLocation(dbHandler);
     }
 
     public boolean saveDriverLocations(String driverID, String latitude, String longitude, String timestamp) {
@@ -36,37 +36,27 @@ public class LocationController
         Driver driver = new Driver();
         driver.setUserID(Integer.valueOf(driverID));
         driver.setLastLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
-                new Timestamp(Long.valueOf(timestamp))));
+                new Timestamp(Long.parseLong(timestamp))));
 
-        return dbHandler.saveDriverLocation(driver);
+        return driver.saveDriverLocation(dbHandler);
     }
 
     public JSONObject getDriverLocation(String driverID) {
         Driver driver = new Driver();
         driver.setUserID(Integer.valueOf(driverID));
 
-        driver = dbHandler.getDriverLocation(driver);
-        JSONObject result = new JSONObject();
-
-        if (driver == null) {
-            result.put("STATUS_CODE", 404);
-        }
-        else {
-            result.put("STATUS_CODE", 200);
-            result.put("LATITUDE", driver.getLastLocation().getLatitude());
-            result.put("LONGITUDE", driver.getLastLocation().getLongitude());
-        }
-        return result;
+        return driver.getDriverLocation(dbHandler);
     }
 
     public JSONObject getRiderLocation(String riderID) {
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(riderID));
 
-        rider = dbHandler.getRiderLocation(rider);
+        rider.fetchLocation(dbHandler);
+
         JSONObject result = new JSONObject();
 
-        if (rider == null) {
+        if (rider.getLastLocation() == null) {
             result.put("STATUS_CODE", 404);
         }
         else {

@@ -1,9 +1,9 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.*;
-import com.savaari_demo.entity.*;
-
-import org.json.JSONArray;
+import com.savaari_demo.DBHandler;
+import com.savaari_demo.DBHandlerFactory;
+import com.savaari_demo.entity.Driver;
+import com.savaari_demo.entity.Rider;
 import org.json.JSONObject;
 
 public class CRUDController
@@ -49,18 +49,7 @@ public class CRUDController
         driver.setEmailAddress(emailAddress);
         driver.setPassword(password);
 
-        JSONObject result = new JSONObject();
-        Integer userID = dbHandler.loginDriver(driver);
-
-        if (userID == null) {
-            result.put("STATUS_CODE", 404);
-            result.put("USER_ID", -1);
-        } else {
-            result.put("STATUS_CODE", 200);
-            result.put("USER_ID", userID);
-        }
-
-        return result;
+        return driver.login(dbHandler);
     }
     // Adding a new Rider Account
     public JSONObject addRider(String username, String email_address, String password)
@@ -86,25 +75,17 @@ public class CRUDController
     // Add a new inactive Driver method
     public JSONObject addDriver(String username, String email_address, String password) {
 
-        // TODO Add logic of if Driver exists already
         Driver driver = new Driver();
         driver.setUsername(username);
         driver.setEmailAddress(email_address);
         driver.setPassword(password);
 
-        JSONObject result = new JSONObject();
-        if (dbHandler.addDriver(driver)) {
-            result.put("STATUS_CODE", 200);
-        }
-        else {
-            result.put("STATUS_CODE", 404);
-        }
-
-        return result;
+        return driver.signup(dbHandler);
     }
+
+    /*
     public JSONArray riderDetails()
     {
-        System.out.println("Rider deets called2");
         JSONArray jsonArray =  dbHandler.riderDetails();
         if (jsonArray != null)
         {
@@ -136,15 +117,16 @@ public class CRUDController
             return temp;
         }
     }
+    */
 
     public JSONObject riderData(String userID)
     {
+        JSONObject returnObj = new JSONObject();
+
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(userID));
 
-        rider = dbHandler.riderData(rider);
-        JSONObject returnObj = new JSONObject();
-        if (rider != null)
+        if (rider.fetchData(dbHandler))
         {
             returnObj.put("STATUS", 200);
             returnObj.put("USER_NAME", rider.getUsername());
@@ -159,17 +141,17 @@ public class CRUDController
     }
 
     public JSONObject driverData(String userID) {
+        JSONObject returnObj = new JSONObject();
+
         Driver driver = new Driver();
         driver.setUserID(Integer.valueOf(userID));
 
-        driver = dbHandler.driverData(driver);
-        JSONObject returnObj = new JSONObject();
-
-        if (driver != null)
+        if (driver.fetchData(dbHandler))
         {
             returnObj.put("STATUS", 200);
             returnObj.put("USER_NAME", driver.getUsername());
             returnObj.put("EMAIL_ADDRESS", driver.getEmailAddress());
+
         }
         else
         {

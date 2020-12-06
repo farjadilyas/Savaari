@@ -85,12 +85,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
         GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, OnItemClickListener {
 
     private static final String TAG = "RideActivity";
+
+    ScheduledFuture<?> future;
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -361,7 +364,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void watchRideStatus() {
         Log.d(TAG, "watchRideStatus() called!");
-        ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay((Runnable) () -> rideViewModel.getRideStatus(),
+        future = ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay((Runnable) () -> rideViewModel.getRideStatus(),
                 0L, 8L, TimeUnit.SECONDS);
         rideViewModel.isRideStatusChanged().observe(RideActivity.this, this::onRideStatusChanged);
     }
@@ -1069,7 +1072,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             case (R.id.nav_settings):
                 Intent i = new Intent(RideActivity.this, SettingsActivity.class);
                 startActivity(i);
-                finish();
                 break;
         }
         return true;
@@ -1079,7 +1081,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     protected void onDestroy() {
         super.onDestroy();
 
-        //Cancel scheduled but not started task, and avoid new ones
+        future.cancel(true);
+
+        /*Cancel scheduled but not started task, and avoid new ones
         ((SavaariApplication) getApplication()).scheduledExecutor.shutdown();
 
         //Wait for the running tasks
@@ -1090,7 +1094,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
 
         //Interrupt the threads and shutdown the scheduler
-        ((SavaariApplication) getApplication()).scheduledExecutor.shutdownNow();
+        ((SavaariApplication) getApplication()).scheduledExecutor.shutdownNow();*/
     }
 
     @Override

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -17,6 +18,9 @@ public class MainActivity extends Util {
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        ThemeVar.setData(preferences.getInt(getString(R.string.preference_theme_var), 5));
+
         switch (ThemeVar.getData())
         {
             case(0):

@@ -279,7 +279,6 @@ public class RideViewModel extends ViewModel {
                         }
                         else {
                             Log.d(LOG_TAG, "getRide: STATUS ERROR: " + result.getInt("STATUS_CODE"));
-
                         }
 
                         // If taking ride, driver status PAIRED, else DEFAULT
