@@ -308,6 +308,24 @@ public class NetworkUtil
         }
     }
 
+    public static boolean acknowledgeEndOfRide(String urlAddress, int rideID, int riderID) {
+        Log.d(TAG, " :acknowledgeEndOfRide called!");
+        String url = urlAddress + "getRideStatus";
+
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("RIDE_ID", rideID);
+            jsonParam.put("RIDER_ID", riderID);
+            return (sendPost(url, jsonParam, true).getInt("STATUS_CODE")==200);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :getRideStatus() - JSONException");
+            return false;
+        }
+    }
+
     // Get paired driver Location
     public static JSONObject getDriverLocation(String urlAddress, int driverID) {
         Log.d(TAG, " :getDriverLocation called!");

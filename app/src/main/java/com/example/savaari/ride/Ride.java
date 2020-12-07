@@ -14,7 +14,9 @@ public class Ride {
             DRIVER_ARRIVED = 12,
             CANCELLED = 13,
             STARTED = 14,
-            COMPLETED = 15;
+            ARRIVED_AT_DEST = 15,
+            PAYMENT_MADE = 16,
+            END_ACKED = 20;
 
     public static final int
             DEFAULT = 0,

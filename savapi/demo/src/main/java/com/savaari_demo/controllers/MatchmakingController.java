@@ -2,10 +2,7 @@ package com.savaari_demo.controllers;
 
 import com.savaari_demo.DBHandler;
 import com.savaari_demo.DBHandlerFactory;
-import com.savaari_demo.entity.Driver;
-import com.savaari_demo.entity.Location;
-import com.savaari_demo.entity.Ride;
-import com.savaari_demo.entity.Rider;
+import com.savaari_demo.entity.*;
 import org.json.JSONObject;
 
 public class MatchmakingController {
@@ -92,6 +89,8 @@ public class MatchmakingController {
         Ride ride = new Ride();
         ride.setRideID(Integer.parseInt(rideID));
         ride.setDistanceTravelled(Double.parseDouble(dist_travelled));
+
+        ride.setDriver(new Driver());
         ride.getDriver().setUserID(Integer.valueOf(driver_id));
 
         return ride.markArrivalAtDestination(dbHandler);
@@ -111,7 +110,7 @@ public class MatchmakingController {
         ride.getRider().setUserID(Integer.parseInt(riderID));
 
         JSONObject result = new JSONObject();
-        result.put("STATUS", ((ride.acknowledgeEndOfRide(dbHandler))? 200 : 404));
+        result.put("STATUS_CODE", ((ride.acknowledgeEndOfRide(dbHandler))? 200 : 404));
         return result;
     }
 
@@ -136,11 +135,16 @@ public class MatchmakingController {
         return driver.getRideForDriver(dbHandler);
     }
 
-    public JSONObject endRideWithPayment(String ride_id, String amount_paid)
+    public JSONObject endRideWithPayment(String ride_id, String amount_paid, String driver_id)
     {
         Ride ride = new Ride();
         ride.setRideID(Integer.parseInt(ride_id));
+
+        ride.setPayment(new Payment());
         ride.getPayment().setAmountPaid(Double.parseDouble(amount_paid));
+
+        ride.setDriver(new Driver());
+        ride.getDriver().setUserID(Integer.parseInt(driver_id));
 
         return ride.endRideWithPayment(dbHandler);
     }

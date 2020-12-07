@@ -38,6 +38,7 @@ public class RideViewModel extends ViewModel {
     private final MutableLiveData<Boolean> userLocationsLoaded = new MutableLiveData<>();
     private final MutableLiveData<Boolean> driverLocationFetched = new MutableLiveData<>(false);
     private final MutableLiveData<Ride> rideFound = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> endOfRideAcknowledged = new MutableLiveData<>();
     private final MutableLiveData<Boolean> rideStatusChanged = new MutableLiveData<>();
     private final MutableLiveData<Boolean> closeToPickup = new MutableLiveData<>();
 
@@ -67,6 +68,7 @@ public class RideViewModel extends ViewModel {
     public LiveData<Boolean> isLiveUserLocationsLoaded() { return userLocationsLoaded; }
     public LiveData<Boolean> isDriverLocationFetched() { return driverLocationFetched; }
     public LiveData<Ride> isRideFound() { return rideFound; }
+    public LiveData<Boolean> isEndOfRideAcknowledged() { return endOfRideAcknowledged; }
     public LiveData<Boolean> isRideStatusChanged() { return rideStatusChanged; }
 
 
@@ -219,6 +221,12 @@ public class RideViewModel extends ViewModel {
             }, ride.getRideID());
 
         }
+    }
+
+    public void acknowledgeEndOfRide() {
+        repository.acknowledgeEndOfRide(object -> {
+            endOfRideAcknowledged.postValue(true);
+        }, ride.getRideID(), ride.getRider().getUserID());
     }
 
     public void fetchDriverLocation() {

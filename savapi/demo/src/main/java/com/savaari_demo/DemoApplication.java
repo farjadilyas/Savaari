@@ -168,13 +168,14 @@ public class DemoApplication
 	@RequestMapping(value = "/markArrivalAtDestination", method = RequestMethod.POST)
 	public String markArrivalAtDestination(@RequestBody Map<String, String> allParams)
 	{
+		System.out.println("MARK ARRIVAL CALLED");
 		return matchmakingController.markArrivalAtDestination(allParams.get("RIDE_ID"), allParams.get("DIST_TRAVELLED"), allParams.get("DRIVER_ID")).toString();
 	}
 
 	@RequestMapping(value = "/endRideWithPayment", method = RequestMethod.POST)
 	public String endRideWithPayment(@RequestBody Map<String, String> allParams)
 	{
-		return matchmakingController.endRideWithPayment(allParams.get("RIDE_ID"), allParams.get("AMNT_PAID")).toString();
+		return matchmakingController.endRideWithPayment(allParams.get("RIDE_ID"), allParams.get("AMNT_PAID"), allParams.get("DRIVER_ID")).toString();
 	}
 
 	/* End of section */

@@ -570,24 +570,31 @@ public class OracleDBHandler implements DBHandler {
     @Override
     public JSONObject markArrivalAtDestination(Ride ride) {
         try {
-            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = ?, FARE = ?, END_TIME = NOW() WHERE RIDE_ID = ?");
+            String query = "UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = " + ride.getDistanceTravelled()
+                    + ", FARE = " + ride.getFare() + ", FINISH_TIME = CURRENT_TIME() WHERE RIDE_ID = " + ride.getRideID();
 
-            sqlQuery.setDouble(1, ride.getDistanceTravelled());
-            sqlQuery.setInt(2, ride.getRideID());
-            sqlQuery.setDouble(3, ride.getFare());
+            System.out.println("This is the sqlQuery: " + query);
+
+            PreparedStatement sqlQuery = connect.prepareStatement(query);
             
             int numRowsUpdated = sqlQuery.executeUpdate();
+
+            System.out.println(LOG_TAG + ":markArrivalAtDestination: numRowsUpdated: " + numRowsUpdated);
             
             JSONObject jsonObject = new JSONObject();
             if (numRowsUpdated > 0) {
+                System.out.println(LOG_TAG + "markArrivalAtDestination: NO ERROR");
                 jsonObject.put("STATUS", 200);
-            } else {
+            }
+            else {
+                System.out.println(LOG_TAG + "markArrivalAtDestination: error #1");
                 jsonObject.put("STATUS", 404);
             }
             return jsonObject;
         }
         catch (Exception e) {
             e.printStackTrace();
+            System.out.println(LOG_TAG + "markArrivalAtDestination: error #2");
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("STATUS", 404);
             return jsonObject;
@@ -601,7 +608,7 @@ public class OracleDBHandler implements DBHandler {
         
         Payment newPayment = null;
         
-        String insertPaymentQuery = "INSERT INTO PAYMENTS VALUES(0, 0, NULL, 0)";
+        String insertPaymentQuery = "INSERT INTO PAYMENTS VALUES(0, 0, 0, NULL, 0)";
         String generatedColumns[] = { "PAYMENT_ID" };
 
         PreparedStatement insertPaymentStatement;
@@ -648,13 +655,16 @@ public class OracleDBHandler implements DBHandler {
     @Override
     public boolean recordRide(Ride ride) {    
         try {
-            PreparedStatement sqlQuery = connect.prepareStatement("INSERT INTO RIDES " +
+            String query = "INSERT INTO RIDES " +
                     "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, " + ride.getPayment().getPaymentID() +" AS PAYMENT_ID, " +
-                    "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, " +
+                    "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, 0 AS DIST_TRAVELLED, " +
                     "1 AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, 11 AS STATUS " +
                     "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
                     "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getDriver().getUserID() +
-                    " AND D.RIDER_ID = " + ride.getRider().getUserID());
+                    " AND D.RIDER_ID = " + ride.getRider().getUserID();
+
+            System.out.println("The query is: " + query);
+            PreparedStatement sqlQuery = connect.prepareStatement(query);
 
             int numRowsUpdated = sqlQuery.executeUpdate();
 
@@ -696,7 +706,7 @@ public class OracleDBHandler implements DBHandler {
         }
     }
     public JSONObject getRide(Ride ride) {
-        String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE\n" +
+        String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE, RD.FARE\n" +
                 "FROM RIDES RD, RIDER_DETAILS R, DRIVER_DETAILS D\n" +
                 "WHERE RD.RIDER_ID = " + ride.getRider().getUserID() +
                 " AND RD.DRIVER_ID = " + ride.getDriver().getUserID() +
@@ -727,6 +737,7 @@ public class OracleDBHandler implements DBHandler {
                 result.put("RIDE_STATUS", resultSet.getInt(12));
                 result.put("DRIVER_LAT", resultSet.getDouble(13));
                 result.put("DRIVER_LONG", resultSet.getDouble(14));
+                result.put("FARE", resultSet.getDouble(15));
 
 
                 /*
@@ -787,7 +798,7 @@ public class OracleDBHandler implements DBHandler {
     public boolean endRideWithPayment(Ride ride)
     {
         try {
-            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE TABLE RIDES SET STATUS = 16 WHERE RIDE_ID = ?");
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 16 WHERE RIDE_ID = ?");
             sqlQuery.setInt(1, ride.getRideID());
 
             int numRowsUpdated = sqlQuery.executeUpdate();

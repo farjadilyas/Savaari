@@ -93,7 +93,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private static final String TAG = "RideActivity";
 
-    ScheduledFuture<?> future;
+    ScheduledFuture<?> future = null;
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -308,8 +308,15 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     toggleRideDetailsBar(true, true);
                     break;
 
-                case Ride.COMPLETED:
+                case Ride.ARRIVED_AT_DEST:
                     Toast.makeText(this, "Thank you for riding with Savaari", Toast.LENGTH_SHORT).show();
+                    break;
+                case Ride.PAYMENT_MADE:
+                    //TODO: acknowledgeEndOfRide()
+                    break;
+                case Ride.END_ACKED:
+                    //Impossible
+                    Log.d(TAG, "Received END_ACKED in existing ride - impossible case");
                     break;
             }
             watchRideStatus();
@@ -385,13 +392,22 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     rideStatusMessage.setText("Estimated Time to Destination: 6 min");
                     //Toast.makeText(this, "Your ride was cancelled. Trying again...", Toast.LENGTH_SHORT).show();
                     break;
-                case Ride.COMPLETED:
+                case Ride.ARRIVED_AT_DEST:
+                    Toast.makeText(this, "You have reached your destination", Toast.LENGTH_SHORT).show();
+                    break;
+                case Ride.PAYMENT_MADE:
+                    Toast.makeText(this, "Payment made", Toast.LENGTH_SHORT).show();
+                    rideViewModel.acknowledgeEndOfRide();
+                    rideViewModel.isEndOfRideAcknowledged().observe(this, this::endOfRideAcknowledgedAction);
+                    break;
+                case Ride.END_ACKED:
                     Toast.makeText(this, "Thank you for riding with Savaari", Toast.LENGTH_SHORT).show();
                     break;
 
             }
         }
     }
+
 
     /*
      * Launches thread that fetches driver location updates
@@ -419,10 +435,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         });
     }
 
+    private void endOfRideAcknowledgedAction(Boolean endOfRideAcknowledged) {
+        if (endOfRideAcknowledged) {
+            Toast.makeText(this, "End of ride acknowledged!", Toast.LENGTH_SHORT).show();
+            toggleRideDetailsBar(false, true);
+            toggleRideSearchBar(true, true);
+        }
+        else {
+            Log.d(TAG, ":endOfRideAcknowledgedAction: not acknowledged");
+        }
+    }
+
     private void backToSearchRide() {
         progressBar.setVisibility(View.INVISIBLE);
         toggleRideSearchBar(true, true);
-
     }
 
     private void onSearchRideAction() {
@@ -1081,7 +1107,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     protected void onDestroy() {
         super.onDestroy();
 
-        future.cancel(true);
+        if (future != null) {
+            future.cancel(true);
+        }
 
         /*Cancel scheduled but not started task, and avoid new ones
         ((SavaariApplication) getApplication()).scheduledExecutor.shutdown();
