@@ -1,9 +1,6 @@
 package com.savaari_demo;
 
-import com.savaari_demo.entity.Driver;
-import com.savaari_demo.entity.Location;
-import com.savaari_demo.entity.Ride;
-import com.savaari_demo.entity.Rider;
+import com.savaari_demo.entity.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,6 +36,7 @@ public interface DBHandler {
     boolean sendRideRequest(Ride rideRequest);
     JSONObject checkFindStatus(Rider rider);
     boolean recordRide(Ride ride);
+    Payment addPayment();
 
     /* In-ride DB calls */
     Ride checkRideRequestStatus(Rider rider);

@@ -168,7 +168,7 @@ public class DemoApplication
 	@RequestMapping(value = "/endRideDriver", method = RequestMethod.POST)
 	public String endRideDriver(@RequestBody Map<String, String> allParams)
 	{
-		return matchmakingController.endRideDriver(allParams.get("RIDE_ID")).toString();
+		return matchmakingController.endRideDriver(allParams.get("RIDE_ID"), allParams.get("DIST_TRAVELLED")).toString();
 	}
 
 	/* End of section */

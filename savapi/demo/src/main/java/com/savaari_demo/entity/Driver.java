@@ -6,6 +6,7 @@ import org.json.JSONObject;
 public class Driver extends User
 {
 	// Main Attributes
+	private static final String LOG_TAG = Driver.class.getSimpleName();
 	Boolean isActive;
 	Boolean isTakingRide;
 	int rideRequestStatus;
@@ -122,13 +123,22 @@ public class Driver extends User
 		if (dbHandler.confirmRideRequest(ride)) {
 			jsonObject.put("STATUS", 200);
 
-			// Record Ride
-			dbHandler.recordRide(ride);
+			Payment newPayment = dbHandler.addPayment();
+
+			if (newPayment == null) {
+				System.out.println(LOG_TAG + ":recordRide: payment is null");
+			}
+			else {
+				// Payment created, set it in ride & record ride
+				ride.setPayment(newPayment);
+				dbHandler.recordRide(ride);
+			}
 		} else {
 			jsonObject.put("STATUS", 404);
 		}
 		return jsonObject;
 	}
+
 	public JSONObject getRideForDriver(DBHandler dbHandler)
 	{
 		Ride ride = dbHandler.checkRideRequestStatus(this);

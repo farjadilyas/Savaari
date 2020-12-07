@@ -88,9 +88,10 @@ public class MatchmakingController {
         return ride.startRideDriver(dbHandler);
     }
 
-    public JSONObject endRideDriver(String rideID) {
+    public JSONObject endRideDriver(String rideID, String dist_travelled) {
         Ride ride = new Ride();
         ride.setRideID(Integer.parseInt(rideID));
+        ride.setDistanceTravelled(Double.parseDouble(dist_travelled));
 
         return ride.endRideDriver(dbHandler);
     }

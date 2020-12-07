@@ -17,8 +17,10 @@ public class Ride {
     private Location dropoffLocation;
     private Timestamp startTime;
     private Timestamp endTime;
-    private int rideType;        //TODO: Decide type later (ride type class?)
+    private double distanceTravelled;
+    private int rideType;           //TODO: Decide type later (ride type class?)
     private double estimatedFare;
+    private double fare;
     private int rideStatus;         //TODO: Ensure it's in correct range (ride status class?)
     private int findStatus;
     private Object paymentMethod;   //TODO: Ensure it's one of a few types
@@ -107,6 +109,26 @@ public class Ride {
     public void setFindStatus(int findStatus) {
         this.findStatus = findStatus;
     }
+    public double getDistanceTravelled() {
+        return distanceTravelled;
+    }
+    public void setDistanceTravelled(double distanceTravelled) {
+        this.distanceTravelled = distanceTravelled;
+    }
+    public double getFare() {
+        return fare;
+    }
+    public void setFare(double fare) {
+        this.fare = fare;
+    }
+
+    // ---------------------------------------------------------------------------------
+    // PRIVATE METHODS for POLICIES
+    private double calculateFare()
+    {
+        // TODO: FARE POLICY and stuff ?
+        return 0.0;
+    }
 
     // ---------------------------------------------------------------------------------
     //                          System interaction methods
@@ -118,5 +140,16 @@ public class Ride {
         return dbHandler.markDriverArrival(this);
     }
     public JSONObject startRideDriver(DBHandler dbHandler) { return dbHandler.startRideDriver(this); }
-    public JSONObject endRideDriver(DBHandler dbHandler) { return dbHandler.endRideDriver(this);}
+    
+    // Main End Ride with Driver Method
+    public JSONObject endRideDriver(DBHandler dbHandler) { 
+
+        JSONObject jsonObject = dbHandler.endRideDriver(this);
+
+        if (jsonObject.getInt("STATUS") == 200) {
+            fare = calculateFare();
+            jsonObject.put("FARE", fare);
+        }
+        return jsonObject;
+    }
 }

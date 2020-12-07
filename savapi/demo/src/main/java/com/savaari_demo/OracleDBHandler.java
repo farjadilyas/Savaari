@@ -1,9 +1,6 @@
 package com.savaari_demo;
 
-import com.savaari_demo.entity.Driver;
-import com.savaari_demo.entity.Location;
-import com.savaari_demo.entity.Ride;
-import com.savaari_demo.entity.Rider;
+import com.savaari_demo.entity.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -516,6 +513,7 @@ public class OracleDBHandler implements DBHandler {
         }
     }
 
+    // Starting the Ride from Driver side
     @Override
     public JSONObject startRideDriver(Ride ride) {
         try {
@@ -526,7 +524,17 @@ public class OracleDBHandler implements DBHandler {
 
             JSONObject jsonObject = new JSONObject();
             if (numRowsUpdated > 0) {
-                jsonObject.put("STATUS", 200);
+                
+                // Adding Start Time Query
+                PreparedStatement sqlQuery2 = connect.prepareStatement("UPDATE RIDES SET START_TIME = NOW() WHERE RIDE_ID = ?");
+                sqlQuery2.setInt(1, ride.getRideID());
+                numRowsUpdated = sqlQuery2.executeUpdate();
+
+                // Return object
+                if (numRowsUpdated > 0)
+                    jsonObject.put("STATUS", 200);
+                else
+                    jsonObject.put("STATUS", 404);
             } else {
                 jsonObject.put("STATUS", 404);
             }
@@ -543,10 +551,12 @@ public class OracleDBHandler implements DBHandler {
     @Override
     public JSONObject endRideDriver(Ride ride) {
         try {
-            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15 WHERE RIDE_ID = ?");
-
-            sqlQuery.setInt(1, ride.getRideID());
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = ? WHERE RIDE_ID = ?");
+            sqlQuery.setDouble(1, ride.getDistanceTravelled());
+            sqlQuery.setInt(2, ride.getRideID());
+            
             int numRowsUpdated = sqlQuery.executeUpdate();
+            
             JSONObject jsonObject = new JSONObject();
             if (numRowsUpdated > 0) {
                 jsonObject.put("STATUS", 200);
@@ -565,13 +575,60 @@ public class OracleDBHandler implements DBHandler {
 
     /* End of section*/
 
+    @Override
+    public Payment addPayment() {
+        
+        Payment newPayment = null;
+        
+        String insertPaymentQuery = "INSERT INTO PAYMENTS VALUES(0, 0, NULL, 0)";
+        String generatedColumns[] = { "PAYMENT_ID" };
+
+        PreparedStatement insertPaymentStatement;
+        int numRowsUpdated;
+
+
+        try {
+            insertPaymentStatement = connect.prepareStatement(insertPaymentQuery, generatedColumns);
+            numRowsUpdated = insertPaymentStatement.executeUpdate();
+        }
+        catch (Exception e) {
+            System.out.println(LOG_TAG + ":addPayment: SQLException #1");
+            e.printStackTrace();
+            return null;
+        }
+
+        if (numRowsUpdated == 0) {
+            System.out.println(LOG_TAG + ":recordRide: creating payment failed, no rows updated");
+        }
+        else {
+            try {
+                ResultSet generatedKeys = insertPaymentStatement.getGeneratedKeys();
+
+                if (generatedKeys.next()) {
+                    newPayment = new Payment();
+                    newPayment.setPaymentID(generatedKeys.getInt(1));
+                }
+                else {
+                    System.out.println(LOG_TAG + ":recordRide: creating payment failed, no payment id obtained");
+                }
+            }
+            catch (Exception e) {
+                System.out.println(LOG_TAG + ":addPayment: SQLException #2");
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        return newPayment;
+    }
+
 
     // Store new Ride
     @Override
-    public boolean recordRide(Ride ride) {
+    public boolean recordRide(Ride ride) {    
         try {
             PreparedStatement sqlQuery = connect.prepareStatement("INSERT INTO RIDES " +
-                    "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, NULL AS PAYMENT_ID, " +
+                    "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, " + ride.getPayment().getPaymentID() +" AS PAYMENT_ID, " +
                     "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, " +
                     "1 AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, 11 AS STATUS " +
                     "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
