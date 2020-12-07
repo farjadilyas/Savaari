@@ -103,6 +103,17 @@ public class MatchmakingController {
         return rider.getRideForRider(dbHandler);
     }
 
+    public JSONObject acknowledgeEndOfRide(String rideID, String riderID) {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(rideID));
+        ride.setRider(new Rider());
+        ride.getRider().setUserID(Integer.parseInt(riderID));
+
+        JSONObject result = new JSONObject();
+        result.put("STATUS", ((ride.acknowledgeEndOfRide(dbHandler))? 200 : 404));
+        return result;
+    }
+
     /*
     public JSONObject getRide(Ride ride) {
         JSONObject result = new JSONObject();

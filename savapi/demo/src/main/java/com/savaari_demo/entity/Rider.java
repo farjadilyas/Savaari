@@ -26,6 +26,10 @@ public class Rider extends User
     /* Methods for system interactions */
 
     //Rider-side CRUD methods
+    public boolean reset(DBHandler dbHandler) {
+        return dbHandler.resetRider(this);
+    }
+
     public boolean fetchData(DBHandler dbHandler) {
 
         return dbHandler.fetchRiderData(this);

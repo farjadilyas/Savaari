@@ -196,6 +196,14 @@ public class DemoApplication
 		return matchmakingController.getRideStatus(rideID).toString();
 	}
 
+	@RequestMapping(value = "/acknowledgeEndOfRide", method = RequestMethod.POST)
+	public String acknowledgeEndOfRide(@RequestBody Map<String, String> allParams)
+	{
+		String rideID = allParams.get("RIDE_ID");
+		String riderID = allParams.get("RIDER_ID");
+		return matchmakingController.acknowledgeEndOfRide(rideID, riderID).toString();
+	}
+
 	/* End of section */
 
 	/* Location update methods*/

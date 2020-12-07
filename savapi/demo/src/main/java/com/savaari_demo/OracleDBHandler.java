@@ -236,6 +236,25 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
+    public boolean resetRider(Rider rider) {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement(
+                    "UPDATE RIDER_DETAILS SET FIND_STATUS = 0, DRIVER_ID = -1 WHERE RIDER_ID = ?");
+
+            sqlQuery.setInt(1, rider.getUserID());
+
+            int numRowsUpdated = sqlQuery.executeUpdate();
+
+            return (numRowsUpdated > 0);
+        }
+        catch (Exception e) {
+            System.out.println("Exception in DBHandler:resetRider()");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
     public Boolean updateRider() {
         return null;
     }
@@ -788,6 +807,23 @@ public class OracleDBHandler implements DBHandler {
             }
         } catch (Exception e) {
             System.out.println("Exception in DBHandler: endRideWitPayment");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean acknowledgeEndOfRide(Ride ride) {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 20 WHERE RIDE_ID = ?");
+
+            sqlQuery.setInt(1, ride.getRideID());
+
+            int numRowsUpdated = sqlQuery.executeUpdate();
+            return (numRowsUpdated > 0);
+        }
+        catch (Exception e) {
+            System.out.println("Exception in DBHandler: acknowledgeEndOfRide");
             e.printStackTrace();
             return false;
         }

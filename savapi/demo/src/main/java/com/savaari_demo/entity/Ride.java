@@ -141,6 +141,17 @@ public class Ride {
     }
     public JSONObject startRideDriver(DBHandler dbHandler) { return dbHandler.startRideDriver(this); }
 
+
+    // Acknowledge end of ride (final call)
+    public boolean acknowledgeEndOfRide(DBHandler dbHandler) {
+
+        if (dbHandler.acknowledgeEndOfRide(this)) {
+            return rider.reset(dbHandler);
+        }
+
+        return false;
+    }
+
     // TODO: Methods need to get more data from tables
 
     // Main End Ride with Driver Method

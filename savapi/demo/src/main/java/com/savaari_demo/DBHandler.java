@@ -43,7 +43,9 @@ public interface DBHandler {
     JSONObject getRide(Ride ride);
     JSONObject getRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
+    boolean acknowledgeEndOfRide(Ride ride);
     JSONObject resetDriver(Driver driver);
+    boolean resetRider(Rider rider);
 
     /* Location method calls */
     boolean saveRiderLocation(Rider rider);
