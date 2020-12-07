@@ -127,7 +127,7 @@ public class Ride {
     private double calculateFare()
     {
         // TODO: FARE POLICY and stuff ?
-        return 0.0;
+        return 2150.89;
     }
 
     // ---------------------------------------------------------------------------------
@@ -140,16 +140,30 @@ public class Ride {
         return dbHandler.markDriverArrival(this);
     }
     public JSONObject startRideDriver(DBHandler dbHandler) { return dbHandler.startRideDriver(this); }
-    
-    // Main End Ride with Driver Method
-    public JSONObject endRideDriver(DBHandler dbHandler) { 
 
-        JSONObject jsonObject = dbHandler.endRideDriver(this);
+    // TODO: Methods need to get more data from tables
+
+    // Main End Ride with Driver Method
+    public JSONObject markArrivalAtDestination(DBHandler dbHandler) {
+        fare = calculateFare();
+        JSONObject jsonObject = dbHandler.markArrivalAtDestination(this);
 
         if (jsonObject.getInt("STATUS") == 200) {
-            fare = calculateFare();
             jsonObject.put("FARE", fare);
         }
+        return jsonObject;
+    }
+
+    // Main Method for Ending Ride with Payment: Cash Mode
+    public JSONObject endRideWithPayment(DBHandler dbHandler)
+    {
+        boolean status = dbHandler.endRideWithPayment(this);
+
+        JSONObject jsonObject = driver.resetDriver(dbHandler);
+
+        if (!(status && jsonObject.getInt("STATUS") == 200))
+            jsonObject.put("STATUS", 404);
+
         return jsonObject;
     }
 }

@@ -29,7 +29,7 @@ public interface DBHandler {
     boolean confirmRideRequest(Ride ride);
     JSONObject markDriverArrival(Ride ride);
     JSONObject startRideDriver(Ride ride);
-    JSONObject endRideDriver(Ride ride);
+    JSONObject markArrivalAtDestination(Ride ride);
 
     /* Rider-side matchmaking DB calls*/
     ArrayList<Driver> searchDriverForRide();
@@ -42,6 +42,8 @@ public interface DBHandler {
     Ride checkRideRequestStatus(Rider rider);
     JSONObject getRide(Ride ride);
     JSONObject getRideStatus(Ride ride);
+    boolean endRideWithPayment(Ride ride);
+    JSONObject resetDriver(Driver driver);
 
     /* Location method calls */
     boolean saveRiderLocation(Rider rider);

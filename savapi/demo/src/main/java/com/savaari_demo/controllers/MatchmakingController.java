@@ -88,12 +88,12 @@ public class MatchmakingController {
         return ride.startRideDriver(dbHandler);
     }
 
-    public JSONObject endRideDriver(String rideID, String dist_travelled) {
+    public JSONObject markArrivalAtDestination(String rideID, String dist_travelled) {
         Ride ride = new Ride();
         ride.setRideID(Integer.parseInt(rideID));
         ride.setDistanceTravelled(Double.parseDouble(dist_travelled));
 
-        return ride.endRideDriver(dbHandler);
+        return ride.markArrivalAtDestination(dbHandler);
     }
 
     public JSONObject getRideForRider(String riderID) {
@@ -122,5 +122,14 @@ public class MatchmakingController {
         driver.setUserID(Integer.valueOf(driverID));
 
         return driver.getRideForDriver(dbHandler);
+    }
+
+    public JSONObject endRideWithPayment(String ride_id, String amount_paid)
+    {
+        Ride ride = new Ride();
+        ride.setRideID(Integer.parseInt(ride_id));
+        ride.getPayment().setAmountPaid(Double.parseDouble(amount_paid));
+
+        return ride.endRideWithPayment(dbHandler);
     }
 }

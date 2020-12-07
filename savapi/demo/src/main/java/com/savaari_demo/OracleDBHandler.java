@@ -549,11 +549,13 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public JSONObject endRideDriver(Ride ride) {
+    public JSONObject markArrivalAtDestination(Ride ride) {
         try {
-            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = ? WHERE RIDE_ID = ?");
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = ?, FARE = ?, END_TIME = NOW() WHERE RIDE_ID = ?");
+
             sqlQuery.setDouble(1, ride.getDistanceTravelled());
             sqlQuery.setInt(2, ride.getRideID());
+            sqlQuery.setDouble(3, ride.getFare());
             
             int numRowsUpdated = sqlQuery.executeUpdate();
             
@@ -760,6 +762,57 @@ public class OracleDBHandler implements DBHandler {
             result.put("STATUS_CODE", 404);
             return result;
         }
+    }
+
+    @Override
+    public boolean endRideWithPayment(Ride ride)
+    {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE TABLE RIDES SET STATUS = 16 WHERE RIDE_ID = ?");
+            sqlQuery.setInt(1, ride.getRideID());
+
+            int numRowsUpdated = sqlQuery.executeUpdate();
+            if (numRowsUpdated > 0) {
+                sqlQuery = connect.prepareStatement("UPDATE PAYMENTS P INNER JOIN RIDES RD ON RD.PAYMENT_ID = P.PAYMENT_ID SET P.AMOUNT_PAID = ?, P.CHANGE = ? - RD.FARE WHERE RD.RIDE_ID = ?");
+
+                sqlQuery.setDouble(1, ride.getPayment().getAmountPaid());
+                sqlQuery.setDouble(2, ride.getPayment().getAmountPaid());
+                sqlQuery.setInt(3, ride.getRideID());
+
+                numRowsUpdated = sqlQuery.executeUpdate();
+
+                return numRowsUpdated > 0;
+
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("Exception in DBHandler: endRideWitPayment");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public JSONObject resetDriver(Driver driver) {
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("STATUS", 404);
+
+        try {
+
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET IS_ACTIVE = 0, RIDE_STATUS = 0, RIDER_ID = -1, SOURCE_LAT = 0, SOURCE_LONG = 0, DEST_LAT = 0, DEST_LONG = 0 WHERE DRIVER_ID = ?");
+            sqlQuery.setInt(1, driver.getUserID());
+
+            if (sqlQuery.executeUpdate() > 0) {
+                jsonObject.put("STATUS", 200);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Exception in DBHandler: resetDriver()");
+            e.printStackTrace();
+        }
+        return jsonObject;
     }
     /* End of section */
 

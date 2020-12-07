@@ -175,4 +175,8 @@ public class Driver extends User
 		}
 		return result;
 	}
+
+	public JSONObject resetDriver(DBHandler dbHandler) {
+		return dbHandler.resetDriver(this);
+	}
 }
