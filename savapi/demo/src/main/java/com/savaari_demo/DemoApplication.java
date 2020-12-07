@@ -168,7 +168,7 @@ public class DemoApplication
 	@RequestMapping(value = "/markArrivalAtDestination", method = RequestMethod.POST)
 	public String markArrivalAtDestination(@RequestBody Map<String, String> allParams)
 	{
-		return matchmakingController.markArrivalAtDestination(allParams.get("RIDE_ID"), allParams.get("DIST_TRAVELLED")).toString();
+		return matchmakingController.markArrivalAtDestination(allParams.get("RIDE_ID"), allParams.get("DIST_TRAVELLED"), allParams.get("DRIVER_ID")).toString();
 	}
 
 	@RequestMapping(value = "/endRideWithPayment", method = RequestMethod.POST)
