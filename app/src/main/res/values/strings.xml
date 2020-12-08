@@ -2,8 +2,8 @@
 
     <!-- API Related -->
 
-    <string name = "google_maps_api_key">AIzaSyCUTRgtUcFQ8-ShUacER-f3rs45EsvHfcQ</string>
-    <string name = "directions_api_key">AIzaSyCKNsD2ETZcHtQIo4KhEaI5ysSQfsFh2Hc</string>
+    <string name = "google_maps_api_key"><Your API Key></string>
+    <string name = "directions_api_key"><Your Api Key></string>
     <string name = "sda_api_url">https://50ed16d8cec7.ngrok.io/</string>
 
     <!-- General App related -->
