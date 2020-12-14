@@ -33,21 +33,20 @@ public class MatchmakingController {
     // TODO: Policy on how a ride is sent to driver, implemented in checkRideStatus()
     public boolean setMarkActive(Driver driver)
     {
-        return driver.setMarkActive();
+        //return driver.setMarkActive();
         if (driver.setMarkActive())
         {
             JSONObject json = driver.checkRideRequestStatus();
             if (json == null) {
-                json = new JSONObject();
-                json.put("STATUS", 404);
+                return false;
             }
-            return json;
+            return true;
         }
         else
         {
             JSONObject json = new JSONObject();
             json.put("STATUS", 404);
-            return json;
+            return false;
         }
     }
 
@@ -91,15 +90,8 @@ public class MatchmakingController {
         return rider.getRideForRider();
     }
 
-    public JSONObject acknowledgeEndOfRide(String rideID, String riderID) {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(rideID));
-        ride.setRider(new Rider());
-        ride.getRider().setUserID(Integer.parseInt(riderID));
-
-        JSONObject result = new JSONObject();
-        result.put("STATUS_CODE", ((ride.acknowledgeEndOfRide())? 200 : 404));
-        return result;
+    public boolean acknowledgeEndOfRide(Ride ride) {
+        return ride.acknowledgeEndOfRide();
     }
 
     /*
@@ -110,9 +102,8 @@ public class MatchmakingController {
         return result;
     }*/
 
-    public JSONObject getRideStatus(String rideID) {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(rideID));
+    public Integer getRideStatus(Ride ride) {
+
         return ride.fetchRideStatus();
     }
 

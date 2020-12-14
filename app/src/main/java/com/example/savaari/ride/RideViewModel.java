@@ -162,40 +162,40 @@ public class RideViewModel extends ViewModel {
         repository.findDriver(object -> {
             JSONObject result;
 
-            try {
-                if (object == null) {
-                    ride.setFindStatus(Ride.STATUS_ERROR);
-                }
-                else {
-                    result = (JSONObject) object;
-                    String status = result.getString("STATUS");
+            if (object == null) {
+                ride.setFindStatus(Ride.STATUS_ERROR);
+            }
+            else {
+                result = (JSONObject) object;
 
-                    switch (status) {
-                        case "FOUND":
-                            Log.d(LOG_TAG, "findDriver(): FOUND");
-                            setRide(result);
-                            ride.setFindStatus(Ride.PAIRED);
-                            break;
-                        case "NOT_PAIRED":
-                            Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
-                            ride.setFindStatus(Ride.NOT_PAIRED);
-                            break;
-                        case "NOT_FOUND":
-                            Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
-                            ride.setFindStatus(Ride.NOT_FOUND);
-                            break;
-                        default:
-                            Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
-                            ride.setFindStatus(Ride.STATUS_ERROR);
-                            break;
-                    }
-                }
-                rideFound.postValue(ride);
+                Log.d(LOG_TAG, "findDriver(): FOUND");
+                setRide(result);
+                ride.setFindStatus(Ride.PAIRED);
+
+                /*
+                String status = result.getString("STATUS");
+
+                switch (status) {
+                    case "FOUND":
+                        Log.d(LOG_TAG, "findDriver(): FOUND");
+                        setRide(result);
+                        ride.setFindStatus(Ride.PAIRED);
+                        break;
+                    case "NOT_PAIRED":
+                        Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
+                        ride.setFindStatus(Ride.NOT_PAIRED);
+                        break;
+                    case "NOT_FOUND":
+                        Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
+                        ride.setFindStatus(Ride.NOT_FOUND);
+                        break;
+                    default:
+                        Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
+                        ride.setFindStatus(Ride.STATUS_ERROR);
+                        break;
+                }*/
             }
-            catch (JSONException e) {
-                e.printStackTrace();
-                Log.d(LOG_TAG, "findDriver(): JSONException");
-            }
+            rideFound.postValue(ride);
 
         }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude);
     }
@@ -212,7 +212,7 @@ public class RideViewModel extends ViewModel {
                     JSONObject result = (JSONObject) object;
 
                     try {
-                        if (result.getInt("STATUS_CODE") == 200 && ride.getRideStatus() != result.getInt("RIDE_STATUS")) {
+                        if (ride.getRideStatus() != result.getInt("RIDE_STATUS")) {
                             ride.setRideStatus(result.getInt("RIDE_STATUS"));
                             rideStatusChanged.postValue(true);
                         }
@@ -277,6 +277,11 @@ public class RideViewModel extends ViewModel {
                     else {
                         JSONObject result = (JSONObject) object;
 
+                        Log.d(LOG_TAG, " getRide: Is taking a ride!");
+                        ride.setFindStatus(Ride.ALREADY_PAIRED);
+                        setRide(result);
+
+                        /*
                         if (result.getInt("STATUS_CODE") == 200) {
 
                             if (result.getBoolean("IS_TAKING_RIDE")) {
@@ -290,7 +295,7 @@ public class RideViewModel extends ViewModel {
                         }
                         else {
                             Log.d(LOG_TAG, "getRide: STATUS ERROR: " + result.getInt("STATUS_CODE"));
-                        }
+                        }*/
 
                         // If taking ride, driver status PAIRED, else DEFAULT
                         rideFound.postValue(ride);

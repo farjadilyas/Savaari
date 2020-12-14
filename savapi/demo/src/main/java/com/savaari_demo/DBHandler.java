@@ -1,6 +1,7 @@
 package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -41,7 +42,7 @@ public interface DBHandler {
     /* In-ride DB calls */
     RideRequest checkRideRequestStatus(Rider rider);
     Ride getRide(RideRequest rideRequest);
-    JSONObject getRideStatus(Ride ride);
+    Integer getRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);
     JSONObject resetDriver(Driver driver);

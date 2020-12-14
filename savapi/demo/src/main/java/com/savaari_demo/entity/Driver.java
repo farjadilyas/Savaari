@@ -138,7 +138,7 @@ public class Driver extends User
 		}
 		else {
 			ride.setDriver(this);
-			result = OracleDBHandler.getInstance().getRide(ride);
+			//result = OracleDBHandler.getInstance().getRide(ride);
 			result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
 		}
 
