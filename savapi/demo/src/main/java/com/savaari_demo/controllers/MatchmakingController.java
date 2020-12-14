@@ -1,20 +1,16 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.DBHandler;
-import com.savaari_demo.DBHandlerFactory;
 import com.savaari_demo.entity.*;
-
 import org.json.JSONObject;
 
 public class MatchmakingController {
     // Main Attributes
     private static final String LOG_TAG = MatchmakingController.class.getSimpleName();
-    private static DBHandler dbHandler;
 
     // Main Constructor
     public MatchmakingController()
     {
-        dbHandler = DBHandlerFactory.getDBHandler("Oracle");
+        // Empty Constructor
     }
 
     /*
@@ -33,56 +29,26 @@ public class MatchmakingController {
     // TODO: Policy on how a ride is sent to driver, implemented in checkRideStatus()
     public boolean setMarkActive(Driver driver)
     {
-        //return driver.setMarkActive();
-        if (driver.setMarkActive())
-        {
-            JSONObject json = driver.checkRideRequestStatus();
-            if (json == null) {
-                return false;
-            }
-            return true;
-        }
-        else
-        {
-            JSONObject json = new JSONObject();
-            json.put("STATUS", 404);
-            return false;
-        }
+        return driver.setMarkActive();
     }
-
-    public JSONObject confirmRideRequest(String userID, String found_status, String rider_id)
+    public RideRequest checkRideRequestStatus(Driver driver)
     {
-        Driver driver = new Driver();
-        Rider rider = new Rider();
-
-        driver.setUserID(Integer.parseInt(userID));
-        rider.setUserID(Integer.parseInt(rider_id));
-
-        return driver.confirmRideRequest(rider, Integer.parseInt(found_status));
+        return driver.checkRideRequestStatus();
+    }
+    public boolean confirmRideRequest(RideRequest rideRequest)
+    {
+        return rideRequest.getDriver().confirmRideRequest(rideRequest);
     }
 
-    public JSONObject markDriverArrival(String rideID) {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(rideID));
-
+    public boolean markDriverArrival(Ride ride) {
         return ride.markDriverArrival();
     }
 
-    public JSONObject startRideDriver(String rideID) {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(rideID));
-
+    public boolean startRideDriver(Ride ride) {
         return ride.startRideDriver();
     }
 
-    public JSONObject markArrivalAtDestination(String rideID, String dist_travelled, String driver_id) {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(rideID));
-        ride.setDistanceTravelled(Double.parseDouble(dist_travelled));
-
-        ride.setDriver(new Driver());
-        ride.getDriver().setUserID(Integer.parseInt(driver_id));
-
+    public double markArrivalAtDestination(Ride ride) {
         return ride.markArrivalAtDestination();
     }
 
@@ -107,24 +73,12 @@ public class MatchmakingController {
         return ride.fetchRideStatus();
     }
 
-    public JSONObject getRideForDriver(String driverID){
-        Driver driver = new Driver();
-        driver.setUserID(Integer.parseInt(driverID));
-
-        return driver.getRideForDriver();
+    public Ride getRideForDriver(RideRequest rideRequest){
+        return rideRequest.getDriver().getRideForDriver(rideRequest);
     }
 
-    public JSONObject endRideWithPayment(String ride_id, String amount_paid, String driver_id)
+    public boolean endRideWithPayment(Ride ride, double amount_paid)
     {
-        Ride ride = new Ride();
-        ride.setRideID(Integer.parseInt(ride_id));
-
-        ride.setPayment(new Payment());
-        ride.getPayment().setAmountPaid(Double.parseDouble(amount_paid));
-
-        ride.setDriver(new Driver());
-        ride.getDriver().setUserID(Integer.parseInt(driver_id));
-
-        return ride.endRideWithPayment();
+        return ride.endRideWithPayment(amount_paid);
     }
 }

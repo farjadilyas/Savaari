@@ -68,25 +68,15 @@ public class Driver extends User
 	}
 
 	// Check Ride Request Status
-	public JSONObject checkRideRequestStatus()
+	public RideRequest checkRideRequestStatus()
 	{
 		// TODO: Implement policy of checking rides
 		while(true)
 		{
-			Ride ride = OracleDBHandler.getInstance().checkRideRequestStatus(this);
+			RideRequest ride = OracleDBHandler.getInstance().checkRideRequestStatus(this);
 			if (ride != null)
 			{
-				JSONObject jsonObject = new JSONObject();
-
-				jsonObject.put("STATUS", 200);
-				jsonObject.put("RIDER_NAME", ride.getRider().getUsername());
-				jsonObject.put("RIDER_ID", ride.getRider().getUserID());
-				jsonObject.put("SOURCE_LAT", ride.getPickupLocation().getLatitude());
-				jsonObject.put("SOURCE_LONG", ride.getPickupLocation().getLongitude());
-				jsonObject.put("DEST_LAT", ride.getDropoffLocation().getLatitude());
-				jsonObject.put("DEST_LONG", ride.getDropoffLocation().getLongitude());
-
-				return jsonObject;
+				return ride;
 			}
 			else
 			{
@@ -102,47 +92,25 @@ public class Driver extends User
 	}
 
 	// Confirm Ride Request
-	public JSONObject confirmRideRequest(Rider rider, int found_status)
+	public boolean confirmRideRequest(RideRequest rideRequest)
 	{
 		Ride ride = new Ride();
+
 		ride.setDriver(this);
-		ride.setRider(rider);
-		ride.setRideStatus(found_status == 1 ? 2 : 0);
-		ride.setFindStatus(found_status + 1);
+		ride.setRider(rideRequest.getRider());
+		ride.setRideStatus(rideRequest.getFindStatus() == 1 ? 2 : 0);
+		ride.setFindStatus(rideRequest.getFindStatus() + 1);
 
-		JSONObject jsonObject = new JSONObject();
 		if (OracleDBHandler.getInstance().confirmRideRequest(ride)) {
-
-			if (ride.recordRide()) {
-				jsonObject.put("STATUS", 200);
-			}
-			else {
-				jsonObject.put("STATUS", 304);
-			}
-
-		} else {
-			jsonObject.put("STATUS", 404);
+			return ride.recordRide();
 		}
-		return jsonObject;
+		return false;
 	}
 
 	// Get Ride for Driver
-	public JSONObject getRideForDriver()
+	public Ride getRideForDriver(RideRequest rideRequest)
 	{
-		Ride ride = OracleDBHandler.getInstance().checkRideRequestStatus(this);
-		JSONObject result = new JSONObject();
-
-		if (ride == null) {
-			result.put("STATUS_CODE", 404);
-			result.put("IS_TAKING_RIDE", false);
-		}
-		else {
-			ride.setDriver(this);
-			//result = OracleDBHandler.getInstance().getRide(ride);
-			result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
-		}
-
-		return result;
+		return OracleDBHandler.getInstance().getRide(rideRequest);
 	}
 
 	// Saving Driver Location
@@ -169,7 +137,7 @@ public class Driver extends User
 	}
 
 	// Reset Driver
-	public JSONObject resetDriver() {
+	public boolean resetDriver() {
 		return OracleDBHandler.getInstance().resetDriver(this);
 	}
 }

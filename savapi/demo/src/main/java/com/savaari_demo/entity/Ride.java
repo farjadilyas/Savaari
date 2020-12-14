@@ -146,10 +146,10 @@ public class Ride extends RideRequest {
     public Integer fetchRideStatus() {
         return OracleDBHandler.getInstance().getRideStatus(this);
     }
-    public JSONObject markDriverArrival() {
+    public boolean markDriverArrival() {
         return OracleDBHandler.getInstance().markDriverArrival(this);
     }
-    public JSONObject startRideDriver() { return OracleDBHandler.getInstance().startRideDriver(this); }
+    public boolean startRideDriver() { return OracleDBHandler.getInstance().startRideDriver(this); }
 
 
     // Acknowledge end of ride (final call)
@@ -165,27 +165,21 @@ public class Ride extends RideRequest {
     // TODO: Methods need to get more data from tables
 
     // Main End Ride with Driver Method
-    public JSONObject markArrivalAtDestination() {
+    public double markArrivalAtDestination() {
         fare = calculateFare();
-        JSONObject jsonObject = OracleDBHandler.getInstance().markArrivalAtDestination(this);
-
-        if (jsonObject.getInt("STATUS") == 200) {
-            jsonObject.put("FARE", fare);
+        if (OracleDBHandler.getInstance().markArrivalAtDestination(this)) {
+            return fare;
         }
-        return jsonObject;
+        return -1;
     }
 
     // Main Method for Ending Ride with Payment: Cash Mode
-    public JSONObject endRideWithPayment()
+    public boolean endRideWithPayment(double amountPaid)
     {
-        boolean status = OracleDBHandler.getInstance().endRideWithPayment(this);
-
-        JSONObject jsonObject = driver.resetDriver();
-
-        if (!(status && jsonObject.getInt("STATUS") == 200))
-            jsonObject.put("STATUS", 404);
-
-        return jsonObject;
+        // TODO: Payment policy, where does payment sheningans happen?
+        payment = new Payment();
+        payment.setAmountPaid(amountPaid);
+        return (driver.resetDriver() && OracleDBHandler.getInstance().endRideWithPayment(this));
     }
 
     public boolean recordRide() {

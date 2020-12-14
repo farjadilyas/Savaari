@@ -18,6 +18,7 @@ public class LocationController
 
     /* Location update & retrieval methods*/
 
+
     public boolean saveRiderLocation(Rider rider) {
         return rider.saveLocation();
     }
