@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
+
 import com.savaari_demo.entity.*;
+
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -74,7 +76,7 @@ public class DemoApplication
 
 		JSONObject result = new JSONObject();
 
-		if (crudController.addDriver(username, email_address, password)) {
+		if (crudController.addRider(username, email_address, password)) {
 			result.put("STATUS_CODE", 200);
 		}
 		else {
@@ -398,16 +400,32 @@ public class DemoApplication
 	@RequestMapping(value = "/getRideStatus", method = RequestMethod.POST)
 	public String getRideStatus(@RequestBody Map<String, String> allParams)
 	{
-		String rideID = allParams.get("RIDE_ID");
-		return matchmakingController.getRideStatus(rideID).toString();
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+
+		int rideStatus = matchmakingController.getRideStatus(ride);
+
+		JSONObject result = null;
+
+		if (rideStatus != Ride.RS_DEFAULT) {
+			result = new JSONObject();
+			result.put("RIDE_STATUS", rideStatus);
+		}
+
+		return result.toString();
 	}
 
 	@RequestMapping(value = "/acknowledgeEndOfRide", method = RequestMethod.POST)
 	public String acknowledgeEndOfRide(@RequestBody Map<String, String> allParams)
 	{
-		String rideID = allParams.get("RIDE_ID");
-		String riderID = allParams.get("RIDER_ID");
-		return matchmakingController.acknowledgeEndOfRide(rideID, riderID).toString();
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.setRider(new Rider());
+		ride.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+
+		JSONObject result = new JSONObject();
+		result.put("STATUS_CODE", ((matchmakingController.acknowledgeEndOfRide(ride))? 200 : 404));
+		return result.toString();
 	}
 
 	/* End of section */
@@ -431,12 +449,12 @@ public class DemoApplication
 	@RequestMapping(value = "/saveRiderLocation", method = RequestMethod.POST)
 	public String saveRiderLocation(@RequestBody Map<String, String> allParams)
 	{
-		String userID = allParams.get("USER_ID"),
-				latitude = allParams.get("LATITUDE"),
-				longitude = allParams.get("LONGITUDE"),
-				timestamp = allParams.get("TIMESTAMP");
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		rider.setCurrentLocation(new Location(Double.valueOf(allParams.get("LATITUDE")), Double.valueOf(allParams.get("LONGITUDE")),
+				Long.parseLong(allParams.get("TIMESTAMP"))));
 
-		boolean locationSaved = locationController.saveRiderLocations(userID, latitude, longitude, timestamp);
+		boolean locationSaved = locationController.saveRiderLocation(rider);
 
 		JSONObject result = new JSONObject();
 		result.put("STATUS", ((locationSaved)? 200 : 404));
@@ -464,7 +482,22 @@ public class DemoApplication
 	@RequestMapping(value = "/getRiderLocation", method = RequestMethod.POST)
 	public String getRiderLocation(@RequestBody Map<String, String> allParams)
 	{
-		return locationController.getRiderLocation(allParams.get("USER_ID")).toString();
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		locationController.getRiderLocation(rider);
+
+		JSONObject result = new JSONObject();
+
+		if (rider.getCurrentLocation() == null) {
+			result.put("STATUS_CODE", 404);
+		}
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("LATITUDE", rider.getCurrentLocation().getLatitude());
+			result.put("LONGITUDE", rider.getCurrentLocation().getLongitude());
+		}
+		return result.toString();
 	}
 	/* End of section */
 

@@ -1,6 +1,7 @@
 package com.savaari_demo.entity;
 
 import com.savaari_demo.OracleDBHandler;
+
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ public class Ride extends RideRequest {
 
     // Main Attributes
     public static final int
+            RS_DEFAULT = 10,
             PICKUP = 11,
             DRIVER_ARRIVED = 12,
             CANCELLED = 13,
@@ -141,7 +143,7 @@ public class Ride extends RideRequest {
     // ---------------------------------------------------------------------------------
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
-    public JSONObject fetchRideStatus() {
+    public Integer fetchRideStatus() {
         return OracleDBHandler.getInstance().getRideStatus(this);
     }
     public boolean markDriverArrival() {

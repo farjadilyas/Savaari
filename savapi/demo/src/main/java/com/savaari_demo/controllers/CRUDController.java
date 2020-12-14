@@ -1,6 +1,5 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.OracleDBHandler;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
 import org.json.JSONObject;
@@ -33,7 +32,7 @@ public class CRUDController
         rider.setEmailAddress(email_address);
         rider.setPassword(password);
 
-        return OracleDBHandler.getInstance().addRider(rider);
+        return rider.signup();
     }
 
     // Add a new inactive Driver method

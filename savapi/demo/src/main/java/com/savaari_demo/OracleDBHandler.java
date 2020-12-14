@@ -739,29 +739,24 @@ public class OracleDBHandler implements DBHandler {
 
     }
 
-    public JSONObject getRideStatus(Ride ride) {
+    public Integer getRideStatus(Ride ride) {
         String sqlQuery = "SELECT STATUS FROM RIDES WHERE RIDE_ID = " + ride.getRideID();
 
-        JSONObject result = new JSONObject();
+        Integer rideStatus = Ride.RS_DEFAULT;
 
         try {
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
             if (resultSet.next()) {
-                result.put("STATUS_CODE", 200);
-                result.put("RIDE_STATUS", resultSet.getInt(1));
-            }
-            else {
-                result.put("STATUS_CODE", 404);
+                rideStatus = resultSet.getInt(1);
             }
 
-            return result;
+            return rideStatus;
         }
         catch (Exception e) {
             System.out.println("Exception in DBHandler: getRide()");
             e.printStackTrace();
-            result.put("STATUS_CODE", 404);
-            return result;
+            return Ride.RS_DEFAULT;
         }
     }
 

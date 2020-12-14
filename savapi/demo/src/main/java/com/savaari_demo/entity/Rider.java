@@ -20,6 +20,10 @@ public class Rider extends User
     /* Methods for system interactions */
 
     //Rider-side CRUD methods
+
+    public Boolean signup() {
+        return OracleDBHandler.getInstance().addRider(this);
+    }
     public Integer login() {
         return OracleDBHandler.getInstance().loginRider(this);
     }
@@ -58,9 +62,9 @@ public class Rider extends User
         if (rideRequest.getFindStatus() == RideRequest.FOUND) {
             return getRide(rideRequest);
         }
-        else if (rideRequest.getFindStatus() == 1) {
+        else if (rideRequest.getFindStatus() == RideRequest.REJECTED) {
             // Rejected
-            return null
+            return null;
         }
         else {
             // Check if request sent
