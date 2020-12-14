@@ -6,7 +6,7 @@ import com.example.savaari.services.network.OnDataLoadedListener;
 import java.util.concurrent.Executor;
 
 public class Repository {
-    private static final String url = "https://4b15bd13dffb.ngrok.io/";
+    private static final String url = "https://58eb3463c829.ngrok.io/";
     private Executor executor;
 
     Repository(Executor executor) {

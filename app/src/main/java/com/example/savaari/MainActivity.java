@@ -19,7 +19,8 @@ public class MainActivity extends Util {
     protected void onCreate(Bundle savedInstanceState)
     {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        ThemeVar.setData(preferences.getInt(getString(R.string.preference_theme_var), 5));
+
+        ThemeVar.setData(preferences.getInt(getString(R.string.preference_theme_var), ThemeVar.getData()));
 
         switch (ThemeVar.getData())
         {

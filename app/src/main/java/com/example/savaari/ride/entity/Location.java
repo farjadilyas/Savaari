@@ -1,4 +1,6 @@
-package com.savaari_demo.entity;
+package com.example.savaari.ride.entity;
+
+import com.google.android.gms.maps.model.LatLng;
 
 public class Location
 {
@@ -12,10 +14,16 @@ public class Location
 		super();
 	}
 
+	public Location(LatLng latLng) {
+		this.latitude = latLng.latitude;
+		this.longitude = latLng.longitude;
+		this.timestamp = null;
+	}
 	public Location(Double latitude, Double longitude) {
 		super();
 		this.latitude = latitude;
 		this.longitude = longitude;
+		this.timestamp = null;
 	}
 	public Location(Double latitude, Double longitude, Long timestamp) {
 		super();

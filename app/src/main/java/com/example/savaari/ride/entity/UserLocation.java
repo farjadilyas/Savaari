@@ -1,4 +1,4 @@
-package com.example.savaari.user;
+package com.example.savaari.ride.entity;
 
 public class UserLocation
 {

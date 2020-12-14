@@ -46,9 +46,10 @@ import com.example.savaari.Util;
 import com.example.savaari.ride.adapter.OnItemClickListener;
 import com.example.savaari.ride.adapter.RideTypeAdapter;
 import com.example.savaari.ride.adapter.RideTypeItem;
+import com.example.savaari.ride.entity.Ride;
 import com.example.savaari.services.location.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
-import com.example.savaari.user.UserLocation;
+import com.example.savaari.ride.entity.UserLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -276,7 +277,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         driverName.setText(rideViewModel.getRide().getDriver().getUsername());
         ratingBar.setRating(rideViewModel.getRide().getDriver().getRating());
 
-        if (ride.getMatchStatus() == Ride.ALREADY_PAIRED) {
+        if (ride.getFindStatus() == Ride.ALREADY_PAIRED) {
             switch (ride.getRideStatus()) {
                 case Ride.PICKUP:
                     setRoute(rideViewModel.getRide().getPickupLocation(), rideViewModel.getRide().getDropoffLocation(), "");
@@ -330,7 +331,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void newRideFoundAction(Ride ride) {
         String findStatusMessage;
 
-        switch (ride.getMatchStatus()) {
+        switch (ride.getFindStatus()) {
             case Ride.PAIRED:
                 MarkerOptions options = new MarkerOptions().position(ride.getPickupLocation())
                         .title("Pickup point");
@@ -545,7 +546,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     public void onMapReady(GoogleMap googleMap) {
         Toast.makeText(RideActivity.this, "Map is ready", Toast.LENGTH_SHORT).show();
         this.googleMap = googleMap;
-        if (ThemeVar.getData()%2 == 0) {
+        if (ThemeVar.getData()%2 == 0 || ThemeVar.getData() == 1) {
             googleMap.setMapStyle(
                     MapStyleOptions.loadRawResourceStyle(
                             this, R.raw.map_style));
@@ -643,8 +644,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         destTextInput = destFragmentView.findViewById(R.id.places_autocomplete_search_input);
         srcTextInput.setHint(R.string.add_source);
         srcTextInput.setTextSize(18);
+        srcTextInput.setTextColor(R.attr.textColor);
         destTextInput.setHint(R.string.add_dest);
         destTextInput.setTextSize(18);
+        destTextInput.setTextColor(R.attr.textColor);
 
         // Source selected listener
         autocompleteFragmentSrc.setOnPlaceSelectedListener(new PlaceSelectionListener() {

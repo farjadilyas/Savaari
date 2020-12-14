@@ -33,14 +33,14 @@ public interface DBHandler {
 
     /* Rider-side matchmaking DB calls*/
     ArrayList<Driver> searchDriverForRide();
-    boolean sendRideRequest(Ride rideRequest);
-    JSONObject checkFindStatus(Rider rider);
+    boolean sendRideRequest(RideRequest rideRequest);
+    Integer checkFindStatus(Rider rider);
     boolean recordRide(Ride ride);
     Payment addPayment();
 
     /* In-ride DB calls */
-    Ride checkRideRequestStatus(Rider rider);
-    JSONObject getRide(Ride ride);
+    RideRequest checkRideRequestStatus(Rider rider);
+    Ride getRide(RideRequest rideRequest);
     JSONObject getRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);

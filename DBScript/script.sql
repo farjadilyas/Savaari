@@ -145,7 +145,7 @@ DROP TABLE `RIDER_DETAILS`;
 /* Initialize tables with necessary data */
 
 INSERT INTO RIDE_TYPES(TYPE_ID, NAME, MULTIPLIER, MAX_PASSENGERS)
-VALUES(0, "Bike", 1, 1),(0, "Choti", 1.2, 4), (0, "Bari", 1.4, 8), (0, "Ayaash", 2, 6);
+VALUES(0, "Bike", 1, 1),(0, "Small", 1.2, 4), (0, "Med", 1.4, 8), (0, "NotSoSmol", 2, 6);
 
 
 
@@ -158,3 +158,5 @@ UPDATE RIDER_DETAILS
 SET FIND_STATUS = 0, DRIVER_ID = -1;
 
 DELETE FROM RIDES;
+
+DELETE FROM PAYMENTS;

@@ -5,11 +5,8 @@ import com.savaari_demo.DBHandlerFactory;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Location;
 import com.savaari_demo.entity.Rider;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.sql.Timestamp;
 
 public class LocationController
 {
@@ -24,8 +21,8 @@ public class LocationController
         // Package parameters into Rider instance
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(riderID));
-        rider.setLastLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
-                new Timestamp(Long.parseLong(timestamp))));
+        rider.setCurrentLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
+                Long.parseLong(timestamp)));
 
         return rider.saveLocation(dbHandler);
     }
@@ -35,8 +32,8 @@ public class LocationController
         // Package parameters into Rider instance
         Driver driver = new Driver();
         driver.setUserID(Integer.valueOf(driverID));
-        driver.setLastLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
-                new Timestamp(Long.parseLong(timestamp))));
+        driver.setCurrentLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
+                Long.parseLong(timestamp)));
 
         return driver.saveDriverLocation(dbHandler);
     }
@@ -56,13 +53,13 @@ public class LocationController
 
         JSONObject result = new JSONObject();
 
-        if (rider.getLastLocation() == null) {
+        if (rider.getCurrentLocation() == null) {
             result.put("STATUS_CODE", 404);
         }
         else {
             result.put("STATUS_CODE", 200);
-            result.put("LATITUDE", rider.getLastLocation().getLatitude());
-            result.put("LONGITUDE", rider.getLastLocation().getLongitude());
+            result.put("LATITUDE", rider.getCurrentLocation().getLatitude());
+            result.put("LONGITUDE", rider.getCurrentLocation().getLongitude());
         }
         return result;
     }

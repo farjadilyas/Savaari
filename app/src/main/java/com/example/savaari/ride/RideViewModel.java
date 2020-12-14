@@ -7,7 +7,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.savaari.Repository;
-import com.example.savaari.user.UserLocation;
+import com.example.savaari.ride.entity.Location;
+import com.example.savaari.ride.entity.Ride;
+import com.example.savaari.ride.entity.UserLocation;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -47,6 +49,7 @@ public class RideViewModel extends ViewModel {
         this.USER_ID = USER_ID;
         this.repository = repository;
         ride = new Ride();
+        ride.getRider().setUserID(USER_ID);
     }
 
     /* Get user data */
@@ -161,7 +164,7 @@ public class RideViewModel extends ViewModel {
 
             try {
                 if (object == null) {
-                    ride.setMatchStatus(Ride.STATUS_ERROR);
+                    ride.setFindStatus(Ride.STATUS_ERROR);
                 }
                 else {
                     result = (JSONObject) object;
@@ -171,19 +174,19 @@ public class RideViewModel extends ViewModel {
                         case "FOUND":
                             Log.d(LOG_TAG, "findDriver(): FOUND");
                             setRide(result);
-                            ride.setMatchStatus(Ride.PAIRED);
+                            ride.setFindStatus(Ride.PAIRED);
                             break;
                         case "NOT_PAIRED":
                             Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
-                            ride.setMatchStatus(Ride.NOT_PAIRED);
+                            ride.setFindStatus(Ride.NOT_PAIRED);
                             break;
                         case "NOT_FOUND":
                             Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
-                            ride.setMatchStatus(Ride.NOT_FOUND);
+                            ride.setFindStatus(Ride.NOT_FOUND);
                             break;
                         default:
                             Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
-                            ride.setMatchStatus(Ride.STATUS_ERROR);
+                            ride.setFindStatus(Ride.STATUS_ERROR);
                             break;
                     }
                 }
@@ -241,8 +244,8 @@ public class RideViewModel extends ViewModel {
                         if (result.getInt("STATUS_CODE") == 200) {
 
                             Log.d(LOG_TAG, " fetchDriverLocation: Got driver location!");
-                            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("LATITUDE"),
-                                    result.getDouble("LONGITUDE")));
+                            ride.getDriver().setCurrentLocation(new Location(result.getDouble("LATITUDE"),
+                                    result.getDouble("LONGITUDE"), null));
                             driverLocationFetched.postValue(true);
 
                             if (ride.closeToPickup()) {
@@ -278,7 +281,7 @@ public class RideViewModel extends ViewModel {
 
                             if (result.getBoolean("IS_TAKING_RIDE")) {
                                 Log.d(LOG_TAG, " getRide: Is taking a ride!");
-                                ride.setMatchStatus(Ride.ALREADY_PAIRED);
+                                ride.setFindStatus(Ride.ALREADY_PAIRED);
                                 setRide(result);
                             }
                             else {
@@ -307,8 +310,8 @@ public class RideViewModel extends ViewModel {
 
             ride.getDriver().setUserID(result.getInt("DRIVER_ID"));
             ride.getDriver().setUsername(result.getString("DRIVER_NAME"));
-            ride.getDriver().setCurrentLocation(new LatLng(result.getDouble("DRIVER_LAT"),
-                    result.getDouble("DRIVER_LONG")));
+            ride.getDriver().setCurrentLocation(new Location(result.getDouble("DRIVER_LAT"),
+                    result.getDouble("DRIVER_LONG"), null));
 
             ride.getPayment().setPaymentID(result.getInt("PAYMENT_ID"));
 
