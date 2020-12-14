@@ -420,7 +420,7 @@ public class OracleDBHandler implements DBHandler {
         }
     }
     @Override
-    public Ride checkRideRequestStatus(Driver driver)
+    public RideRequest checkRideRequestStatus(Driver driver)
     {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
@@ -440,7 +440,7 @@ public class OracleDBHandler implements DBHandler {
                 }
                 if (resultSet.getInt(1) > 0) {
                     System.out.println("db:checkRideReqStat: op2");
-                    Ride ride = new Ride();
+                    RideRequest ride = new RideRequest();
 
                     Rider rider = new Rider();
                     rider.setUserID(resultSet.getInt(2));
@@ -505,96 +505,59 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public JSONObject markDriverArrival(Ride ride) {
+    public boolean markDriverArrival(Ride ride) {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 12 WHERE RIDE_ID = ?");
-
             sqlQuery.setInt(1, ride.getRideID());
-
             int numRowsUpdates = sqlQuery.executeUpdate();
-
-            JSONObject jsonObject = new JSONObject();
-            if (numRowsUpdates > 0) {
-                jsonObject.put("STATUS", 200);
-            } else {
-                jsonObject.put("STATUS", 404);
-            }
-            return jsonObject;
+            return (numRowsUpdates > 0);
         }
         catch (Exception e) {
             e.printStackTrace();
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("STATUS", 404);
-            return jsonObject;
+            return false;
         }
     }
 
     // Starting the Ride from Driver side
     @Override
-    public JSONObject startRideDriver(Ride ride) {
+    public boolean startRideDriver(Ride ride) {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE RIDES SET STATUS = 14 WHERE RIDE_ID = ?");
 
             sqlQuery.setInt(1, ride.getRideID());
             int numRowsUpdated = sqlQuery.executeUpdate();
-
-            JSONObject jsonObject = new JSONObject();
-            if (numRowsUpdated > 0) {
-                
-                // Adding Start Time Query
-                PreparedStatement sqlQuery2 = connect.prepareStatement("UPDATE RIDES SET START_TIME = NOW() WHERE RIDE_ID = ?");
-                sqlQuery2.setInt(1, ride.getRideID());
-                numRowsUpdated = sqlQuery2.executeUpdate();
-
-                // Return object
-                if (numRowsUpdated > 0)
-                    jsonObject.put("STATUS", 200);
-                else
-                    jsonObject.put("STATUS", 404);
-            } else {
-                jsonObject.put("STATUS", 404);
-            }
-            return jsonObject;
+            return (numRowsUpdated > 0);
         }
         catch (Exception e) {
             e.printStackTrace();
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("STATUS", 404);
-            return jsonObject;
+            return false;
         }
     }
 
     @Override
-    public JSONObject markArrivalAtDestination(Ride ride) {
+    public boolean markArrivalAtDestination(Ride ride) {
         try {
             String query = "UPDATE RIDES SET STATUS = 15, DIST_TRAVELLED = " + ride.getDistanceTravelled()
                     + ", FARE = " + ride.getFare() + ", FINISH_TIME = CURRENT_TIME() WHERE RIDE_ID = " + ride.getRideID();
 
             System.out.println("This is the sqlQuery: " + query);
-
             PreparedStatement sqlQuery = connect.prepareStatement(query);
-            
             int numRowsUpdated = sqlQuery.executeUpdate();
-
             System.out.println(LOG_TAG + ":markArrivalAtDestination: numRowsUpdated: " + numRowsUpdated);
-            
-            JSONObject jsonObject = new JSONObject();
+
             if (numRowsUpdated > 0) {
                 System.out.println(LOG_TAG + "markArrivalAtDestination: NO ERROR");
-                jsonObject.put("STATUS", 200);
+                return true;
             }
             else {
                 System.out.println(LOG_TAG + "markArrivalAtDestination: error #1");
-                jsonObject.put("STATUS", 404);
+                return false;
             }
-            return jsonObject;
         }
         catch (Exception e) {
             e.printStackTrace();
             System.out.println(LOG_TAG + "markArrivalAtDestination: error #2");
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("STATUS", 404);
-            return jsonObject;
+            return false;
         }
     }
 
@@ -849,25 +812,21 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public JSONObject resetDriver(Driver driver) {
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("STATUS", 404);
-
+    public boolean resetDriver(Driver driver) {
         try {
 
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET IS_ACTIVE = 0, RIDE_STATUS = 0, RIDER_ID = -1, SOURCE_LAT = 0, SOURCE_LONG = 0, DEST_LAT = 0, DEST_LONG = 0 WHERE DRIVER_ID = ?");
             sqlQuery.setInt(1, driver.getUserID());
 
             if (sqlQuery.executeUpdate() > 0) {
-                jsonObject.put("STATUS", 200);
+                return true;
             }
 
         } catch (Exception e) {
             System.out.println("Exception in DBHandler: resetDriver()");
             e.printStackTrace();
         }
-        return jsonObject;
+        return false;
     }
     /* End of section */
 

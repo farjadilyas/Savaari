@@ -24,7 +24,7 @@ public class LocationController
         rider.setCurrentLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
                 Long.parseLong(timestamp)));
 
-        return rider.saveLocation(dbHandler);
+        return rider.saveLocation();
     }
 
     public boolean saveDriverLocations(String driverID, String latitude, String longitude, String timestamp) {
@@ -35,21 +35,21 @@ public class LocationController
         driver.setCurrentLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
                 Long.parseLong(timestamp)));
 
-        return driver.saveDriverLocation(dbHandler);
+        return driver.saveDriverLocation();
     }
 
     public JSONObject getDriverLocation(String driverID) {
         Driver driver = new Driver();
         driver.setUserID(Integer.valueOf(driverID));
 
-        return driver.getDriverLocation(dbHandler);
+        return driver.getDriverLocation();
     }
 
     public JSONObject getRiderLocation(String riderID) {
         Rider rider = new Rider();
         rider.setUserID(Integer.valueOf(riderID));
 
-        rider.fetchLocation(dbHandler);
+        rider.fetchLocation();
 
         JSONObject result = new JSONObject();
 
