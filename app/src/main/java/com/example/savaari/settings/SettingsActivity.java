@@ -15,6 +15,7 @@ import com.example.savaari.services.location.LocationUpdateUtil;
 
 public class SettingsActivity extends Util implements SettingsClickListener {
 
+    private SettingsViewModel settingsViewModel = null;
     private Toolbar myToolbar;
     private boolean inSubSetting = false;
     private UserSettings userSettings;
@@ -50,7 +51,7 @@ public class SettingsActivity extends Util implements SettingsClickListener {
 
         userSettings = new UserSettings();
 
-        // TODO: ValueEvenetListener for change in theme settings
+        // TODO: ValueEventListener for change in theme settings
 
         /*
         * If themeChange is true (theme has been changed), then replace with new ThemeFragment

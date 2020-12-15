@@ -3,7 +3,10 @@ package com.example.savaari.ride.entity;
 import java.util.ArrayList;
 
 public class Ride extends RideRequest {
+
+    // Main Attributes
     public static final int
+            RS_DEFAULT = 10,
             PICKUP = 11,
             DRIVER_ARRIVED = 12,
             CANCELLED = 13,

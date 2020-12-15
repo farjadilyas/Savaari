@@ -1,39 +1,39 @@
 package com.savaari_demo.entity;
 
 import com.savaari_demo.OracleDBHandler;
-import org.json.JSONObject;
 
 public class Driver extends User
 {
 	// Main Attributes
 	private static final String LOG_TAG = Driver.class.getSimpleName();
-	Boolean isActive;
-	Boolean isTakingRide;
+	Boolean active;
+	Boolean takingRide;
 	int rideRequestStatus;
 
 	// Main Constructors
 	public Driver() {
-		super();
+
 	}
-	public Driver(Location currentLocation, Boolean isActive, Boolean isTakingRide) {
+
+	public Driver(Location currentLocation, Boolean active, Boolean takingRide) {
 		super();
 		setCurrentLocation(currentLocation);
-		setIsActive(isActive);
-		setIsTakingRide(isTakingRide);
+		setActive(active);
+		setTakingRide(takingRide);
 	}
 	
 	// Getters and Setters
-	public Boolean getIsActive() {
-		return isActive;
+	public Boolean isActive() {
+		return active;
 	}
-	public void setIsActive(Boolean isActive) {
-		this.isActive = isActive;
+	public void setActive(Boolean active) {
+		this.active = active;
 	}
-	public Boolean getIsTakingRide() {
-		return isTakingRide;
+	public Boolean isTakingRide() {
+		return takingRide;
 	}
-	public void setIsTakingRide(Boolean isTakingRide) {
-		this.isTakingRide = isTakingRide;
+	public void setTakingRide(Boolean takingRide) {
+		this.takingRide = takingRide;
 	}
 	public int getRideRequestStatus() {
 		return rideRequestStatus;
@@ -120,20 +120,9 @@ public class Driver extends User
 	}
 
 	// Getting Driver Location
-	public JSONObject getDriverLocation()
+	public void getDriverLocation()
 	{
 		setCurrentLocation(OracleDBHandler.getInstance().getDriverLocation(this));
-		JSONObject result = new JSONObject();
-
-		if (getCurrentLocation() == null) {
-			result.put("STATUS_CODE", 404);
-		}
-		else {
-			result.put("STATUS_CODE", 200);
-			result.put("LATITUDE", getCurrentLocation().getLatitude());
-			result.put("LONGITUDE", getCurrentLocation().getLongitude());
-		}
-		return result;
 	}
 
 	// Reset Driver

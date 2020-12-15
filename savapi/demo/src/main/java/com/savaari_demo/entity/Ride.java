@@ -2,8 +2,6 @@ package com.savaari_demo.entity;
 
 import com.savaari_demo.OracleDBHandler;
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 public class Ride extends RideRequest {
@@ -29,11 +27,14 @@ public class Ride extends RideRequest {
     private double estimatedFare;
     private double fare;
     private int rideStatus;
-    private Integer paymentMethod;
+    private Integer paymentMethod; // TODO : Move Proper attributes to Ride Request
     private ArrayList<Location> stops;
 
     public Ride() {
-
+        rider = new Rider();
+        driver = new Driver();
+        //vehicle = new Vehicle();
+        payment = new Payment();
     }
 
     // ---------------------------------------------------------------------------------

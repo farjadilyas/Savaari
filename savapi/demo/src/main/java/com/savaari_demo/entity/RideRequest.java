@@ -34,7 +34,8 @@ public class RideRequest {
     protected int findStatus;
 
     public RideRequest() {
-
+        rider = new Rider();
+        driver = new Driver();
     }
 
     public Rider getRider() {

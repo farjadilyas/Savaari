@@ -7,8 +7,7 @@ import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Location;
 import com.savaari_demo.entity.Rider;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.ArrayList;
 
 public class LocationController
 {
@@ -23,32 +22,23 @@ public class LocationController
         return rider.saveLocation();
     }
 
-    public boolean saveDriverLocations(String driverID, String latitude, String longitude, String timestamp) {
-
-        // Package parameters into Rider instance
-        Driver driver = new Driver();
-        driver.setUserID(Integer.parseInt(driverID));
-        driver.setCurrentLocation(new Location(Double.valueOf(latitude), Double.valueOf(longitude),
-                Long.parseLong(timestamp)));
+    public boolean saveDriverLocation(Driver driver) {
 
         return driver.saveDriverLocation();
     }
 
-    public JSONObject getDriverLocation(String driverID) {
-        Driver driver = new Driver();
-        driver.setUserID(Integer.parseInt(driverID));
-
-        return driver.getDriverLocation();
+    public void getDriverLocation(Driver driver) {
+        driver.getDriverLocation();
     }
 
     public void getRiderLocation(Rider rider) {
         rider.fetchLocation();
     }
 
-    public JSONArray getDriverLocations() {
+    public ArrayList<Location> getDriverLocations() {
         return OracleDBHandler.getInstance().getDriverLocations();
     }
-    public JSONArray getRiderLocations() {
+    public ArrayList<Location> getRiderLocations() {
         return OracleDBHandler.getInstance().getRiderLocations();
     }
     /* End of section */

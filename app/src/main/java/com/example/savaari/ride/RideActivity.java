@@ -49,7 +49,6 @@ import com.example.savaari.ride.adapter.RideTypeItem;
 import com.example.savaari.ride.entity.Ride;
 import com.example.savaari.services.location.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
-import com.example.savaari.ride.entity.UserLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -119,37 +118,37 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     /* Nav Views */
     private DrawerLayout drawer;
-    LinearLayout searchBar;
+    private LinearLayout searchBar;
 
     private ImageButton menuButton;
     private NavigationView navigationView;
     private View headerView;
     private TextView navUsername, navEmail;
 
-    LinearLayout rideSelectPanel;
-    LinearLayout rideConfigBar;
-    ProgressBar progressBar;
+    private LinearLayout rideSelectPanel;
+    private LinearLayout rideConfigBar;
+    private ProgressBar progressBar;
     private Button searchRideButton;
 
-    LinearLayout rideTypeSelector;
-    LinearLayout paymentMethodSelector;
-    LinearLayout rideTypePanel;
-    ImageView rideTypeImage;
-    TextView rideTypeName;
-    TextView rideTypePrice;
-    TextView rideTypeHeader;
-    ArrayList<RideTypeItem> rideTypeItems;
+    private LinearLayout rideTypeSelector;
+    private LinearLayout paymentMethodSelector;
+    private LinearLayout rideTypePanel;
+    private ImageView rideTypeImage;
+    private TextView rideTypeName;
+    private TextView rideTypePrice;
+    private TextView rideTypeHeader;
+    private ArrayList<RideTypeItem> rideTypeItems;
 
-    LinearLayout rideDetailsPanel;
-    ImageView riderImage;
-    TextView rideStatusMessage;
-    TextView driverName;
-    RatingBar ratingBar;
+    private LinearLayout rideDetailsPanel;
+    private ImageView riderImage;
+    private TextView rideStatusMessage;
+    private TextView driverName;
+    private RatingBar ratingBar;
 
     private RideViewModel rideViewModel = null;
     /* State variables - references to ViewModel variables */
     private int USER_ID = -1;
-    private ArrayList<UserLocation> mUserLocations;
+    private ArrayList<com.example.savaari.ride.entity.Location> mUserLocations;
 
     /* User Objects, driver & rider references to instances belonging to Ride Object*/
     private Ride ride = null;
@@ -224,11 +223,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (dataLoaded) {
             navUsername.setText(rideViewModel.getRide().getRider().getUsername());
             navEmail.setText(rideViewModel.getRide().getRider().getEmailAddress());
-            Toast.makeText(RideActivity.this, "User data loaded!", Toast.LENGTH_SHORT).show();
         }
         else
         {
-            Toast.makeText(RideActivity.this, "Data could not be loaded", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Data could not be loaded");
         }
     }
 
@@ -243,16 +241,13 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
             // Testing Code
             Log.d(TAG, "loadUserLocations: mUserLocations.size(): " + mUserLocations.size());
-            for (int i = 0; i < mUserLocations.size(); ++i) {
+
+            for (com.example.savaari.ride.entity.Location userLocation : mUserLocations) {
                 Log.d(TAG, "loadUserLocations: setting Markers");
                 MarkerOptions option = new MarkerOptions()
-                        .position(new LatLng(mUserLocations.get(i).getLatitude(), mUserLocations.get(i).getLongitude()));
+                        .position(new LatLng(userLocation.getLatitude(), userLocation.getLongitude()));
                 googleMap.addMarker(option);
             }
-            Toast.makeText(RideActivity.this, "User locations loaded!", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            Toast.makeText(RideActivity.this, "User locations could not be loaded", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -273,6 +268,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     // Called if a ride is found, forwards new rides to newRideFoundAction()
     private void rideFoundAction(Ride ride) {
+
+        this.ride = ride;
 
         driverName.setText(rideViewModel.getRide().getDriver().getUsername());
         ratingBar.setRating(rideViewModel.getRide().getDriver().getRating());
@@ -357,14 +354,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 backToSearchRide();
                 break;
 
-            case Ride.DEFAULT:
+            default:
                 backToSearchRide();
                 return;
-
-            default:
-                findStatusMessage = "There was a problem in finding a ride";
-                backToSearchRide();
-                break;
         }
 
         Toast.makeText(RideActivity.this, findStatusMessage, Toast.LENGTH_SHORT).show();
@@ -372,7 +364,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void watchRideStatus() {
         Log.d(TAG, "watchRideStatus() called!");
-        future = ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay((Runnable) () -> rideViewModel.getRideStatus(),
+        future = ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay(() -> rideViewModel.getRideStatus(),
                 0L, 8L, TimeUnit.SECONDS);
         rideViewModel.isRideStatusChanged().observe(RideActivity.this, this::onRideStatusChanged);
     }
@@ -425,7 +417,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 0L, 8L, TimeUnit.SECONDS);
 
         MarkerOptions options = new MarkerOptions()
-                .position(ride.getDriver().getCurrentLocation())
+                .position(rideViewModel.getRide().getDriver().getCurrentLocation())
                 .title("Driver: " + ride.getDriver().getUsername());
         driverMarker = googleMap.addMarker(options);
 
@@ -453,6 +445,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     private void onSearchRideAction() {
+        Log.d("onSearchRideAction: ", String.valueOf(ride.getPickupLocation() == null));
         if (ride.getPickupLocation() == null) {
             ride.setPickupLocation(userLocation, "Current location");
         }
@@ -1113,19 +1106,6 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (future != null) {
             future.cancel(true);
         }
-
-        /*Cancel scheduled but not started task, and avoid new ones
-        ((SavaariApplication) getApplication()).scheduledExecutor.shutdown();
-
-        //Wait for the running tasks
-        try {
-            ((SavaariApplication) getApplication()).scheduledExecutor.awaitTermination(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        //Interrupt the threads and shutdown the scheduler
-        ((SavaariApplication) getApplication()).scheduledExecutor.shutdownNow();*/
     }
 
     @Override

@@ -9,10 +9,10 @@ import androidx.lifecycle.ViewModel;
 import com.example.savaari.Repository;
 import com.example.savaari.ride.entity.Location;
 import com.example.savaari.ride.entity.Ride;
-import com.example.savaari.ride.entity.UserLocation;
+import com.example.savaari.ride.entity.Rider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,6 +25,8 @@ public class RideViewModel extends ViewModel {
     private static String LOG_TAG = RideViewModel.class.getSimpleName();
     private final Repository repository;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     /* CCredentials for netowrk operations */
     private int USER_ID = -1;
 
@@ -33,7 +35,7 @@ public class RideViewModel extends ViewModel {
     private Ride ride;
 
     /* User locations data for pinging */
-    private ArrayList<UserLocation> mUserLocations = new ArrayList<>();
+    private ArrayList<Location> mUserLocations = new ArrayList<>();
 
     /* Data Loaded status flags */
     private final MutableLiveData<Boolean> userDataLoaded = new MutableLiveData<>();
@@ -56,7 +58,7 @@ public class RideViewModel extends ViewModel {
     public LatLng getUserCoordinates() {
         return userCoordinates;
     }
-    public ArrayList<UserLocation> getUserLocations() {
+    public ArrayList<Location> getUserLocations() {
         return mUserLocations;
     }
     public Ride getRide() { return ride; }
@@ -82,60 +84,42 @@ public class RideViewModel extends ViewModel {
 
     public void loadUserData() {
         repository.loadUserData(object -> {
-            JSONObject result = null;
             try {
                 if (object == null) {
                     Log.d(LOG_TAG, "onDataLoaded(): resultString is null");
                     userDataLoaded.postValue(false);
                 }
                 else {
-                    result = (JSONObject) object;
-
-                    ride.getRider().setUsername(result.getString("USER_NAME"));
-                    ride.getRider().setEmailAddress(result.getString("EMAIL_ADDRESS"));
-                    Log.d("loadUserData(): ", result.getString("USER_NAME"));
+                    Rider fetchedRider = (Rider) object;
+                    ride.setRider(fetchedRider);
                     userDataLoaded.postValue(true);
                 }
             }
             catch (Exception e) {
                 e.printStackTrace();
                 userDataLoaded.postValue(false);
-                Log.d(LOG_TAG, "onDataLoaded(): exception thrown" + result.toString());
+                Log.d(LOG_TAG, "onDataLoaded(): exception thrown");
             }
         }, USER_ID);
     }
 
-    /* loads array of UserLocation*/
+    /* loads ArrayList of Location*/
     public void loadUserLocations() {
         //if (!userLocationsLoaded.getValue())
         {
 
             repository.getUserLocations(object -> {
                 try {
-                    JSONArray resultArray = (JSONArray) object;
-                    Log.d(TAG, "loadUserLocations: " + resultArray.toString());
-                    if (resultArray != null)
+                    if (object != null)
                     {
-                        Log.d(TAG, "loadUserLocations: found JSON Array");
-                        for (int i = 0; i < resultArray.length(); i++) {
-                            JSONObject obj = resultArray.getJSONObject(i);
-                            UserLocation userLocation = new UserLocation();
+                        Log.d(TAG, "loadUserLocations: not null");
 
-                            // Assigning User Objects
-                            //userLocation.setUserID(obj.getInt("USER_ID"));
-                            userLocation.setLatitude(obj.getDouble("LATITUDE"));
-                            userLocation.setLongitude(obj.getDouble("LONGITUDE"));
-                            //userLocation.setTimestamp(obj.getString("TIMESTAMP"));
-
-                            // Adding Final Object
-                            mUserLocations.add(userLocation);
-                            Log.d(TAG, "loadUserLocations: userID: " + userLocation.getUserID());
-                            Log.d(TAG, "loadUserLocations: latitude: " + userLocation.getLatitude());
-                            Log.d(TAG, "loadUserLocations: longitude: " + userLocation.getLongitude());
-                            Log.d(TAG, "loadUserLocations: timestamp: " + userLocation.getTimestamp());
-                        }
+                        mUserLocations = (ArrayList<Location>) object;
+                        userLocationsLoaded.postValue(true);
                     }
-                    userLocationsLoaded.postValue(true);
+                    else {
+                        userLocationsLoaded.postValue(false);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -160,16 +144,13 @@ public class RideViewModel extends ViewModel {
     public void findDriver(int USER_ID, LatLng pickupLocation, LatLng dropoffLocation) {
 
         repository.findDriver(object -> {
-            JSONObject result;
 
             if (object == null) {
                 ride.setFindStatus(Ride.STATUS_ERROR);
             }
             else {
-                result = (JSONObject) object;
-
                 Log.d(LOG_TAG, "findDriver(): FOUND");
-                setRide(result);
+                ride = (Ride) object;
                 ride.setFindStatus(Ride.PAIRED);
 
                 /*
@@ -273,13 +254,13 @@ public class RideViewModel extends ViewModel {
                 try {
                     if (object == null) {
                         Log.d(LOG_TAG, " getRide: Failed to fetch ride");
+                        ride.setFindStatus(Ride.RS_DEFAULT);
                     }
                     else {
-                        JSONObject result = (JSONObject) object;
+                        ride = (Ride) object;
 
                         Log.d(LOG_TAG, " getRide: Is taking a ride!");
                         ride.setFindStatus(Ride.ALREADY_PAIRED);
-                        setRide(result);
 
                         /*
                         if (result.getInt("STATUS_CODE") == 200) {
@@ -298,42 +279,14 @@ public class RideViewModel extends ViewModel {
                         }*/
 
                         // If taking ride, driver status PAIRED, else DEFAULT
-                        rideFound.postValue(ride);
                     }
+                    rideFound.postValue(ride);
                 }
                 catch (Exception e) {
                     e.printStackTrace();
                     Log.d(LOG_TAG, "loadRide(): Exception");
                 }
             }, USER_ID);
-        }
-    }
-
-    private void setRide(JSONObject result) {
-        try {
-            ride.setRideID(result.getInt("RIDE_ID"));
-
-            ride.getDriver().setUserID(result.getInt("DRIVER_ID"));
-            ride.getDriver().setUsername(result.getString("DRIVER_NAME"));
-            ride.getDriver().setCurrentLocation(new Location(result.getDouble("DRIVER_LAT"),
-                    result.getDouble("DRIVER_LONG"), null));
-
-            ride.getPayment().setPaymentID(result.getInt("PAYMENT_ID"));
-
-            ride.setPickupLocation(new LatLng(result.getDouble("SOURCE_LAT"),
-                    result.getDouble("SOURCE_LONG")), "");
-            ride.setDropoffLocation(new LatLng(result.getDouble("DEST_LAT"),
-                    result.getDouble("DEST_LONG")), "");
-
-            ride.setStartTime(result.getLong("START_TIME"));
-
-            ride.setRideType(result.getInt("RIDE_TYPE"));
-            ride.setEstimatedFare(result.getInt("ESTIMATED_FARE"));
-            ride.setRideStatus(result.getInt("RIDE_STATUS"));
-        }
-        catch (JSONException e) {
-            Log.d(TAG, "setRide(): JSONException");
-            e.printStackTrace();
         }
     }
 }

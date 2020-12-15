@@ -1,7 +1,9 @@
 package com.savaari_demo.controllers;
 
+import com.savaari_demo.OracleDBHandler;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class CRUDController
@@ -47,10 +49,10 @@ public class CRUDController
         return driver.signup();
     }
 
-    /*
+
     public JSONArray riderDetails()
     {
-        JSONArray jsonArray =  dbHandler.riderDetails();
+        JSONArray jsonArray =  OracleDBHandler.getInstance().riderDetails();
         if (jsonArray != null)
         {
             return jsonArray;
@@ -67,7 +69,7 @@ public class CRUDController
 
     public JSONArray driverDetails()
     {
-        JSONArray jsonArray =  dbHandler.driverDetails();
+        JSONArray jsonArray =  OracleDBHandler.getInstance().driverDetails();
         if (jsonArray != null)
         {
             return jsonArray;
@@ -81,7 +83,7 @@ public class CRUDController
             return temp;
         }
     }
-    */
+
 
     public boolean riderData(Rider rider) {
         return rider.fetchData();

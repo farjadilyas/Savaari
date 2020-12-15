@@ -398,7 +398,7 @@ public class OracleDBHandler implements DBHandler {
     {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET IS_ACTIVE = ? WHERE USER_ID = ?");
-            sqlQuery.setBoolean(1, driver.getIsActive());
+            sqlQuery.setBoolean(1, driver.isActive());
             sqlQuery.setInt(2, driver.getUserID());
 
             System.out.println(sqlQuery);
@@ -706,7 +706,7 @@ public class OracleDBHandler implements DBHandler {
                 result.put("DRIVER_LONG", resultSet.getDouble(14));
                 result.put("FARE", resultSet.getDouble(15));*/
 
-
+                ride = new Ride();
                 ride.setRideID(resultSet.getInt(1));
                 ride.getRider().setUsername(resultSet.getString(2));
                 ride.getDriver().setUsername(resultSet.getString(3));
@@ -742,7 +742,7 @@ public class OracleDBHandler implements DBHandler {
     public Integer getRideStatus(Ride ride) {
         String sqlQuery = "SELECT STATUS FROM RIDES WHERE RIDE_ID = " + ride.getRideID();
 
-        Integer rideStatus = Ride.RS_DEFAULT;
+        Integer rideStatus = Ride.DEFAULT;
 
         try {
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
@@ -756,7 +756,7 @@ public class OracleDBHandler implements DBHandler {
         catch (Exception e) {
             System.out.println("Exception in DBHandler: getRide()");
             e.printStackTrace();
-            return Ride.RS_DEFAULT;
+            return Ride.DEFAULT;
         }
     }
 
@@ -919,7 +919,7 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public JSONArray getRiderLocations() {
+    public ArrayList<Location> getRiderLocations() {
         try {
             String sqlQuery = "SELECT CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE" +
                     ", TIMESTAMP FROM RIDER_DETAILS";
@@ -927,19 +927,17 @@ public class OracleDBHandler implements DBHandler {
             // Find list of Rider Locations //TODO: Add criteria later
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
-            //Package resultSet into JSONArray
-            JSONArray result = new JSONArray();
-            JSONObject row = new JSONObject();
+            ArrayList<Location> locations = new ArrayList<>();
+            Location currentLocation;
 
             while (resultSet.next()) {
-                row.put("LATITUDE", resultSet.getDouble(1));
-                row.put("LONGITUDE", resultSet.getDouble(2));
-                row.put("TIMESTAMP", resultSet.getDouble(2));
-                result.put(row);
-                row = new JSONObject();
+                currentLocation = new Location(resultSet.getDouble(1),
+                        resultSet.getDouble(2),
+                        resultSet.getTimestamp(3).getTime());
+                locations.add(currentLocation);
             }
 
-            return result;
+            return locations;
         }
         catch (Exception e) {
             System.out.println(LOG_TAG + "Exception:getRiderLocations()");
@@ -949,27 +947,25 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public JSONArray getDriverLocations() {
+    public ArrayList<Location> getDriverLocations() {
         try {
             String sqlQuery = "SELECT CAST(LATITUDE AS CHAR(12)) AS LATITUDE, CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE" +
                     ", TIMESTAMP FROM DRIVER_DETAILS";
 
-            // Find list of Rider Locations //TODO: Add criteria later
+            // Find list of Driver Locations //TODO: Add criteria later
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
-            //Package resultSet into JSONArray
-            JSONArray result = new JSONArray();
-            JSONObject row = new JSONObject();
+            ArrayList<Location> locations = new ArrayList<>();
+            Location currentLocation;
 
             while (resultSet.next()) {
-                row.put("LATITUDE", resultSet.getDouble(1));
-                row.put("LONGITUDE", resultSet.getDouble(2));
-                row.put("TIMESTAMP", resultSet.getDouble(2));
-                result.put(row);
-                row = new JSONObject();
+                currentLocation = new Location(resultSet.getDouble(1),
+                        resultSet.getDouble(2),
+                        resultSet.getTimestamp(3).getTime());
+                locations.add(currentLocation);
             }
 
-            return result;
+            return locations;
         }
         catch (Exception e) {
             System.out.println(LOG_TAG + "Exception:getDriverLocations()");

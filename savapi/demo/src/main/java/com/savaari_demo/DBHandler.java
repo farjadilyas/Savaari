@@ -1,9 +1,7 @@
 package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
-
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -53,6 +51,6 @@ public interface DBHandler {
     boolean saveDriverLocation(Driver driver);
     Location getRiderLocation(Rider rider);
     Location getDriverLocation(Driver driver);
-    JSONArray getRiderLocations();
-    JSONArray getDriverLocations();
+    ArrayList<Location> getRiderLocations();
+    ArrayList<Location> getDriverLocations();
 }

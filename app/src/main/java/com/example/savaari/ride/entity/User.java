@@ -3,15 +3,15 @@ package com.example.savaari.ride.entity;
 import com.google.android.gms.maps.model.LatLng;
 
 public class User {
-    protected int userID;
-    protected String username;
-    protected String password;
-    protected String emailAddress;
-    protected String firstName;
-    protected String lastName;
-    protected String phoneNo;
-    protected Location currentLocation;
-    protected float rating;
+    private int userID;
+    private String username;
+    private String password;
+    private String emailAddress;
+    private String firstName;
+    private String lastName;
+    private String phoneNo;
+    private Location currentLocation;
+    private float rating;
 
     User() {
         rating = (float) 4.4;
@@ -74,6 +74,9 @@ public class User {
     }
 
     public LatLng getCurrentLocation() {
+        if (currentLocation == null) {
+            return null;
+        }
         return new LatLng(currentLocation.latitude, currentLocation.longitude);
     }
 

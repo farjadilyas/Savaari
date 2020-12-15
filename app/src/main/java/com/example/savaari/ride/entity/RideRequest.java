@@ -52,6 +52,9 @@ public class RideRequest {
     }
 
     public LatLng getPickupLocation() {
+        if (pickupLocation == null) {
+            return null;
+        }
         return new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
     }
 
@@ -65,6 +68,10 @@ public class RideRequest {
     }
 
     public LatLng getDropoffLocation() {
+        if (dropoffLocation == null) {
+            return null;
+        }
+
         return new LatLng(dropoffLocation.getLatitude(), dropoffLocation.getLongitude());
     }
 
