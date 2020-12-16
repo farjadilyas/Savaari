@@ -1,7 +1,7 @@
 package com.example.savaari;
 
 public class ThemeVar {
-    static int s = 5;
+    static int s = 4;
     private static final ThemeVar ourInstance = new ThemeVar();
     public static ThemeVar getInstance() {
         return ourInstance;

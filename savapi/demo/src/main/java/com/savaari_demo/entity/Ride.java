@@ -1,59 +1,59 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.DBHandler;
-import org.json.JSONObject;
+import com.savaari_demo.OracleDBHandler;
 
-import java.sql.Timestamp;
+import java.util.ArrayList;
 
-public class Ride {
+public class Ride extends RideRequest {
 
     // Main Attributes
-    private int rideID;
-    private Rider rider;
-    private Driver driver;
+    public static final int
+            RS_DEFAULT = 10,
+            PICKUP = 11,
+            DRIVER_ARRIVED = 12,
+            CANCELLED = 13,
+            STARTED = 14,
+            ARRIVED_AT_DEST = 15,
+            PAYMENT_MADE = 16,
+            END_ACKED = 20;
+
+    int rideID;
     private Vehicle vehicle;
     private Payment payment;
-    private Location pickupLocation;
-    private Location dropoffLocation;
-    private Timestamp startTime;
-    private Timestamp endTime;
+    private long startTime;
+    private long endTime;
     private double distanceTravelled;
-    private int rideType;           //TODO: Decide type later (ride type class?)
+    private int rideType;
     private double estimatedFare;
     private double fare;
-    private int rideStatus;         //TODO: Ensure it's in correct range (ride status class?)
-    private int findStatus;
-    private Object paymentMethod;   //TODO: Ensure it's one of a few types
+    private int rideStatus;
+    private Integer paymentMethod; // TODO : Move Proper attributes to Ride Request
+    private ArrayList<Location> stops;
+
+    public Ride() {
+        rider = new Rider();
+        driver = new Driver();
+        //vehicle = new Vehicle();
+        payment = new Payment();
+    }
 
     // ---------------------------------------------------------------------------------
     //                          GETTER and SETTER
     // ---------------------------------------------------------------------------------
-    public Timestamp getStartTime() {
+    public Long getStartTime() {
         return startTime;
     }
-    public void setStartTime(Timestamp startTime) {
+    public void setStartTime(Long startTime) {
         this.startTime = startTime;
     }
-    public Timestamp getEndTime() {
+    public Long getEndTime() {
         return endTime;
     }
-    public void setEndTime(Timestamp endTime) {
+    public void setEndTime(Long endTime) {
         this.endTime = endTime;
     }
     public void setRideID(int rideID) { this.rideID = rideID; }
     public int getRideID() { return rideID; }
-    public Rider getRider() {
-        return rider;
-    }
-    public void setRider(Rider rider) {
-        this.rider = rider;
-    }
-    public Driver getDriver() {
-        return driver;
-    }
-    public void setDriver(Driver driver) {
-        this.driver = driver;
-    }
     public Vehicle getVehicle() {
         return vehicle;
     }
@@ -96,19 +96,6 @@ public class Ride {
     public void setRideStatus(int rideStatus) {
         this.rideStatus = rideStatus;
     }
-    public Object getPaymentMethod() {
-        return paymentMethod;
-    }
-    public void setPaymentMethod(Object paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-    public int getFindStatus()
-    {
-        return findStatus;
-    }
-    public void setFindStatus(int findStatus) {
-        this.findStatus = findStatus;
-    }
     public double getDistanceTravelled() {
         return distanceTravelled;
     }
@@ -122,6 +109,30 @@ public class Ride {
         this.fare = fare;
     }
 
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setPaymentMethod(Integer paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public Integer getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public ArrayList<Location> getStops() {
+        return stops;
+    }
+
+    public void setStops(ArrayList<Location> stops) {
+        this.stops = stops;
+    }
+
     // ---------------------------------------------------------------------------------
     // PRIVATE METHODS for POLICIES
     private double calculateFare()
@@ -133,20 +144,20 @@ public class Ride {
     // ---------------------------------------------------------------------------------
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
-    public JSONObject fetchRideStatus(DBHandler dbHandler) {
-        return dbHandler.getRideStatus(this);
+    public Integer fetchRideStatus() {
+        return OracleDBHandler.getInstance().getRideStatus(this);
     }
-    public JSONObject markDriverArrival(DBHandler dbHandler) {
-        return dbHandler.markDriverArrival(this);
+    public boolean markDriverArrival() {
+        return OracleDBHandler.getInstance().markDriverArrival(this);
     }
-    public JSONObject startRideDriver(DBHandler dbHandler) { return dbHandler.startRideDriver(this); }
+    public boolean startRideDriver() { return OracleDBHandler.getInstance().startRideDriver(this); }
 
 
     // Acknowledge end of ride (final call)
-    public boolean acknowledgeEndOfRide(DBHandler dbHandler) {
+    public boolean acknowledgeEndOfRide() {
 
-        if (dbHandler.acknowledgeEndOfRide(this)) {
-            return rider.reset(dbHandler);
+        if (OracleDBHandler.getInstance().acknowledgeEndOfRide(this)) {
+            return rider.reset();
         }
 
         return false;
@@ -155,26 +166,36 @@ public class Ride {
     // TODO: Methods need to get more data from tables
 
     // Main End Ride with Driver Method
-    public JSONObject markArrivalAtDestination(DBHandler dbHandler) {
+    public double markArrivalAtDestination() {
         fare = calculateFare();
-        JSONObject jsonObject = dbHandler.markArrivalAtDestination(this);
-
-        if (jsonObject.getInt("STATUS") == 200) {
-            jsonObject.put("FARE", fare);
+        if (OracleDBHandler.getInstance().markArrivalAtDestination(this)) {
+            return fare;
         }
-        return jsonObject;
+        return -1;
     }
 
     // Main Method for Ending Ride with Payment: Cash Mode
-    public JSONObject endRideWithPayment(DBHandler dbHandler)
+    public boolean endRideWithPayment(double amountPaid)
     {
-        boolean status = dbHandler.endRideWithPayment(this);
+        // TODO: Payment policy, where does payment sheningans happen?
+        payment = new Payment();
+        payment.setAmountPaid(amountPaid);
+        return (driver.resetDriver() && OracleDBHandler.getInstance().endRideWithPayment(this));
+    }
 
-        JSONObject jsonObject = driver.resetDriver(dbHandler);
+    public boolean recordRide() {
 
-        if (!(status && jsonObject.getInt("STATUS") == 200))
-            jsonObject.put("STATUS", 404);
+        Payment newPayment = OracleDBHandler.getInstance().addPayment();
 
-        return jsonObject;
+        if (newPayment == null) {
+            System.out.println("Ride" + ":recordRide: payment is null");
+            return false;
+        }
+        else {
+            // Payment created, set it in ride & record ride
+            setPayment(newPayment);
+            OracleDBHandler.getInstance().recordRide(this);
+            return true;
+        }
     }
 }

@@ -259,7 +259,7 @@ public class ThemeFragment extends Fragment implements View.OnClickListener {
                 prevImage = image1;
                 break;
             case(R.id.theme2):
-                themeSelected = 1;
+                themeSelected = 4;
                 prevImage = image2;
                 break;
             case(R.id.theme3):
@@ -267,7 +267,7 @@ public class ThemeFragment extends Fragment implements View.OnClickListener {
                 prevImage = image3;
                 break;
             case(R.id.theme4):
-                themeSelected = 3;
+                themeSelected = 1;
                 prevImage = image4;
                 break;
             case(R.id.theme5):

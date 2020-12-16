@@ -1,14 +1,20 @@
 
 package com.savaari_demo;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
-
+import com.savaari_demo.entity.*;
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Map;
 
 @SpringBootApplication
@@ -19,10 +25,21 @@ public class DemoApplication
 	private static MatchmakingController matchmakingController;
 	private static CRUDController crudController;
 	private static LocationController locationController;
+	private static ObjectMapper objectMapper;
 
-	// MAIN METHOD
-	public static void main(String[] args) 
+
+
+
+	/* MAIN METHOD */
+	public static void main(String[] args)
 	{
+		objectMapper = new ObjectMapper();
+		objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
+				.withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+				.withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+
 		matchmakingController = new MatchmakingController();
 		crudController = new CRUDController();
 		locationController = new LocationController();
@@ -30,61 +47,151 @@ public class DemoApplication
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
-	// API REQUESTS
+
+	//* API REQUESTS
 
 	/* Add new user methods */
 	@RequestMapping(value = "/add_rider", method = RequestMethod.POST)
 	public String addRider(@RequestBody Map<String, String> allParams)
 	{
+		System.out.println(allParams.toString());
 		String username = allParams.get("username");
 		String email_address = allParams.get("email_address");
 		String password = allParams.get("password");
 
-		return crudController.addRider(username, email_address, password).toString();
+		JSONObject result = new JSONObject();
+
+		if (crudController.addRider(username, email_address, password)) {
+			result.put("STATUS_CODE", 200);
+		}
+		else {
+			result.put("STATUS_CODE", 404);
+		}
+		return result.toString();
 	}
 
 	@RequestMapping(value = "/add_driver", method = RequestMethod.POST)
 	public String addDriver(@RequestBody Map<String, Object> allParams)
 	{
 		System.out.println(allParams.toString());
+
 		String username = (String) allParams.get("username");
 		String email_address = (String) allParams.get("email_address");
 		String password = (String) allParams.get("password");
+		JSONObject result = new JSONObject();
+		if (crudController.addDriver(username, email_address, password)) {
+			result.put("STATUS_CODE", 200);
+		}
+		else {
+			result.put("STATUS_CODE", 404);
+		}
 
-		return crudController.addDriver(username, email_address, password).toString();
+		return result.toString();
 	}
 	/* End of section */
 
-
 	/* Authenticate user methods */
 	@RequestMapping(value = "/login_rider", method = RequestMethod.POST)
-	public String loginRider(@RequestBody Map<String, String> allParams)
+	public String loginRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String email_address = allParams.get("username");
-		String password = allParams.get("password");
+		Rider rider = new Rider();
+		rider.setEmailAddress(allParams.get("username"));
+		rider.setPassword(allParams.get("password"));
 
-		System.out.println("LOGIN QUERY: " + email_address + " " + password);
+		Integer userID = crudController.loginRider(rider);
 
-		return crudController.loginRider(email_address, password).toString();
+		// Package response
+		JSONObject result = new JSONObject();
+
+		if (userID == null) {
+			result.put("STATUS_CODE", 404);
+			result.put("USER_ID", -1);
+		}
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("USER_ID", userID);
+
+			request.getSession(true);
+		}
+
+		return result.toString();
+	}
+
+	@RequestMapping(value = "/persistRiderLogin", method = RequestMethod.POST)
+	public String persistRiderLogin(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		//TODO: if verified using token
+		if (request.getSession(false) == null) {
+			request.getSession(true);
+		}
+
+		return new JSONObject().put("STATUS_CODE", 200).toString();
 	}
 
 	@RequestMapping(value = "/login_driver", method = RequestMethod.POST)
-	public String loginDriver(@RequestBody Map<String, String> allParams)
+	public String loginDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String email_address = allParams.get("username");
-		String password = allParams.get("password");
+		Driver driver = new Driver();
+		driver.setEmailAddress(allParams.get("username"));
+		driver.setPassword(allParams.get("password"));
 
-		return crudController.loginDriver(email_address, password).toString();
+		Integer userID = crudController.loginDriver(driver);
+
+		// Package response
+		JSONObject result = new JSONObject();
+
+		if (userID == null) {
+			result.put("STATUS_CODE", 404);
+			result.put("USER_ID", -1);
+		}
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("USER_ID", userID);
+
+			request.getSession(true);
+		}
+
+		return result.toString();
+	}
+	@RequestMapping(value = "/persistDriverLogin", method = RequestMethod.POST)
+	public String persistDriverLogin(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		// TODO Verify Driver Account
+		if (request.getSession(false) == null) {
+			request.getSession(true);
+		}
+		return new JSONObject().put("STATUS", 200).toString();
+	}
+
+	@RequestMapping(value = "/logout_rider", method = RequestMethod.POST)
+	public String logoutRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		request.getSession().invalidate();
+		return new JSONObject().put("STATUS_CODE", 200).toString();
+	}
+
+	@RequestMapping(value = "/logout_driver", method = RequestMethod.POST)
+	public String logoutDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		request.getSession().invalidate();
+		return new JSONObject().put("STATUS_CODE", 200).toString();
 	}
 	/* End of section*/
 
 
 	/* Fetch user data methods
 	@GetMapping("/rider_details")
-	public String riderDetails()
+	public String riderDetails(Model model, HttpSession session)
 	{
-		System.out.println("Rider deets called");
-		return crudController.riderDetails().toString();
+		List<String> messages = (List<String>) session.getAttribute("MY_SESSION_MESSAGES");
+
+		if (messages != null) {
+			System.out.println("Rider deets called");
+			return crudController.riderDetails().toString();
+		}
+		else {
+			return null;
+		}
 	}
 
 	@GetMapping("/driver_details")
@@ -94,88 +201,264 @@ public class DemoApplication
 	}*/
 
 	@RequestMapping(value = "/rider_data", method = RequestMethod.POST)
-	public String riderData(@RequestBody Map<String, String> allParams)
+	public String riderData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID");
-		return crudController.riderData(userID).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		String result = null;
+
+		if (crudController.riderData(rider)) {
+			try {
+				result = objectMapper.writeValueAsString(rider);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		return result;
 	}
 
 	@RequestMapping(value = "/driver_data", method = RequestMethod.POST)
-	public String driverData(@RequestBody Map<String, String> allParams)
+	public String driverData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID");
-		return crudController.driverData(userID).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		String result = null;
+
+		if (crudController.driverData(driver)) {
+			try {
+				result = objectMapper.writeValueAsString(driver);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		return result;
 	}
 	/* End of section */
 
-
-	//TODO: deleteRider
-	//TODO: deleteDriver
-
+	// TODO: deleteRider
+	// TODO: deleteDriver
 
 	/* Rider-side matchmaking method*/
 	@RequestMapping(value = "/findDriver", method = RequestMethod.POST)
-	public String findDriver(@RequestBody Map<String, String> allParams)
+	public String findDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID"),
-				sourceLatitude = allParams.get("SOURCE_LAT"),
-				sourceLongitude = allParams.get("SOURCE_LONG"),
-				destinationLatitude = allParams.get("DEST_LAT"),
-				destinationLongitude = allParams.get("DEST_LONG");
+		if (request.getSession(false) == null) {
+			return null;
+		}
 
-		return matchmakingController.findDriver(userID, sourceLatitude, sourceLongitude,
-				destinationLatitude, destinationLongitude).toString();
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		Ride fetchedRide = matchmakingController.findDriver(rider,
+				new Location(Double.parseDouble(allParams.get("SOURCE_LAT")),
+						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
+				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
+						Double.parseDouble(allParams.get("DEST_LONG")), null));
+
+		String result = null;
+
+		if (fetchedRide != null) {
+			try {
+				result = objectMapper.writeValueAsString(fetchedRide);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		return result;
 	}
 	/* End of section*/
 
 
 	/* Driver-side matchmaking methods */
 	@RequestMapping(value = "/setMarkActive", method = RequestMethod.POST)
-	public String setMarkActive(@RequestBody Map<String, String> allParams)
+	public String setMarkActive(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID");
-		String activeStatus = allParams.get("ACTIVE_STATUS");
-		return matchmakingController.setMarkActive(userID, activeStatus).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		driver.setActive(Boolean.valueOf(allParams.get("ACTIVE_STATUS")));
+
+		JSONObject json = new JSONObject();
+
+		if (matchmakingController.setMarkActive(driver)) {
+			json.put("STATUS", 200);
+		}
+		else {
+			json.put("STATUS", 404);
+		}
+		return json.toString();
+	}
+
+	@RequestMapping(value = "/checkRideRequestStatus", method = RequestMethod.POST)
+	public String checkRideRequestStatus(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		RideRequest rideRequest = matchmakingController.checkRideRequestStatus(driver);
+		String result = null;
+
+		if (rideRequest != null) {
+			try {
+				result = objectMapper.writeValueAsString(rideRequest);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		return result;
 	}
 
 	@RequestMapping(value = "/checkRideStatus", method = RequestMethod.POST)
-	public String checkRideStatus(@RequestBody Map<String, String> allParams)
+	public String checkRideStatus(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return matchmakingController.getRideForDriver(allParams.get("USER_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		RideRequest rideRequest = new RideRequest();
+		rideRequest.getDriver().setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		rideRequest.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+
+		Ride ride = matchmakingController.getRideForDriver(rideRequest);
+
+		String result = null;
+		if (ride != null) {
+			try {
+				result = objectMapper.writeValueAsString(ride);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		return result;
 	}
 
 	@RequestMapping(value = "/confirmRideRequest", method = RequestMethod.POST)
-	public String confirmRideRequest(@RequestBody Map<String, String> allParams)
+	public String confirmRideRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID");
-		String found_status = allParams.get("FOUND_STATUS");
-		String riderID = allParams.get("RIDER_ID");
+		if (request.getSession(false) == null) {
+			return null;
+		}
 
-		return matchmakingController.confirmRideRequest(userID, found_status, riderID).toString();
+		RideRequest rideRequest = new RideRequest();
+
+		rideRequest.getDriver().setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		rideRequest.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+		rideRequest.setFindStatus(Integer.parseInt(allParams.get("FOUND_STATUS")));
+
+		JSONObject jsonObject = new JSONObject();
+		if (matchmakingController.confirmRideRequest(rideRequest)) {
+			jsonObject.put("STATUS", 200);
+		} else {
+			jsonObject.put("STATUS", 404);
+		}
+		return jsonObject.toString();
 	}
 	@RequestMapping(value = "/markArrival", method = RequestMethod.POST)
-	public String markDriverArrival(@RequestBody Map<String, String> allParams)
+	public String markDriverArrival(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return matchmakingController.markDriverArrival(allParams.get("RIDE_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+
+		JSONObject jsonObject = new JSONObject();
+		if (matchmakingController.markDriverArrival(ride)) {
+			jsonObject.put("STATUS", 200);
+		} else {
+			jsonObject.put("STATUS", 404);
+		}
+		return jsonObject.toString();
 	}
 
 	@RequestMapping(value = "/startRideDriver", method = RequestMethod.POST)
-	public String startRideDriver(@RequestBody Map<String, String> allParams)
+	public String startRideDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return matchmakingController.startRideDriver(allParams.get("RIDE_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+
+		JSONObject jsonObject = new JSONObject();
+		if (matchmakingController.startRideDriver(ride)) {
+			jsonObject.put("STATUS", 200);
+		} else {
+			jsonObject.put("STATUS", 404);
+		}
+		return jsonObject.toString();
 	}
 
 	@RequestMapping(value = "/markArrivalAtDestination", method = RequestMethod.POST)
-	public String markArrivalAtDestination(@RequestBody Map<String, String> allParams)
+	public String markArrivalAtDestination(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
 		System.out.println("MARK ARRIVAL CALLED");
-		return matchmakingController.markArrivalAtDestination(allParams.get("RIDE_ID"), allParams.get("DIST_TRAVELLED"), allParams.get("DRIVER_ID")).toString();
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.setDistanceTravelled(Double.parseDouble(allParams.get("DIST_TRAVELLED")));
+		ride.getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+
+		JSONObject result = new JSONObject();
+		double fare = matchmakingController.markArrivalAtDestination(ride);
+		if (fare > 0) {
+			result.put("FARE", fare);
+		} else {
+
+		}
+		return result.toString();
 	}
 
 	@RequestMapping(value = "/endRideWithPayment", method = RequestMethod.POST)
-	public String endRideWithPayment(@RequestBody Map<String, String> allParams)
+	public String endRideWithPayment(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return matchmakingController.endRideWithPayment(allParams.get("RIDE_ID"), allParams.get("AMNT_PAID"), allParams.get("DRIVER_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+
+		double amountPaid = Double.parseDouble(allParams.get("AMNT_PAID"));
+
+		JSONObject jsonObject = new JSONObject();
+		if (matchmakingController.endRideWithPayment(ride, amountPaid)) {
+			jsonObject.put("STATUS", 200);
+		} else {
+			jsonObject.put("STATUS", 404);
+		}
+		return jsonObject.toString();
 	}
 
 	/* End of section */
@@ -184,39 +467,83 @@ public class DemoApplication
 	/* Ride system calls */
 
 	@RequestMapping(value = "/getRideForRider", method = RequestMethod.POST)
-	public String getRideForRider(@RequestBody Map<String, String> allParams)
+	public String getRideForRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String riderID = allParams.get("USER_ID");
-		return matchmakingController.getRideForRider(riderID).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		Ride fetchedRide = matchmakingController.getRideForRider(rider);
+
+		if (fetchedRide != null) {
+			try {
+				return objectMapper.writeValueAsString(fetchedRide);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		return null;
 	}
 
 	@RequestMapping(value = "/getRideStatus", method = RequestMethod.POST)
-	public String getRideStatus(@RequestBody Map<String, String> allParams)
+	public String getRideStatus(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String rideID = allParams.get("RIDE_ID");
-		return matchmakingController.getRideStatus(rideID).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+
+		int rideStatus = matchmakingController.getRideStatus(ride);
+
+		JSONObject result = null;
+
+		if (rideStatus != Ride.DEFAULT) {
+			result = new JSONObject();
+			result.put("RIDE_STATUS", rideStatus);
+		}
+
+		return result.toString();
 	}
 
 	@RequestMapping(value = "/acknowledgeEndOfRide", method = RequestMethod.POST)
-	public String acknowledgeEndOfRide(@RequestBody Map<String, String> allParams)
+	public String acknowledgeEndOfRide(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String rideID = allParams.get("RIDE_ID");
-		String riderID = allParams.get("RIDER_ID");
-		return matchmakingController.acknowledgeEndOfRide(rideID, riderID).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.setRider(new Rider());
+		ride.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+
+		JSONObject result = new JSONObject();
+		result.put("STATUS_CODE", ((matchmakingController.acknowledgeEndOfRide(ride))? 200 : 404));
+		return result.toString();
 	}
 
 	/* End of section */
 
 	/* Location update methods*/
 	@RequestMapping(value = "/saveDriverLocation", method = RequestMethod.POST)
-	public String saveDriverLocation(@RequestBody Map<String, String> allParams)
+	public String saveDriverLocation(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID"),
-				latitude = allParams.get("LATITUDE"),
-				longitude = allParams.get("LONGITUDE"),
-				timestamp = allParams.get("TIMESTAMP");
+		if (request.getSession(false) == null) {
+			return null;
+		}
 
-		boolean locationSaved = locationController.saveDriverLocations(userID, latitude, longitude, timestamp);
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		driver.setCurrentLocation(new Location(Double.valueOf(allParams.get("LATITUDE")), Double.valueOf(allParams.get("LONGITUDE")),
+				Long.parseLong(allParams.get("TIMESTAMP"))));
+
+		boolean locationSaved = locationController.saveDriverLocation(driver);
 
 		JSONObject result = new JSONObject();
 		result.put("STATUS", ((locationSaved)? 200 : 404));
@@ -224,14 +551,18 @@ public class DemoApplication
 	}
 
 	@RequestMapping(value = "/saveRiderLocation", method = RequestMethod.POST)
-	public String saveRiderLocation(@RequestBody Map<String, String> allParams)
+	public String saveRiderLocation(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		String userID = allParams.get("USER_ID"),
-				latitude = allParams.get("LATITUDE"),
-				longitude = allParams.get("LONGITUDE"),
-				timestamp = allParams.get("TIMESTAMP");
+		if (request.getSession(false) == null) {
+			return null;
+		}
 
-		boolean locationSaved = locationController.saveRiderLocations(userID, latitude, longitude, timestamp);
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		rider.setCurrentLocation(new Location(Double.valueOf(allParams.get("LATITUDE")), Double.valueOf(allParams.get("LONGITUDE")),
+				Long.parseLong(allParams.get("TIMESTAMP"))));
+
+		boolean locationSaved = locationController.saveRiderLocation(rider);
 
 		JSONObject result = new JSONObject();
 		result.put("STATUS", ((locationSaved)? 200 : 404));
@@ -239,27 +570,97 @@ public class DemoApplication
 	}
 
 	@RequestMapping(value = "/getDriverLocations", method = RequestMethod.POST)
-	public String getDriverLocations(@RequestBody Map<String, String> allParams)
+	public String getDriverLocations(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return locationController.getDriverLocations().toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		try {
+			ArrayList<Location> locations = locationController.getDriverLocations();
+
+			if (locations == null) {
+				return null;
+			} else {
+				return objectMapper.writeValueAsString(locations);
+			}
+		}
+		catch (Exception e){
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@RequestMapping(value = "/getRiderLocations", method = RequestMethod.POST)
-	public String getRiderLocations(@RequestBody Map<String, String> allParams)
+	public String getRiderLocations(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return locationController.getRiderLocations().toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		try {
+			ArrayList<Location> locations = locationController.getRiderLocations();
+
+			if (locations == null) {
+				return null;
+			} else {
+				return objectMapper.writeValueAsString(locations);
+			}
+		}
+		catch (Exception e){
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@RequestMapping(value = "/getDriverLocation", method = RequestMethod.POST)
-	public String getDriverLocation(@RequestBody Map<String, String> allParams)
+	public String getDriverLocation(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return locationController.getDriverLocation(allParams.get("USER_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		locationController.getDriverLocation(driver);
+
+		JSONObject result = new JSONObject();
+
+		if (driver.getCurrentLocation() == null) {
+			result.put("STATUS_CODE", 404);
+		}
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("LATITUDE", driver.getCurrentLocation().getLatitude());
+			result.put("LONGITUDE", driver.getCurrentLocation().getLongitude());
+		}
+		return result.toString();
 	}
 
 	@RequestMapping(value = "/getRiderLocation", method = RequestMethod.POST)
-	public String getRiderLocation(@RequestBody Map<String, String> allParams)
+	public String getRiderLocation(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		return locationController.getRiderLocation(allParams.get("USER_ID")).toString();
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Rider rider = new Rider();
+		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		locationController.getRiderLocation(rider);
+
+		JSONObject result = new JSONObject();
+
+		if (rider.getCurrentLocation() == null) {
+			result.put("STATUS_CODE", 404);
+		}
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("LATITUDE", rider.getCurrentLocation().getLatitude());
+			result.put("LONGITUDE", rider.getCurrentLocation().getLongitude());
+		}
+		return result.toString();
 	}
 	/* End of section */
 

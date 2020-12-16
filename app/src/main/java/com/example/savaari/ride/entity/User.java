@@ -1,14 +1,16 @@
-package com.example.savaari.user;
+package com.example.savaari.ride.entity;
 
 import com.google.android.gms.maps.model.LatLng;
 
 public class User {
     private int userID;
     private String username;
+    private String password;
+    private String emailAddress;
     private String firstName;
     private String lastName;
-    private String emailAddress;
-    private LatLng currentLocation;
+    private String phoneNo;
+    private Location currentLocation;
     private float rating;
 
     User() {
@@ -17,6 +19,22 @@ public class User {
 
     public int getUserID() {
         return userID;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPhoneNo() {
+        return phoneNo;
+    }
+
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNo = phoneNo;
     }
 
     public void setUserID(int userID) {
@@ -56,10 +74,13 @@ public class User {
     }
 
     public LatLng getCurrentLocation() {
-        return currentLocation;
+        if (currentLocation == null) {
+            return null;
+        }
+        return new LatLng(currentLocation.latitude, currentLocation.longitude);
     }
 
-    public void setCurrentLocation(LatLng currentLocation) {
+    public void setCurrentLocation(Location currentLocation) {
         this.currentLocation = currentLocation;
     }
 

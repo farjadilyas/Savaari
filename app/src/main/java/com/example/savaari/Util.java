@@ -65,13 +65,13 @@ public class Util extends AppCompatActivity {
                 context.setTheme(R.style.BlackTheme);
                 break;
             case(1):
-                context.setTheme(R.style.RedTheme);
+                context.setTheme(R.style.DarkBlueTheme);
                 break;
             case(2):
                 context.setTheme(R.style.DimRedTheme);
                 break;
             case(4):
-                context.setTheme(R.style.DarkBlueTheme);
+                context.setTheme(R.style.RedTheme);
                 break;
             case(5):
                 context.setTheme(R.style.TodoTheme);

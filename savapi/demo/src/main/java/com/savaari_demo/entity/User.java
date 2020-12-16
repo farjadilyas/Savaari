@@ -1,54 +1,24 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.DBHandler;
-import org.json.JSONObject;
+import com.savaari_demo.OracleDBHandler;
 
 public class User {
-    // Main Attributes
-    private Integer userID;
+    private int userID;
     private String username;
     private String password;
     private String emailAddress;
     private String firstName;
     private String lastName;
     private String phoneNo;
-    Location lastLocation;
+    private Location currentLocation;
+    private float rating;
 
-    // Main Constructors
-    public User() {
-        super();
-        userID = 0;
+    User() {
+        userID = -1;
     }
 
-    // Parameterized Constructor
-    public User(Integer userID, String username, String password, String emailAddress, String firstName,
-                String lastName, String phoneNo, Location lastLocation) {
-        super();
-        this.userID = userID;
-        this.username = username;
-        this.password = password;
-        this.emailAddress = emailAddress;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.phoneNo = phoneNo;
-        this.lastLocation = lastLocation;
-    }
-
-    // Getters and Setters
-    public Integer getUserID() {
+    public int getUserID() {
         return userID;
-    }
-
-    public void setUserID(Integer userID) {
-        this.userID = userID;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public String getPassword() {
@@ -59,12 +29,24 @@ public class User {
         this.password = password;
     }
 
-    public String getEmailAddress() {
-        return emailAddress;
+    public String getPhoneNo() {
+        return phoneNo;
     }
 
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNo = phoneNo;
+    }
+
+    public void setUserID(int userID) {
+        this.userID = userID;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getFirstName() {
@@ -83,30 +65,36 @@ public class User {
         this.lastName = lastName;
     }
 
-    public String getPhoneNo() {
-        return phoneNo;
+    public String getEmailAddress() {
+        return emailAddress;
     }
 
-    public void setPhoneNo(String phoneNo) {
-        this.phoneNo = phoneNo;
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
-    public Location getLastLocation() {
-        return lastLocation;
+    public Location getCurrentLocation() {
+        return currentLocation;
     }
 
-    public void setLastLocation(Location lastLocation) {
-        this.lastLocation = lastLocation;
+    public void setCurrentLocation(Location currentLocation) {
+        this.currentLocation = currentLocation;
+    }
+
+    public float getRating() {
+        return rating;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
     }
 
 
     // Methods for system interactions
 
-    public JSONObject getRide(DBHandler dbHandler, Ride ride) {
-        JSONObject result = new JSONObject();
-        result = dbHandler.getRide(ride);
-        result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
-        return result;
+    public Ride getRide(RideRequest rideRequest) {
 
+        return OracleDBHandler.getInstance().getRide(rideRequest);
+        //result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
     }
 }

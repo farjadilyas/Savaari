@@ -2,7 +2,6 @@ package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -25,26 +24,26 @@ public interface DBHandler {
 
     /* Driver Side Matchmaking Database Calls*/
     boolean markDriverActive(Driver driver);
-    Ride checkRideRequestStatus(Driver driver);
+    RideRequest checkRideRequestStatus(Driver driver);
     boolean confirmRideRequest(Ride ride);
-    JSONObject markDriverArrival(Ride ride);
-    JSONObject startRideDriver(Ride ride);
-    JSONObject markArrivalAtDestination(Ride ride);
+    boolean markDriverArrival(Ride ride);
+    boolean startRideDriver(Ride ride);
+    boolean markArrivalAtDestination(Ride ride);
 
     /* Rider-side matchmaking DB calls*/
     ArrayList<Driver> searchDriverForRide();
-    boolean sendRideRequest(Ride rideRequest);
-    JSONObject checkFindStatus(Rider rider);
+    boolean sendRideRequest(RideRequest rideRequest);
+    Integer checkFindStatus(Rider rider);
     boolean recordRide(Ride ride);
     Payment addPayment();
 
     /* In-ride DB calls */
-    Ride checkRideRequestStatus(Rider rider);
-    JSONObject getRide(Ride ride);
-    JSONObject getRideStatus(Ride ride);
+    RideRequest checkRideRequestStatus(Rider rider);
+    Ride getRide(RideRequest rideRequest);
+    Integer getRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);
-    JSONObject resetDriver(Driver driver);
+    boolean resetDriver(Driver driver);
     boolean resetRider(Rider rider);
 
     /* Location method calls */
@@ -52,6 +51,6 @@ public interface DBHandler {
     boolean saveDriverLocation(Driver driver);
     Location getRiderLocation(Rider rider);
     Location getDriverLocation(Driver driver);
-    JSONArray getRiderLocations();
-    JSONArray getDriverLocations();
+    ArrayList<Location> getRiderLocations();
+    ArrayList<Location> getDriverLocations();
 }
