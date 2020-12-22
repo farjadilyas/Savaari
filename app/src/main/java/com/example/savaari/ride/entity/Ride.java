@@ -21,7 +21,6 @@ public class Ride extends RideRequest {
     private long startTime;
     private long endTime;
     private double distanceTravelled;
-    private int rideType;
     private double estimatedFare;
     private double fare;
     private int rideStatus;
@@ -78,14 +77,6 @@ public class Ride extends RideRequest {
 
     public void setEndTime(long endTime) {
         this.endTime = endTime;
-    }
-
-    public int getRideType() {
-        return rideType;
-    }
-
-    public void setRideType(int rideType) {
-        this.rideType = rideType;
     }
 
     public double getEstimatedFare() {

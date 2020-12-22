@@ -43,7 +43,9 @@ import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
 import com.example.savaari.ThemeVar;
 import com.example.savaari.Util;
-import com.example.savaari.ride.adapter.OnItemClickListener;
+import com.example.savaari.ride.adapter.ItemClickListener;
+import com.example.savaari.ride.adapter.PaymentMethodAdapter;
+import com.example.savaari.ride.adapter.PaymentMethodItem;
 import com.example.savaari.ride.adapter.RideTypeAdapter;
 import com.example.savaari.ride.adapter.RideTypeItem;
 import com.example.savaari.ride.entity.Ride;
@@ -90,7 +92,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, OnItemClickListener {
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, ItemClickListener {
 
     private static final String TAG = "RideActivity";
 
@@ -140,6 +142,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private TextView rideTypePrice;
     private TextView rideTypeHeader;
     private ArrayList<RideTypeItem> rideTypeItems;
+
+    private LinearLayout paymentMethodPanel;
+    private ImageView paymentMethodImage;
+    private TextView paymentMethodText;
+    private TextView paymentMethodHeader;
+    private ArrayList<PaymentMethodItem> paymentMethodItems;
 
     private LinearLayout rideDetailsPanel;
     private ImageView riderImage;
@@ -200,17 +208,25 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             getLocationPermission();
 
             rideTypeItems = new ArrayList<>();
+            paymentMethodItems = new ArrayList<>();
 
-
-            // set up the RecyclerView
+            // set up the RecyclerView for RideType
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_rtype_bike, "Bike", "PKR 81"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Smol Car", "PKR 173"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Med Car", "PKR 224"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Big Car", "PKR 443"));
             RideTypeAdapter rideTypeAdapter = new RideTypeAdapter(rideTypeItems, this);
-            RecyclerView recyclerView = findViewById(R.id.select_ride_type);
-            recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(rideTypeAdapter);
+            RecyclerView rideTypeRecylerView = findViewById(R.id.select_ride_type);
+            rideTypeRecylerView.setLayoutManager(new LinearLayoutManager(this));
+            rideTypeRecylerView.setAdapter(rideTypeAdapter);
+
+            // Set up the RecyclerView for PaymentMethod
+            paymentMethodItems.add(new PaymentMethodItem(R.drawable.ic_money, "Cash"));
+            paymentMethodItems.add(new PaymentMethodItem(R.drawable.ic_visa, "**** 3161"));
+            PaymentMethodAdapter paymentMethodAdapter = new PaymentMethodAdapter(paymentMethodItems, this);
+            RecyclerView paymentMethodRecyclerView = findViewById(R.id.select_payment_method);
+            paymentMethodRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            paymentMethodRecyclerView.setAdapter(paymentMethodAdapter);
         }
     }
 
@@ -752,9 +768,19 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         rideTypePrice = findViewById(R.id.ride_type_price);
         rideTypePanel = findViewById(R.id.ride_type_panel);
 
-        rideConfigBar.setOnClickListener(v -> {
+        paymentMethodHeader = findViewById(R.id.payment_method_header);
+        paymentMethodImage = findViewById(R.id.payment_img);
+        paymentMethodText = findViewById(R.id.payment_txt);
+        paymentMethodPanel = findViewById(R.id.payment_method_panel);
+
+        rideTypeSelector.setOnClickListener(v -> {
             rideTypeHeader.setText(R.string.select_ride_type);
             toggleRideTypePanel(true, true);
+        });
+
+        paymentMethodSelector.setOnClickListener(v -> {
+            paymentMethodHeader.setText(R.string.select_payment_method);
+            togglePaymentMethodPanel(true, true);
         });
     }
 
@@ -813,9 +839,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-    // Set visibility of the Ride Details bar
+    // Set visibility of the Ride Details bar & init if necessary
     private void toggleRideDetailsBar(boolean visibility, boolean withAnimation) {
         if (visibility) {
+            ratingBar.setRating(rideViewModel.getRide().getDriver().getRating());
+
             if (withAnimation) {
                 rideDetailsPanel.setAnimation(inFromBottomAnimation(400));
             }
@@ -841,6 +869,21 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 rideTypePanel.setAnimation(outToBottomAnimation(400));
             }
             rideTypePanel.setVisibility(View.GONE);
+        }
+    }
+
+    private void togglePaymentMethodPanel(boolean visibility , boolean withAnimation) {
+        if (visibility) {
+            if (withAnimation) {
+                paymentMethodPanel.setAnimation(inFromBottomAnimation(400));
+            }
+            paymentMethodPanel.setVisibility(View.VISIBLE);
+        }
+        else {
+            if (withAnimation) {
+                paymentMethodPanel.setAnimation(outToBottomAnimation(400));
+            }
+            paymentMethodPanel.setVisibility(View.GONE);
         }
     }
 
@@ -1144,12 +1187,21 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     @Override
-    public void OnClick(int position) {
-        rideViewModel.getRide().setRideType(position);
+    public void onRideTypeItemClick(int position) {
+        rideViewModel.getRide().setRideType(position + 1);
         toggleRideTypePanel(false, true);
 
         rideTypeImage.setImageResource(rideTypeItems.get(position).getRideTypeImage());
         rideTypeName.setText(rideTypeItems.get(position).getRideTypeName());
         rideTypePrice.setText(rideTypeItems.get(position).getRideTypePrice());
+    }
+
+    @Override
+    public void onPaymentMethodItemClick(int position) {
+        rideViewModel.getRide().setPaymentMethod(position + 1);
+        togglePaymentMethodPanel(false, true);
+
+        paymentMethodImage.setImageResource(paymentMethodItems.get(position).getPaymentImage());
+        paymentMethodText.setText(paymentMethodItems.get(position).getPaymentText());
     }
 }

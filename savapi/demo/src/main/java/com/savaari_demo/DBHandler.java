@@ -16,6 +16,13 @@ public interface DBHandler {
     boolean fetchRiderData(Rider rider);
     boolean fetchDriverData(Driver driver);
 
+    /* Registration Methods */
+    boolean sendRegistrationRequest(Driver driver);
+
+    /*Driver-Vehicle methods*/
+    boolean sendVehicleRequest(Driver driver);
+    boolean respondToVehicleRequest(Driver driver);
+
     /* Unused CRUD methods */
     JSONArray riderDetails();
     JSONArray driverDetails();
@@ -54,5 +61,7 @@ public interface DBHandler {
     Location getRiderLocation(Rider rider);
     Location getDriverLocation(Driver driver);
     ArrayList<Location> getRiderLocations();
-    ArrayList<Location> getDriverLocations();
+    ArrayList<Location> getDriverLocation();
+
+    boolean respondToDriverRequest(Driver driver);
 }

@@ -62,7 +62,7 @@ public class Rider extends User
 
 
     public Ride findDriver(Location source,
-                                 Location destination, int paymentMode) {
+                                 Location destination, int paymentMode, int rideType) {
 
         // TODO: Policy? Where does this come from?
         int MAX_REJECTED_ATTEMPTS = 5;
@@ -75,6 +75,7 @@ public class Rider extends User
         rideRequest.setPickupLocation(source);
         rideRequest.setDropoffLocation(destination);
         rideRequest.setPaymentMethod(paymentMode);
+        rideRequest.setRideType(rideType);
 
         // Search for drivers that match criteria, TODO: Add criteria
         ArrayList<Driver> drivers = OracleDBHandler.getInstance().searchDriverForRide();

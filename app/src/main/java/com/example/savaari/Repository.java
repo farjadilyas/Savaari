@@ -16,10 +16,10 @@ public class Repository {
 
     //Find Driver
     public void findDriver(OnDataLoadedListener callback, int currentUserID, double srcLatitude,
-                           double srcLongitude, double destLatitude, double destLongitude, int paymentMode) {
+                           double srcLongitude, double destLatitude, double destLongitude, int paymentMode, int rideType) {
         
         executor.execute(() -> callback.onDataLoaded(NetworkUtil.getInstance().findDriver(url, currentUserID,
-                srcLatitude, srcLongitude, destLatitude, destLongitude, paymentMode)));
+                srcLatitude, srcLongitude, destLatitude, destLongitude, paymentMode, rideType)));
     }
 
     // Sign-Up

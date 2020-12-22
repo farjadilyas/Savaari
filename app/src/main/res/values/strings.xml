@@ -115,6 +115,8 @@
     <string name = "searching_ride">Finding  a driver for you</string>
     <string name = "select_ride_type">Select a ride type</string>
 
+    <string name = "select_payment_method">Select a payment method</string>
+
 
     <!-- ==================Settings Section ============== -->
 

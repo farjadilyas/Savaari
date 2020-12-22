@@ -1,6 +1,7 @@
 package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -82,6 +83,30 @@ public class OracleDBHandler implements DBHandler {
         }
         catch (Exception e) {
             System.out.println("Exception in DBHandler:addDriver()");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean sendRegistrationRequest(Driver driver)
+    {
+        try {
+            PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER DETAILS SET FIRST_NAME = ?" +
+                    ", LAST_NAME = ?, PHONE_NO = ?, CNIC = ?, LICENSE_NUMBER = ?, STATUS = ?");
+
+            sqlQuery.setString(1, driver.getFirstName());
+            sqlQuery.setString(2, driver.getLastName());
+            sqlQuery.setString(3, driver.getPhoneNo());
+            sqlQuery.setString(4, driver.getCNIC());
+            sqlQuery.setString(5, driver.getLicenseNumber());
+            sqlQuery.setInt(6, Driver.DV_REQ_SENT);
+
+            int numRowsUpdated = sqlQuery.executeUpdate();
+
+            return numRowsUpdated > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -217,15 +242,66 @@ public class OracleDBHandler implements DBHandler {
 
     @Override
     public boolean fetchDriverData(Driver driver) {
+        //TODO: refactor with constants
+
         try {
-            String sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS, IS_ACTIVE FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
+            String sqlQuery = "SELECT USER_NAME, FIRST_NAME, LAST_NAME, PHONE_NO, CNIC, LICENSE_NO, EMAIL_ADDRESS, STATUS, IS_ACTIVE, ACTIVE_VEHICLE_ID FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
             if (resultSet.next()) {
+
+                ArrayList<Vehicle> vehicles = new ArrayList<>();
+                Vehicle currentVehicle = null;
+
                 driver.setUserID(driver.getUserID());
                 driver.setUsername(resultSet.getString(1));
-                driver.setEmailAddress(resultSet.getString(2));
-                driver.setActive(Integer.parseInt(resultSet.getString(3)) == 1);
+                driver.setFirstName(resultSet.getString(2));
+                driver.setLastName(resultSet.getString(3));
+                driver.setPhoneNo(resultSet.getString(4));
+                driver.setCNIC(resultSet.getString(5));
+                driver.setLicenseNumber(resultSet.getString(6));
+                driver.setEmailAddress(resultSet.getString(7));
+                driver.setActive(Integer.parseInt(resultSet.getString(8)) == 1);
+                driver.setActiveVehicleID(Integer.parseInt(resultSet.getString(9)));
+
+                // Retrieve Driver's Vehicles
+                String vehiclesQuery = "SELECT DV.VEHICLE_ID, VT.MAKE, VT.MODEL, VT.YEAR, VT.RIDE_TYPE_ID, DV.NUMBER_PLATE" +
+                        ", DV.STATUS, DV.COLOR" +
+                        " FROM DRIVERS_VEHICLES DV" +
+                        " INNER JOIN VEHICLE_TYPES VT ON DV.VEHICLE_TYPE_ID = VT.VEHICLE_TYPE_ID" +
+                        " WHERE DV.DRIVER_ID = " + driver.getUserID();
+
+                resultSet = connect.createStatement().executeQuery(vehiclesQuery);
+
+                while (resultSet.next()) {
+                    currentVehicle = new Vehicle(resultSet.getInt(1), resultSet.getString(2),
+                            resultSet.getString(3), resultSet.getString(4), resultSet.getInt(5),
+                            resultSet.getString(6), resultSet.getInt(7),
+                            resultSet.getString(8));
+                    vehicles.add(currentVehicle);
+
+                    if (driver.getActiveVehicleID() == Vehicle.VH_DEFAULT && currentVehicle.getStatus() == Vehicle.VH_ACCEPTANCE_ACK)  {
+                        driver.setActiveVehicleID(currentVehicle.getStatus());
+                    }
+                }
+
+                // Retrieve Driver's Vehicle requests
+                String vehicleRequestQuery = "SELECT REGISTRATION_REQ_ID, MAKE, MODEL, YEAR, NUMBER_PLATE, STATUS, COLOR" +
+                        " FROM VEHICLE_REGISTRATION_REQ" +
+                        " WHERE DRIVER_ID = " + driver.getUserID();
+
+                resultSet = connect.createStatement().executeQuery(vehicleRequestQuery);
+
+                while (resultSet.next()) {
+                    currentVehicle = new Vehicle(resultSet.getInt(1), resultSet.getString(2),
+                            resultSet.getString(3), resultSet.getString(4), 0,
+                            resultSet.getString(5), resultSet.getInt(6),
+                            resultSet.getString(7));
+                    vehicles.add(currentVehicle);
+                }
+
+                driver.setVehicles(vehicles);
+
                 return true;
             }
             else {
@@ -333,13 +409,15 @@ public class OracleDBHandler implements DBHandler {
 
     @Override
     public ArrayList<Driver> searchDriverForRide() {
+        //TODO: Add checks for RideType
+
         try {
             String sqlQuery = "SELECT USER_ID, USER_NAME, CAST(LATITUDE AS CHAR(12)) AS LATITUDE, " +
                     "CAST(LONGITUDE AS CHAR(12)) AS LONGITUDE FROM DRIVER_DETAILS";
 
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
-            ArrayList<Driver> results = new ArrayList<Driver>();
+            ArrayList<Driver> results = new ArrayList<>();
             Driver currentDriver;
 
             while(resultSet.next()) {
@@ -364,16 +442,17 @@ public class OracleDBHandler implements DBHandler {
         catch (Exception e) {
             System.out.println("Exception in DBHandler:searchDriverForRide()");
             e.printStackTrace();
-            return new ArrayList<Driver>();
+            return new ArrayList<>();
         }
     }
 
+    //TODO: add check for driver's vehicle's ride type
     @Override
     public boolean sendRideRequest(RideRequest rideRequest) {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
                     "UPDATE DRIVER_DETAILS SET RIDER_ID = ?, RIDE_STATUS = 1, SOURCE_LAT = ?, SOURCE_LONG = ?," +
-                            "DEST_LAT = ?, DEST_LONG = ?, PAYMENT_MODE = ? WHERE USER_ID = ? AND IS_ACTIVE = 1 AND RIDE_STATUS = 0");
+                            "DEST_LAT = ?, DEST_LONG = ?, PAYMENT_MODE = ?, RIDE_TYPE = ? WHERE USER_ID = ? AND IS_ACTIVE = 1 AND RIDE_STATUS = 0");
 
             sqlQuery.setInt(1, rideRequest.getRider().getUserID());
             sqlQuery.setDouble(2, rideRequest.getPickupLocation().getLatitude());
@@ -381,7 +460,8 @@ public class OracleDBHandler implements DBHandler {
             sqlQuery.setDouble(4, rideRequest.getDropoffLocation().getLatitude());
             sqlQuery.setDouble(5, rideRequest.getDropoffLocation().getLongitude());
             sqlQuery.setInt(6, rideRequest.getPaymentMethod());
-            sqlQuery.setInt(7, rideRequest.getDriver().getUserID());
+            sqlQuery.setInt(7, rideRequest.getRideType());
+            sqlQuery.setInt(8, rideRequest.getDriver().getUserID());
 
             int numRowsUpdated = sqlQuery.executeUpdate();
             if (numRowsUpdated == 1) {
@@ -451,7 +531,7 @@ public class OracleDBHandler implements DBHandler {
         rideRequest.setFindStatus(33);
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
-                    "SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, D.PAYMENT_MODE"
+                    "SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, D.PAYMENT_MODE, D.RIDE_TYPE"
                     + " FROM DRIVER_DETAILS D LEFT JOIN RIDER_DETAILS R ON D.RIDER_ID = R.USER_ID"
                     + " WHERE D.USER_ID = ? AND D.IS_ACTIVE = 1");
 
@@ -497,6 +577,8 @@ public class OracleDBHandler implements DBHandler {
 
                         destLocation.setLatitude(resultSet.getDouble(6));
                         destLocation.setLongitude(resultSet.getDouble(7));
+
+                        rideRequest.setRideType(resultSet.getInt(8));
 
                         rideRequest.setRider(rider);
                         rideRequest.setPickupLocation(pickLocation);
@@ -694,7 +776,7 @@ public class OracleDBHandler implements DBHandler {
             String query = "INSERT INTO RIDES " +
                     "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, NULL AS PAYMENT_ID, " +
                     "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, 0 AS DIST_TRAVELLED, " +
-                    "1 AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, " + Ride.PICKUP + " AS STATUS " +
+                    "D.RIDE_TYPE AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, " + Ride.PICKUP + " AS STATUS " +
                     "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
                     "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getDriver().getUserID() +
                     " AND D.RIDER_ID = " + ride.getRider().getUserID();
@@ -744,7 +826,9 @@ public class OracleDBHandler implements DBHandler {
         }
     }
     public Ride getRide(RideRequest rideRequest) {
-        String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE, RD.FARE\n" +
+        String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, " +
+                "RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE, " +
+                "RD.FARE\n" +
                 "FROM RIDES RD, RIDER_DETAILS R, DRIVER_DETAILS D\n" +
                 "WHERE RD.RIDER_ID = " + rideRequest.getRider().getUserID() +
                 " AND RD.DRIVER_ID = " + rideRequest.getDriver().getUserID() +
@@ -901,7 +985,7 @@ public class OracleDBHandler implements DBHandler {
         try {
 
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET RIDE_STATUS = "  + RideRequest.MS_DEFAULT
-                     + ", RIDER_ID = " + User.DEFAULT_ID + ", SOURCE_LAT = 0, SOURCE_LONG = 0, DEST_LAT = 0, DEST_LONG = 0, PAYMENT_MODE = -1 WHERE USER_ID = ?");
+                     + ", RIDER_ID = " + User.DEFAULT_ID + ", SOURCE_LAT = 0, SOURCE_LONG = 0, DEST_LAT = 0, DEST_LONG = 0, PAYMENT_MODE = -1, RIDE_TYPE = 0 WHERE USER_ID = ?");
 
             sqlQuery.setInt(1, driver.getUserID());
             if (sqlQuery.executeUpdate() > 0) {
@@ -1065,4 +1149,135 @@ public class OracleDBHandler implements DBHandler {
         }
     }
     /* End of section */
+
+    /* Driver-Vehicle calls */
+
+    /*
+    * For all vehicles, if Vehicle.getStatus()
+    * = VH_DEFAULT -> Send new request
+    * = VH_REQ_REJECTED -> Update existing request
+    * */
+    @Override
+    public boolean sendVehicleRequest(Driver driver) {
+        try {
+            ArrayList<Vehicle> driversVehicles = driver.getVehicles();
+
+            String sendNewRequestQuery, updateExistingRequestQuery;
+            PreparedStatement statement;
+
+            for (Vehicle currentVehicleRequest : driversVehicles) {
+
+                // If request hasn't been sent
+                if (currentVehicleRequest.getStatus() == Vehicle.VH_DEFAULT) {
+                    sendNewRequestQuery = "INSERT INTO VEHICLE_REGISTRATION_REQ" +
+                            " VALUES(" + driver.getUserID() +", 0, " + currentVehicleRequest.getMake() +
+                            ", " + currentVehicleRequest.getModel() + ", " + currentVehicleRequest.getYear() +
+                        ", " + currentVehicleRequest.getNumberPlate() + ", " + currentVehicleRequest.getColor() +
+                        ", " + Vehicle.VH_REQ_SENT+ ")";
+                    System.out.println("sendVehicleRequest: " + sendNewRequestQuery);
+
+                    statement = connect.prepareStatement(sendNewRequestQuery);
+                    statement.executeUpdate();
+
+                }
+                // Previously rejected request
+                else if (currentVehicleRequest.getStatus() == Vehicle.VH_REQ_REJECTED) {
+                    updateExistingRequestQuery = "UPDATE VEHICLE_REGISTRATION_REQ" +
+                            " SET MAKE = " + currentVehicleRequest.getMake() +
+                            ", MODEL = " + currentVehicleRequest.getModel() +
+                            ", YEAR = " + currentVehicleRequest.getYear() +
+                            ", NUMBER_PLATE = " + currentVehicleRequest.getNumberPlate() +
+                            ", COLOR = " + currentVehicleRequest.getColor() +
+                            ", STATUS = " + Vehicle.VH_REQ_SENT+ ")";
+                    System.out.println("sendVehicleRequest: " + updateExistingRequestQuery);
+
+                    statement = connect.prepareStatement(updateExistingRequestQuery);
+                    statement.executeUpdate();
+                }
+            }
+
+            return true;
+        }
+        catch (Exception e) {
+            System.out.println(LOG_TAG + "Exception:sendVehicleRequest()");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean respondToVehicleRequest(Driver driver) {
+        try {
+            ArrayList<Vehicle> driversVehicles = driver.getVehicles();
+
+            int numRowsUpdated = 0;
+
+            String approveVehicleRequestQuery =
+                    "INSERT INTO DRIVERS_VEHICLES DV\n" +
+                            " VALUES(" + driver.getUserID() + ", 0 AS VEHICLE_ID, ?" +
+                            ", VRR.NUMBER_PLATE, " + Vehicle.VH_ACCEPTANCE_ACK + ", VRR.COLOR)\n" +
+                            " INNER JOIN VEHICLE_REGISTRATION_REQ VRR ON DV.DRIVER_ID = VRR.DRIVER_ID\n" +
+                            " WHERE VRR.REGISTRATION_REQ_ID = ?";
+
+            String deleteVehicleRequestQuery =
+                    "DELETE FROM VEHICLE_REGISTRATION_REQ" +
+                            " WHERE DRIVER_ID = ? AND REGISTRATION_REQ_ID = ?";
+
+            String rejectVehicleRequestQuery = "UPDATE VEHICLE_REGISTRATION_REQ" +
+                    " SET STATUS = " + Vehicle.VH_REQ_REJECTED +
+                    " WHERE DRIVER_ID = ?" +
+                    " AND REGISTRATION_REQ_ID = ?";
+
+            PreparedStatement approveVehicleRequestStatement = connect.prepareStatement(approveVehicleRequestQuery);
+            PreparedStatement deleteVehicleRequestStatement = connect.prepareStatement(deleteVehicleRequestQuery);
+            PreparedStatement rejectVehicleRequestStatement = connect.prepareStatement(rejectVehicleRequestQuery);
+
+            // Loop through list of driver's vehicles
+            for (Vehicle currentVehicle : driversVehicles) {
+
+                // If any records 'dirty' - response received but not persisted, then persist
+                if (currentVehicle.getStatus() == Vehicle.VH_REQ_ACCEPTED) {
+                    approveVehicleRequestStatement.setInt(1, currentVehicle.getVehicleTypeID());
+                    approveVehicleRequestStatement.setInt(2, currentVehicle.getVehicleID());
+
+                    numRowsUpdated = approveVehicleRequestStatement.executeUpdate();
+
+                    if (numRowsUpdated > 0) {
+                        deleteVehicleRequestStatement.setInt(1, driver.getUserID());
+                        deleteVehicleRequestStatement.setInt(2, currentVehicle.getVehicleID());
+                    }
+                }
+                else if (currentVehicle.getStatus() == Vehicle.VH_REQ_REJECTED) {
+                    rejectVehicleRequestStatement.setInt(1, driver.getUserID());
+                    rejectVehicleRequestStatement.setInt(2, currentVehicle.getVehicleID());
+
+                    numRowsUpdated = rejectVehicleRequestStatement.executeUpdate();
+                }
+            }
+
+        }
+        catch (Exception e) {
+            System.out.println(LOG_TAG + "Exception:approveVehicleRequest()");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Responding to Driver's Request
+    @Override
+    public boolean respondToDriverRequest(Driver driver) {
+        try {
+          PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET STATUS = ? WHERE USER_ID = ?");
+          sqlQuery.setInt(1, driver.getStatus());
+          sqlQuery.setInt(2, driver.getUserID());
+
+          int numRowsUpdated = sqlQuery.executeUpdate();
+
+          return numRowsUpdated > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

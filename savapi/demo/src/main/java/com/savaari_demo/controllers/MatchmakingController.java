@@ -18,8 +18,8 @@ public class MatchmakingController {
      * Shortlists potential drivers, sends request to ideal
      * Waits for and returns response (driver accepts/declines)
      */
-    public Ride findDriver(Rider rider, Location source, Location destination, int paymentMode) {
-        return rider.findDriver(source, destination, paymentMode);
+    public Ride findDriver(Rider rider, Location source, Location destination, int paymentMode, int rideType) {
+        return rider.findDriver(source, destination, paymentMode, rideType);
     }
     // End of method:findDriver()
 

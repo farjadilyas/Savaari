@@ -31,6 +31,7 @@ public class RideRequest {
     protected String dropoffTitle;
     protected int findStatus;
     private Integer paymentMethod;
+    private int rideType;
 
     public RideRequest() {
         rider = new Rider();
@@ -99,5 +100,13 @@ public class RideRequest {
 
     public Integer getPaymentMethod() {
         return paymentMethod;
+    }
+
+    public int getRideType() {
+        return rideType;
+    }
+
+    public void setRideType(int rideType) {
+        this.rideType = rideType;
     }
 }

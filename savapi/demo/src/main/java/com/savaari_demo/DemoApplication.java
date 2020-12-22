@@ -154,6 +154,33 @@ public class DemoApplication
 
 		return result.toString();
 	}
+
+	@RequestMapping(value = "/registerDriver", method = RequestMethod.POST)
+	public String registerDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		driver.setFirstName(allParams.get("FIRST_NAME"));
+		driver.setLastName(allParams.get("LAST_NAME"));
+		driver.setPhoneNo(allParams.get("PHONE_NO"));
+		driver.setCNIC(allParams.get("CNIC"));
+		driver.setLicenseNumber(allParams.get("LICENSE_NUMBER"));
+
+		boolean status = crudController.registerDriver(driver);
+
+		// Package response
+		JSONObject result = new JSONObject();
+		if (status) {
+			result.put("STATUS", 200);
+		} else {
+			result.put("STATUS", 400);
+		}
+		return result.toString();
+	}
+
 	@RequestMapping(value = "/persistDriverLogin", method = RequestMethod.POST)
 	public String persistDriverLogin(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
@@ -269,7 +296,7 @@ public class DemoApplication
 						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
 				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
 						Double.parseDouble(allParams.get("DEST_LONG")), null),
-				Integer.parseInt(allParams.get("PAYMENT_MODE")));
+				Integer.parseInt(allParams.get("PAYMENT_MODE")), Integer.parseInt(allParams.get("RIDE_TYPE")));
 
 		String result = null;
 
@@ -694,6 +721,98 @@ public class DemoApplication
 	}
 	/* End of section */
 
+
+	/* Vehicle methods */
+
+	@RequestMapping(value = "/sendVehicleRequest", method = RequestMethod.POST)
+	public String sendVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+
+		ArrayList<Vehicle> vehicles = new ArrayList<>();
+		Vehicle vehicle = new Vehicle();
+		vehicle.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REG_ID")));
+		vehicle.setMake(allParams.get("MAKE"));
+		vehicle.setModel(allParams.get("MODEL"));
+		vehicle.setYear(allParams.get("YEAR"));
+		vehicle.setNumberPlate(allParams.get("NUMBER_PLATE"));
+		vehicle.setColor(allParams.get("COLOR"));
+		vehicle.setStatus(Vehicle.VH_DEFAULT);
+
+		vehicles.add(vehicle);
+		driver.setVehicles(vehicles);
+
+		JSONObject result = new JSONObject();
+		boolean requestSent = crudController.sendVehicleRequest(driver);
+
+        result.put("STATUS", ((requestSent)?200:404));
+		return result.toString();
+	}
+
+	/* End of section*/
+
+
+	/* Admin system methods*/
+
+	@RequestMapping(value = "/respondToVehicleRequest", method = RequestMethod.POST)
+	public String respondToVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
+		/* TODO: Admin login required?
+		if (request.getSession(false) == null) {
+			return null;
+		} */
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+
+		ArrayList<Vehicle> vehicles = new ArrayList<>();
+		Vehicle vehicleRequest = new Vehicle();
+		vehicleRequest.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REG_ID")));
+		vehicleRequest.setVehicleTypeID(Integer.parseInt(allParams.get("VEHICLE_TYPE_ID")));
+		vehicleRequest.setStatus(Integer.parseInt(allParams.get("STATUS")));
+		vehicles.add(vehicleRequest);
+
+		driver.setVehicles(vehicles);
+
+		crudController.respondToVehicleRequest(driver);
+	}
+	@RequestMapping(value = "/respondToDriverRequest", method = RequestMethod.POST)
+	public String respondToDriverRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		/* */
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+		driver.setStatus(Integer.parseInt(allParams.get("STATUS")));
+
+		boolean status = crudController.respondToDriverRequest(driver);
+
+		// Packaging Response
+		JSONObject jsonObject = new JSONObject();
+		if (status) {
+			jsonObject.put("STATUS", 200);
+		} else {
+			jsonObject.put("STATUS", 404);
+		}
+		return jsonObject.toString();
+	}
+	/* End of section*/
+
+
+	// Test method
+    @RequestMapping(value = "/jacksonTest", method = RequestMethod.POST)
+    public String sendVehicleRequest(@RequestBody String body, HttpServletRequest request) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            Driver driver = objectMapper.readValue(body, Driver.class);
+            jsonObject.put("STATUS", 200);
+            return jsonObject.toString();
+        }
+        catch (Exception e) {
+            System.out.println("jacksonTest: exception");
+            jsonObject.put("STATUS", 404);
+            return jsonObject.toString();
+        }
+    }
 
 	@GetMapping("/hello")
 	public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {

@@ -33,6 +33,7 @@ public class RideRequest {
     private String dropoffTitle;
     private int findStatus;
     private Integer paymentMethod;
+    private int rideType;
 
     public RideRequest() {
         rider = new Rider();
@@ -40,6 +41,7 @@ public class RideRequest {
         pickupLocation = null;
         dropoffLocation = null;
         findStatus = DEFAULT;
+        rideType = 1;
     }
 
     public Rider getRider() {
@@ -106,5 +108,13 @@ public class RideRequest {
 
     public void setPaymentMethod(Integer paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public int getRideType() {
+        return rideType;
+    }
+
+    public void setRideType(int rideType) {
+        this.rideType = rideType;
     }
 }

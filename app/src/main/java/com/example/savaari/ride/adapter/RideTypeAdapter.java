@@ -18,21 +18,21 @@ import java.util.ArrayList;
 public class RideTypeAdapter  extends RecyclerView.Adapter<RideTypeAdapter.ItemViewHolder> {
 
     private ArrayList<RideTypeItem> mItemList;
-    private OnItemClickListener listener;
+    private ItemClickListener listener;
 
-    public RideTypeAdapter(ArrayList<RideTypeItem> itemList, OnItemClickListener listener) {
+    public RideTypeAdapter(ArrayList<RideTypeItem> itemList, ItemClickListener listener) {
         mItemList = itemList;
         this.listener = listener;
     }
 
     public static class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private WeakReference<OnItemClickListener> listenerRef;
+        private WeakReference<ItemClickListener> listenerRef;
         public LinearLayout rideTypeConfig;
         private ImageView rideTypeImage;
         private TextView rideTypeName, rideTypePrice;
 
-        public ItemViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+        public ItemViewHolder(@NonNull View itemView, final ItemClickListener listener) {
             super(itemView);
 
             rideTypeConfig = itemView.findViewById(R.id.ride_type_config);
@@ -46,7 +46,7 @@ public class RideTypeAdapter  extends RecyclerView.Adapter<RideTypeAdapter.ItemV
 
         @Override
         public void onClick(View v) {
-            listenerRef.get().OnClick(getAdapterPosition());
+            listenerRef.get().onRideTypeItemClick(getAdapterPosition());
         }
     }
 

@@ -3,7 +3,6 @@ package com.savaari_demo.controllers;
 import com.savaari_demo.OracleDBHandler;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -107,4 +106,22 @@ public class CRUDController
         return null;
     }
     /* End of section */
+
+    /* Vehicle methods */
+
+    public boolean respondToVehicleRequest(Driver driver) {
+        return driver.respondToVehicleRequest();
+    }
+
+    public boolean registerDriver(Driver driver) {
+        return driver.sendRegistrationRequest();
+    }
+
+    public boolean sendVehicleRequest(Driver driver) {
+        return driver.sendVehicleRequest();
+    }
+    public boolean respondToDriverRequest(Driver driver)
+    {
+        return OracleDBHandler.getInstance().respondToDriverRequest(driver);
+    }
 }

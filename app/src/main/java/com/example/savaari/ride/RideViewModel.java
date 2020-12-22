@@ -24,7 +24,7 @@ public class RideViewModel extends ViewModel {
     private static String LOG_TAG = RideViewModel.class.getSimpleName();
     private final Repository repository;
 
-    /* CCredentials for netowrk operations */
+    /* Credentials for netowrk operations */
     private int USER_ID = -1;
 
     /* User account data*/
@@ -158,7 +158,7 @@ public class RideViewModel extends ViewModel {
             }
             rideFound.postValue(ride);
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, 0);
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, 0, ride.getRideType());
     }
 
     public void getRideStatus() {
