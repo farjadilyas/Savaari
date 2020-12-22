@@ -152,7 +152,7 @@ public class Ride extends RideRequest {
     public boolean acknowledgeEndOfRide() {
 
         if (OracleDBHandler.getInstance().acknowledgeEndOfRide(this)) {
-            return rider.reset();
+            return rider.reset(false);
         }
 
         return false;

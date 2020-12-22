@@ -28,8 +28,8 @@ public class Rider extends User
         return OracleDBHandler.getInstance().loginRider(this);
     }
 
-    public boolean reset() {
-        return OracleDBHandler.getInstance().resetRider(this);
+    public boolean reset(boolean checkForResponse) {
+        return OracleDBHandler.getInstance().resetRider(this, false);
     }
 
     public boolean fetchData() {
@@ -49,7 +49,7 @@ public class Rider extends User
         }
         else if (rideRequest.getFindStatus() == RideRequest.REJECTED) {
             // Reset rider if previous request was rejected
-            reset();
+            reset(false);
             return null;
         }
         else if (rideRequest.getFindStatus() == RideRequest.NO_CHANGE) {
@@ -101,12 +101,28 @@ public class Rider extends User
                 if (findStatusResult== RideRequest.PAIRED) {
 
                     System.out.println("findDriver() : checkFindStatus() : DRIVER FOUND!");
-
-                    // Retrieve Ride
                     fetchedRide = getRide(rideRequest);
                     break;
                 }
+
+                // No response, reset rider's flags
+                else if (findStatusResult == RideRequest.NO_CHANGE || findStatusResult == RideRequest.STATUS_ERROR) {
+
+                    // Reset rider's flags if no response to ride request (atomic operation)
+                    if (!reset(true)) {
+                        if (OracleDBHandler.getInstance().checkFindStatus(this) == RideRequest.PAIRED) {
+                            System.out.println("findDriver() : checkFindStatus() : DRIVER FOUND!");
+                            fetchedRide = getRide(rideRequest);
+                            break;
+                        }
+                    }
+                    else {
+                        System.out.println("findDriver DRIVER NOT FOUND, trying another driver...");
+                    }
+                }
                 else {
+                    // Rejected / Not sent, reset without checking for response
+                    reset(false);
                     System.out.println("findDriver DRIVER NOT FOUND, trying another driver...");
                 }
             }

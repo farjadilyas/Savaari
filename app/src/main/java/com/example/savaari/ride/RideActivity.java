@@ -77,6 +77,7 @@ import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
+import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 
@@ -112,8 +113,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* Drawing the route on Maps*/
     private Polyline destinationPolyline = null;
     private Marker destinationMarker = null;
+    private DirectionsLeg destinationLeg = null;
     private Polyline pickupPolyline = null;
     private Marker pickupMarker = null;
+    private DirectionsLeg pickupLeg = null;
 
     /* Nav Views */
     private DrawerLayout drawer;
@@ -285,7 +288,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     pickupMarker = googleMap.addMarker(options);
                     calculateDirections(ride.getDriver().getCurrentLocation(), pickupMarker, false);
 
-                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " is arriving in 5 minutes");
+                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " is arriving in " + pickupLeg.duration.humanReadable);
                     toggleRideDetailsBar(true, true);
 
                     startPickupAction();
@@ -304,7 +307,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                 case Ride.STARTED:
                     setRoute(rideViewModel.getRide().getPickupLocation(), rideViewModel.getRide().getDropoffLocation(), "");
-                    rideStatusMessage.setText("Estimated Time to Destination: 6 min");
+                    rideStatusMessage.setText("Estimated Time to Destination: " + destinationLeg.duration.humanReadable);
                     toggleRideDetailsBar(true, true);
                     break;
 
@@ -1013,6 +1016,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                 destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+                destinationLeg = route.legs[0];
                 destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
                 destinationMarker.showInfoWindow();
             }
@@ -1024,6 +1028,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 removePolyline(pickupPolyline);
                 pickupPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 pickupPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.success_green));
+                pickupLeg = route.legs[0];
                 pickupMarker.setSnippet("Duration: " + route.legs[0].duration);
                 pickupMarker.showInfoWindow();
             }

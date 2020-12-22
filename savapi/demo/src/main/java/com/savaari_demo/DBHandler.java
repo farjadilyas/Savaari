@@ -46,7 +46,7 @@ public interface DBHandler {
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);
     boolean resetDriver(Driver driver);
-    boolean resetRider(Rider rider);
+    boolean resetRider(Rider rider, boolean checkForResponse);
 
     /* Location method calls */
     boolean saveRiderLocation(Rider rider);

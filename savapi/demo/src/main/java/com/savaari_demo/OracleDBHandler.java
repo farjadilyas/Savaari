@@ -1,11 +1,13 @@
 package com.savaari_demo;
 
-import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 
 public class OracleDBHandler implements DBHandler {
@@ -216,13 +218,14 @@ public class OracleDBHandler implements DBHandler {
     @Override
     public boolean fetchDriverData(Driver driver) {
         try {
-            String sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
+            String sqlQuery = "SELECT USER_NAME, EMAIL_ADDRESS, IS_ACTIVE FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
             ResultSet resultSet = connect.createStatement().executeQuery(sqlQuery);
 
             if (resultSet.next()) {
                 driver.setUserID(driver.getUserID());
                 driver.setUsername(resultSet.getString(1));
                 driver.setEmailAddress(resultSet.getString(2));
+                driver.setActive(Integer.parseInt(resultSet.getString(3)) == 1);
                 return true;
             }
             else {
@@ -237,10 +240,11 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public boolean resetRider(Rider rider) {
+    public boolean resetRider(Rider rider, boolean checkForResponse) {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
-                    "UPDATE RIDER_DETAILS SET FIND_STATUS = " + Ride.NOT_SENT +", DRIVER_ID = " + Driver.DEFAULT_ID + " WHERE USER_ID = ?");
+                    "UPDATE RIDER_DETAILS SET FIND_STATUS = " + Ride.NOT_SENT +", DRIVER_ID = " + Driver.DEFAULT_ID +
+                            " WHERE USER_ID = ?" + ((checkForResponse)? " AND FIND_STATUS <> " + RideRequest.FOUND : ""));
 
             sqlQuery.setInt(1, rider.getUserID());
 
@@ -283,7 +287,7 @@ public class OracleDBHandler implements DBHandler {
         Integer findStatus;
         ResultSet resultSet = null;
         long currentTime = System.currentTimeMillis();
-        long endTime = currentTime + 20000;
+        long endTime = currentTime + 36000;
 
         try {
             while (currentTime < endTime) {
@@ -384,7 +388,7 @@ public class OracleDBHandler implements DBHandler {
                 System.out.println(LOG_TAG +  ":sendRideRequest: 1 row updated -> Request sent!");
 
                 sqlQuery = connect.prepareStatement("UPDATE RIDER_DETAILS SET FIND_STATUS = " + RideRequest.NO_CHANGE +
-                        " WHERE USER_ID = ?");
+                        ", DRIVER_ID = " + rideRequest.getDriver().getUserID() + " WHERE USER_ID = ?");
                 sqlQuery.setInt(1, rideRequest.getRider().getUserID());
 
                 numRowsUpdated = sqlQuery.executeUpdate();
@@ -519,13 +523,17 @@ public class OracleDBHandler implements DBHandler {
         int numRowsUpdated = 0;
 
         try {
-            PreparedStatement riderSqlQuery = connect.prepareStatement(
+            String sqlQuery =
                     "UPDATE RIDER_DETAILS SET FIND_STATUS = " + RideRequest.REJECTED + ", DRIVER_ID = " + Driver.DEFAULT_ID
-                            + "WHERE USER_ID = " + rideRequest.getRider().getUserID() + " AND FIND_STATUS = " + RideRequest.NO_CHANGE);
+                            + " WHERE USER_ID = " + rideRequest.getRider().getUserID() + " AND FIND_STATUS = " + RideRequest.NO_CHANGE
+                    + " AND DRIVER_ID = " + rideRequest.getDriver().getUserID();
 
+            PreparedStatement riderSqlQuery = connect.prepareStatement(sqlQuery);
             numRowsUpdated = riderSqlQuery.executeUpdate();
 
-            return (numRowsUpdated > 0 && resetDriver(rideRequest.getDriver()));
+            System.out.println("rejectRideRequest: numRowsUpdated: " + numRowsUpdated);
+
+            return (resetDriver(rideRequest.getDriver()));
         }
         catch (Exception e) {
             System.out.println("Exception in DBHandler: rejectRideRequest()");
@@ -543,18 +551,20 @@ public class OracleDBHandler implements DBHandler {
         try {
             PreparedStatement sqlQuery1 = connect.prepareStatement(
                     "UPDATE RIDER_DETAILS SET FIND_STATUS = ?, DRIVER_ID = ? WHERE USER_ID = ? AND FIND_STATUS = "
-                            + RideRequest.NO_CHANGE);
+                            + RideRequest.NO_CHANGE + " AND DRIVER_ID = " + ride.getDriver().getUserID());
 
-            sqlQuery1.setInt(1, ride.getFindStatus());
+            sqlQuery1.setInt(1, RideRequest.FOUND);
             sqlQuery1.setInt(2, ride.getDriver().getUserID());
             sqlQuery1.setInt(3, ride.getRider().getUserID());
 
             int numRowsUpdated = sqlQuery1.executeUpdate();
-            if (numRowsUpdated <= 0)
+            if (numRowsUpdated <= 0) {
+                resetDriver(ride.getDriver());
                 return false;
+            }
 
             PreparedStatement sqlQuery = connect.prepareStatement("UPDATE DRIVER_DETAILS SET RIDE_STATUS = ? WHERE USER_ID = ?");
-            sqlQuery.setInt(1, ride.getRideStatus());
+            sqlQuery.setInt(1, RideRequest.MS_REQ_ACCEPTED);
             sqlQuery.setInt(2, ride.getDriver().getUserID());
 
             numRowsUpdated = sqlQuery.executeUpdate();
@@ -841,7 +851,7 @@ public class OracleDBHandler implements DBHandler {
 
             PreparedStatement sqlQuery = connect.prepareStatement(
                     "UPDATE RIDES SET PAYMENT_ID  = " + ride.getPayment().getPaymentID() +
-                            " STATUS = " + Ride.PAYMENT_MADE +
+                            ", STATUS = " + Ride.PAYMENT_MADE +
                             " WHERE RIDE_ID = ?");
 
             sqlQuery.setInt(1, ride.getRideID());
