@@ -25,7 +25,6 @@ public class Ride extends RideRequest {
     private double estimatedFare;
     private double fare;
     private int rideStatus;
-    private Integer paymentMethod;
     private ArrayList<Location> stops;
 
     public Ride() {
@@ -103,14 +102,6 @@ public class Ride extends RideRequest {
 
     public void setRideStatus(int rideStatus) {
         this.rideStatus = rideStatus;
-    }
-
-    public Object getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(Integer paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 
     public ArrayList<Location> getStops() {

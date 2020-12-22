@@ -40,21 +40,6 @@ public class Rider extends User
     public Ride getRideForRider() {
         RideRequest rideRequest = OracleDBHandler.getInstance().checkRideRequestStatus(this);
 
-        /*
-        JSONObject result = new JSONObject();
-        if (ride == null) {
-            result.put("STATUS_CODE", 404);
-            result.put("IS_TAKING_RIDE", false);
-        }
-        else if (ride.getRider().getFindStatus() != 2) {
-            result.put("STATUS_CODE", 200);
-            result.put("IS_TAKING_RIDE", false);
-        }
-        else {
-            result = getRide(ride);
-        }
-        return result;*/
-
         if (rideRequest == null) {
             return null;
         }
@@ -63,21 +48,24 @@ public class Rider extends User
             return getRide(rideRequest);
         }
         else if (rideRequest.getFindStatus() == RideRequest.REJECTED) {
-            // Rejected
+            // Reset rider if previous request was rejected
+            reset();
             return null;
         }
-        else {
-            // Check if request sent
+        else if (rideRequest.getFindStatus() == RideRequest.NO_CHANGE) {
+            // TODO: Request was sent but no response, loop till timeout then reset
             return null;
         }
+
+        return null;
     }
 
 
     public Ride findDriver(Location source,
-                                 Location destination) {
+                                 Location destination, int paymentMode) {
 
         // TODO: Policy? Where does this come from?
-        int MAX_ATTEMPTS = 60, MAX_REJECTED_ATTEMPTS = 5;
+        int MAX_REJECTED_ATTEMPTS = 5;
         boolean requestSent = false;
 
 
@@ -86,9 +74,16 @@ public class Rider extends User
         rideRequest.setRider(this);
         rideRequest.setPickupLocation(source);
         rideRequest.setDropoffLocation(destination);
+        rideRequest.setPaymentMethod(paymentMode);
 
         // Search for drivers that match criteria, TODO: Add criteria
         ArrayList<Driver> drivers = OracleDBHandler.getInstance().searchDriverForRide();
+
+        Ride fetchedRide = null;
+        Integer findStatusResult = RideRequest.NOT_SENT;
+
+        int attempts;
+        int rejectedAttempts;
 
         // Send request to next best driver
         for (Driver currentDriver : drivers) {
@@ -97,50 +92,22 @@ public class Rider extends User
             requestSent = OracleDBHandler.getInstance().sendRideRequest(rideRequest);
 
             if (requestSent) {
-                break;
-            }
-        }
-
-        Ride fetchedRide = null;
-
-        Integer findStatusResult;
-        if (requestSent) {
-            int attempts = 0;
-            int rejectedAttempts = 0;
-
-            while (attempts < MAX_ATTEMPTS && rejectedAttempts < MAX_REJECTED_ATTEMPTS) {
+                rejectedAttempts = 0;
 
                 // Check find status corresponding to previous ride request
                 findStatusResult = OracleDBHandler.getInstance().checkFindStatus(this);
 
                 // Compare return status
-                if (findStatusResult == RideRequest.STATUS_ERROR) {
-                    System.out.println("findDriver() : checkFindStatus() : STATUS ERROR");
-                }
-                else if (findStatusResult == RideRequest.NO_CHANGE) {
-                    System.out.println("findDriver() : checkFindStatus() : NO_CHANGE");
-                }
-                else if (findStatusResult == RideRequest.NOT_PAIRED) {
-                    System.out.println("findDriver() : checkFindStatus() : REJECTED. Attempting again...");
-                    ++rejectedAttempts;
-                }
-                else if (findStatusResult== RideRequest.PAIRED) {
+                if (findStatusResult== RideRequest.PAIRED) {
 
-                    // Make a Ride object and retrieve complete ride info
-                    fetchedRide = getRide(rideRequest);
                     System.out.println("findDriver() : checkFindStatus() : DRIVER FOUND!");
+
+                    // Retrieve Ride
+                    fetchedRide = getRide(rideRequest);
                     break;
                 }
                 else {
-                    System.out.println("findDriver STATUS UNDEFINED ERROR");
-                }
-                ++attempts;
-
-                try {
-                    Thread.sleep(2000);
-                }
-                catch (Exception e) {
-                    System.out.println("Rider: findDriver: Thread.sleep() exception");
+                    System.out.println("findDriver DRIVER NOT FOUND, trying another driver...");
                 }
             }
         }

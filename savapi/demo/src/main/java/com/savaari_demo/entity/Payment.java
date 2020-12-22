@@ -1,5 +1,7 @@
 package com.savaari_demo.entity;
 
+import com.savaari_demo.OracleDBHandler;
+
 public class Payment {
 
     public static final int CASH = 0, CREDIT_CARD = 1;
@@ -18,6 +20,12 @@ public class Payment {
         change = 0;
         timestamp = 0;
         paymentMode = Payment.CASH;
+    }
+
+    public Payment(Double amountPaid, Double change, Integer paymentMode) {
+        this.amountPaid = amountPaid;
+        this.change = change;
+        this.paymentMode = paymentMode;
     }
 
     // -----------------------------------------------------------------------
@@ -48,5 +56,9 @@ public class Payment {
     }
     public void setPaymentMode(int paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public void record() {
+        OracleDBHandler.getInstance().recordPayment(this);
     }
 }

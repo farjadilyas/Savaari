@@ -48,26 +48,34 @@ public class MainActivity extends Util {
 
         final int USER_ID = sh.getInt("USER_ID", -1);
         if (USER_ID == -1) {
-            Intent i = new Intent(MainActivity.this, LoginActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(i);
-            finish();
+            launchLoginActivity();
         }
         else {
             ((SavaariApplication) getApplication()).getRepository().persistLogin(object -> {
-                if (object != null && (Boolean) object) {
-                    Intent i = new Intent(MainActivity.this, RideActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    i.putExtra("USER_ID", USER_ID);
-                    startActivity(i);
-                    finish();
+                if (object == null || !((Boolean) object)) {
+                    launchRideActivity(USER_ID, false);
                 }
-                else {
-                    //launchLoginActivity();
-                }
+
+                launchRideActivity(USER_ID, true);
             }, USER_ID);
         }
 
+    }
+
+    public void launchLoginActivity() {
+        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
+    }
+
+    public void launchRideActivity(int userID, boolean apiConnection) {
+        Intent i = new Intent(MainActivity.this, RideActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        i.putExtra("USER_ID", userID);
+        i.putExtra("API_CONNECTION", apiConnection);
+        startActivity(i);
+        finish();
     }
 }
 

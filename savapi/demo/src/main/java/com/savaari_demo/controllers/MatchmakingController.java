@@ -1,7 +1,7 @@
 package com.savaari_demo.controllers;
 
+import com.savaari_demo.OracleDBHandler;
 import com.savaari_demo.entity.*;
-import org.json.JSONObject;
 
 public class MatchmakingController {
     // Main Attributes
@@ -18,8 +18,8 @@ public class MatchmakingController {
      * Shortlists potential drivers, sends request to ideal
      * Waits for and returns response (driver accepts/declines)
      */
-    public Ride findDriver(Rider rider, Location source, Location destination) {
-        return rider.findDriver(source, destination);
+    public Ride findDriver(Rider rider, Location source, Location destination, int paymentMode) {
+        return rider.findDriver(source, destination, paymentMode);
     }
     // End of method:findDriver()
 
@@ -31,13 +31,25 @@ public class MatchmakingController {
     {
         return driver.setMarkActive();
     }
-    public RideRequest checkRideRequestStatus(Driver driver)
+    public RideRequest startMatchmaking(Driver driver)
     {
-        return driver.checkRideRequestStatus();
+        return driver.startMatchmaking();
     }
+    public RideRequest checkRideRequestStatus(Driver driver) { return driver.checkRideRequestStatus(); }
+
     public boolean confirmRideRequest(RideRequest rideRequest)
     {
-        return rideRequest.getDriver().confirmRideRequest(rideRequest);
+        if (rideRequest.getFindStatus() == 1) {
+
+            Ride ride = new Ride(rideRequest);
+            return OracleDBHandler.getInstance().confirmRideRequest(ride);
+        }
+        else {
+            // Rider: FIND_STATUS = RideRequest.REJECTED
+            // Driver: RIDE_STATUS = RideRequest.MS_DEFAULT
+
+            return OracleDBHandler.getInstance().rejectRideRequest(rideRequest);
+        }
     }
 
     public boolean markDriverArrival(Ride ride) {
@@ -60,25 +72,17 @@ public class MatchmakingController {
         return ride.acknowledgeEndOfRide();
     }
 
-    /*
-    public JSONObject getRide(Ride ride) {
-        JSONObject result = new JSONObject();
-        result = dbHandler.getRide(ride);
-        result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
-        return result;
-    }*/
+    public void getRideStatus(Ride ride) {
 
-    public Integer getRideStatus(Ride ride) {
-
-        return ride.fetchRideStatus();
+        ride.fetchRideStatus();
     }
 
     public Ride getRideForDriver(RideRequest rideRequest){
         return rideRequest.getDriver().getRideForDriver(rideRequest);
     }
 
-    public boolean endRideWithPayment(Ride ride, double amount_paid)
+    public boolean endRideWithPayment(Ride ride, Double amountPaid, Double change)
     {
-        return ride.endRideWithPayment(amount_paid);
+        return ride.endRideWithPayment(amountPaid, change);
     }
 }

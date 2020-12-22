@@ -27,9 +27,6 @@ public class DemoApplication
 	private static LocationController locationController;
 	private static ObjectMapper objectMapper;
 
-
-
-
 	/* MAIN METHOD */
 	public static void main(String[] args)
 	{
@@ -111,7 +108,9 @@ public class DemoApplication
 			result.put("STATUS_CODE", 200);
 			result.put("USER_ID", userID);
 
-			request.getSession(true);
+			if (request.getSession(false) == null) {
+				request.getSession(true);
+			}
 		}
 
 		return result.toString();
@@ -148,7 +147,9 @@ public class DemoApplication
 			result.put("STATUS_CODE", 200);
 			result.put("USER_ID", userID);
 
-			request.getSession(true);
+			if (request.getSession(false) == null) {
+				request.getSession(true);
+			}
 		}
 
 		return result.toString();
@@ -163,6 +164,7 @@ public class DemoApplication
 		return new JSONObject().put("STATUS", 200).toString();
 	}
 
+	// TODO: Add layer that checks user is logged out in database
 	@RequestMapping(value = "/logout_rider", method = RequestMethod.POST)
 	public String logoutRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
@@ -266,7 +268,8 @@ public class DemoApplication
 				new Location(Double.parseDouble(allParams.get("SOURCE_LAT")),
 						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
 				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
-						Double.parseDouble(allParams.get("DEST_LONG")), null));
+						Double.parseDouble(allParams.get("DEST_LONG")), null),
+				Integer.parseInt(allParams.get("PAYMENT_MODE")));
 
 		String result = null;
 
@@ -307,13 +310,36 @@ public class DemoApplication
 		return json.toString();
 	}
 
+	@RequestMapping(value = "/startMatchmaking", method = RequestMethod.POST)
+	public String startMatchmaking(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
+		RideRequest rideRequest = matchmakingController.startMatchmaking(driver);
+		String result = null;
+
+		if (rideRequest != null) {
+			try {
+				result = objectMapper.writeValueAsString(rideRequest);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		return result;
+	}
+
 	@RequestMapping(value = "/checkRideRequestStatus", method = RequestMethod.POST)
 	public String checkRideRequestStatus(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
 			return null;
 		}
-
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
 
@@ -439,6 +465,7 @@ public class DemoApplication
 		return result.toString();
 	}
 
+	//TODO: send payment, not change and package into ride
 	@RequestMapping(value = "/endRideWithPayment", method = RequestMethod.POST)
 	public String endRideWithPayment(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
@@ -446,16 +473,18 @@ public class DemoApplication
 			return null;
 		}
 
+		// Unwrapping Objects
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 		ride.getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
-
-		double amountPaid = Double.parseDouble(allParams.get("AMNT_PAID"));
+		ride.setPaymentMethod(Integer.parseInt(allParams.get("PAYMENT_MODE")));
 
 		JSONObject jsonObject = new JSONObject();
-		if (matchmakingController.endRideWithPayment(ride, amountPaid)) {
+		if (matchmakingController.endRideWithPayment(ride, Double.parseDouble(allParams.get("AMNT_PAID")),
+                Double.parseDouble(allParams.get("CHANGE")))) {
 			jsonObject.put("STATUS", 200);
-		} else {
+		}
+		else {
 			jsonObject.put("STATUS", 404);
 		}
 		return jsonObject.toString();
@@ -499,16 +528,17 @@ public class DemoApplication
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
-		int rideStatus = matchmakingController.getRideStatus(ride);
+		matchmakingController.getRideStatus(ride);
 
-		JSONObject result = null;
-
-		if (rideStatus != Ride.DEFAULT) {
-			result = new JSONObject();
-			result.put("RIDE_STATUS", rideStatus);
+		if (ride.getRideStatus() != Ride.DEFAULT) {
+			JSONObject result = new JSONObject();
+			result.put("RIDE_STATUS", ride.getRideStatus());
+			result.put("FARE", ride.getFare());
+			return result.toString();
 		}
-
-		return result.toString();
+		else {
+			return null;
+		}
 	}
 
 	@RequestMapping(value = "/acknowledgeEndOfRide", method = RequestMethod.POST)

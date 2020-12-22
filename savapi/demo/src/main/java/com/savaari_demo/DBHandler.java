@@ -1,6 +1,7 @@
 package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
+
 import org.json.JSONArray;
 
 import java.util.ArrayList;
@@ -24,7 +25,8 @@ public interface DBHandler {
 
     /* Driver Side Matchmaking Database Calls*/
     boolean markDriverActive(Driver driver);
-    RideRequest checkRideRequestStatus(Driver driver);
+    RideRequest checkRideRequestStatus(Driver driver, int timeout);
+    boolean rejectRideRequest(RideRequest rideRequest);
     boolean confirmRideRequest(Ride ride);
     boolean markDriverArrival(Ride ride);
     boolean startRideDriver(Ride ride);
@@ -35,12 +37,12 @@ public interface DBHandler {
     boolean sendRideRequest(RideRequest rideRequest);
     Integer checkFindStatus(Rider rider);
     boolean recordRide(Ride ride);
-    Payment addPayment();
+    void recordPayment(Payment payment);
 
     /* In-ride DB calls */
     RideRequest checkRideRequestStatus(Rider rider);
     Ride getRide(RideRequest rideRequest);
-    Integer getRideStatus(Ride ride);
+    void getRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);
     boolean resetDriver(Driver driver);

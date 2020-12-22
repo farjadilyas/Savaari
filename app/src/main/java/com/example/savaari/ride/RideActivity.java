@@ -112,9 +112,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* Drawing the route on Maps*/
     private Polyline destinationPolyline = null;
     private Marker destinationMarker = null;
-
-    private Marker pickupMarker = null;
     private Polyline pickupPolyline = null;
+    private Marker pickupMarker = null;
 
     /* Nav Views */
     private DrawerLayout drawer;
@@ -157,7 +156,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     private int FIND_DRIVER_ATTEMPTS = 0;
-    private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
+    private int FIND_DRIVER_ATTEMPTS_LIMIT = 20;
 
 
     // Main onCreate Function to override
@@ -171,11 +170,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         Window w = getWindow();
         w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-        /* Register Broadcast Receiver for NetworkService */
-        //registerRideReceiver();
-
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
+
+        if (!recvIntent.getBooleanExtra("API_CONNECTION", true)) {
+            Toast.makeText(this, "No network connection", Toast.LENGTH_SHORT).show();
+        }
 
         mUserLocations = new ArrayList<>();
 
@@ -258,6 +258,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* -------Matchmaking & In-Ride ViewModel CALLKS AND OBSERVERS -----*/
 
     private void findDriver() {
+        Log.d(TAG, "findDriver() called!");
+
         if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
             Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
         }
@@ -310,7 +312,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     Toast.makeText(this, "Thank you for riding with Savaari", Toast.LENGTH_SHORT).show();
                     break;
                 case Ride.PAYMENT_MADE:
-                    //TODO: acknowledgeEndOfRide()
+                    rideViewModel.acknowledgeEndOfRide();
                     break;
                 case Ride.END_ACKED:
                     //Impossible
@@ -373,7 +375,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (statusChanged) {
             switch (ride.getRideStatus()) {
                 case Ride.DRIVER_ARRIVED:
-                    pickupPolyline.remove();
+                    removePolyline(pickupPolyline);
                     rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " has arrived");
                     break;
                 case Ride.CANCELLED:
@@ -386,7 +388,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     //Toast.makeText(this, "Your ride was cancelled. Trying again...", Toast.LENGTH_SHORT).show();
                     break;
                 case Ride.ARRIVED_AT_DEST:
-                    Toast.makeText(this, "You have reached your destination", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "You have reached your destination, fare: " + ride.getFare(), Toast.LENGTH_SHORT).show();
                     break;
                 case Ride.PAYMENT_MADE:
                     Toast.makeText(this, "Payment made", Toast.LENGTH_SHORT).show();
@@ -430,9 +432,23 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void endOfRideAcknowledgedAction(Boolean endOfRideAcknowledged) {
         if (endOfRideAcknowledged) {
+
+            // Stop repeating get driver location & get ride status
+            if (future != null) {
+                future.cancel(true);
+            }
+
+            rideViewModel.resetRide();
+            ride = rideViewModel.getRide();
+
             Toast.makeText(this, "End of ride acknowledged!", Toast.LENGTH_SHORT).show();
             toggleRideDetailsBar(false, true);
             toggleRideSearchBar(true, true);
+
+            removePolyline(destinationPolyline);
+            removeMarker(pickupMarker);
+            removeMarker(driverMarker);
+            removeMarker(destinationMarker);
         }
         else {
             Log.d(TAG, ":endOfRideAcknowledgedAction: not acknowledged");
@@ -445,7 +461,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     private void onSearchRideAction() {
-        Log.d("onSearchRideAction: ", String.valueOf(ride.getPickupLocation() == null));
+        Log.d(TAG, "onSearchRideAction called");
         if (ride.getPickupLocation() == null) {
             ride.setPickupLocation(userLocation, "Current location");
         }
@@ -590,9 +606,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (dest != null) {
             ride.setDropoffLocation(dest, title);
 
-            if (destinationMarker != null) {
-                destinationMarker.remove();
-            }
+            removeMarker(destinationMarker);
 
             MarkerOptions options = new MarkerOptions()
                     .position(ride.getDropoffLocation())
@@ -679,6 +693,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 Log.d("init(): ", "Dest: onPlaceSelectedListener(): An error occurred: " + status);
             }
         });
+    }
+
+    private void removeMarker(Marker marker) {
+        if (marker != null) {
+            marker.remove();
+        }
+        marker = null;
+    }
+
+    private void removePolyline(Polyline polyline) {
+        if (polyline != null) {
+            polyline.remove();
+        }
+        polyline = null;
     }
 
     private void initializeViews() {
@@ -989,9 +1017,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 destinationMarker.showInfoWindow();
             }
             else {
+                /*
                 if (pickupPolyline != null) {
                     destinationPolyline.remove();
-                }
+                }*/
+                removePolyline(pickupPolyline);
                 pickupPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 pickupPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.success_green));
                 pickupMarker.setSnippet("Duration: " + route.legs[0].duration);

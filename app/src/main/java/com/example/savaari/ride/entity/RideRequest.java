@@ -4,8 +4,14 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class RideRequest {
 
+    public static final int
+            MS_DEFAULT = 0,
+            MS_REQ_RECEIVED = 1,
+            MS_REQ_ACCEPTED = 2;
+
     // Match status - used in business logic
     public static final int
+            NOT_SENT = -1,
             NO_CHANGE = 0,
             REJECTED = 1,
             FOUND = 2;
@@ -26,6 +32,7 @@ public class RideRequest {
     protected Location dropoffLocation;
     private String dropoffTitle;
     private int findStatus;
+    private Integer paymentMethod;
 
     public RideRequest() {
         rider = new Rider();
@@ -90,5 +97,14 @@ public class RideRequest {
 
     public void setFindStatus(int findStatus) {
         this.findStatus = findStatus;
+    }
+
+
+    public Object getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(Integer paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 }

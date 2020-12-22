@@ -10,7 +10,6 @@ import com.example.savaari.Repository;
 import com.example.savaari.ride.entity.Location;
 import com.example.savaari.ride.entity.Ride;
 import com.example.savaari.ride.entity.Rider;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
@@ -24,8 +23,6 @@ public class RideViewModel extends ViewModel {
 
     private static String LOG_TAG = RideViewModel.class.getSimpleName();
     private final Repository repository;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /* CCredentials for netowrk operations */
     private int USER_ID = -1;
@@ -62,6 +59,11 @@ public class RideViewModel extends ViewModel {
         return mUserLocations;
     }
     public Ride getRide() { return ride; }
+
+    public void resetRide() {
+        ride = new Ride();
+        ride.getRider().setUserID(USER_ID);
+    }
 
     /* Set USER_ID */
     //public void setUserID(int USER_ID) { this.USER_ID = USER_ID; }
@@ -146,39 +148,17 @@ public class RideViewModel extends ViewModel {
         repository.findDriver(object -> {
 
             if (object == null) {
+                Log.d(LOG_TAG, "findDriver(): NOT FOUND");
                 ride.setFindStatus(Ride.STATUS_ERROR);
             }
             else {
                 Log.d(LOG_TAG, "findDriver(): FOUND");
                 ride = (Ride) object;
                 ride.setFindStatus(Ride.PAIRED);
-
-                /*
-                String status = result.getString("STATUS");
-
-                switch (status) {
-                    case "FOUND":
-                        Log.d(LOG_TAG, "findDriver(): FOUND");
-                        setRide(result);
-                        ride.setFindStatus(Ride.PAIRED);
-                        break;
-                    case "NOT_PAIRED":
-                        Log.d(LOG_TAG, "findDriver(): NOT_PAIRED");
-                        ride.setFindStatus(Ride.NOT_PAIRED);
-                        break;
-                    case "NOT_FOUND":
-                        Log.d(LOG_TAG, "findDriver(): NOT_FOUND");
-                        ride.setFindStatus(Ride.NOT_FOUND);
-                        break;
-                    default:
-                        Log.d(LOG_TAG, "findDriver(): STATUS ERROR");
-                        ride.setFindStatus(Ride.STATUS_ERROR);
-                        break;
-                }*/
             }
             rideFound.postValue(ride);
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude);
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, 0);
     }
 
     public void getRideStatus() {
@@ -195,6 +175,10 @@ public class RideViewModel extends ViewModel {
                     try {
                         if (ride.getRideStatus() != result.getInt("RIDE_STATUS")) {
                             ride.setRideStatus(result.getInt("RIDE_STATUS"));
+
+                            if (ride.getRideStatus() == Ride.ARRIVED_AT_DEST) {
+                                ride.setFare(result.getInt("FARE"));
+                            }
                             rideStatusChanged.postValue(true);
                         }
                     }
@@ -208,9 +192,7 @@ public class RideViewModel extends ViewModel {
     }
 
     public void acknowledgeEndOfRide() {
-        repository.acknowledgeEndOfRide(object -> {
-            endOfRideAcknowledged.postValue(true);
-        }, ride.getRideID(), ride.getRider().getUserID());
+        repository.acknowledgeEndOfRide(object -> endOfRideAcknowledged.postValue(true), ride.getRideID(), ride.getRider().getUserID());
     }
 
     public void fetchDriverLocation() {
@@ -261,24 +243,6 @@ public class RideViewModel extends ViewModel {
 
                         Log.d(LOG_TAG, " getRide: Is taking a ride!");
                         ride.setFindStatus(Ride.ALREADY_PAIRED);
-
-                        /*
-                        if (result.getInt("STATUS_CODE") == 200) {
-
-                            if (result.getBoolean("IS_TAKING_RIDE")) {
-                                Log.d(LOG_TAG, " getRide: Is taking a ride!");
-                                ride.setFindStatus(Ride.ALREADY_PAIRED);
-                                setRide(result);
-                            }
-                            else {
-                                Log.d(LOG_TAG, "getRide: Is NOT taking a ride");
-                            }
-                        }
-                        else {
-                            Log.d(LOG_TAG, "getRide: STATUS ERROR: " + result.getInt("STATUS_CODE"));
-                        }*/
-
-                        // If taking ride, driver status PAIRED, else DEFAULT
                     }
                     rideFound.postValue(ride);
                 }

@@ -1,7 +1,5 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.DBHandler;
-import com.savaari_demo.DBHandlerFactory;
 import com.savaari_demo.OracleDBHandler;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Location;
@@ -13,7 +11,6 @@ public class LocationController
 {
     // Main Attributes
     private static final String LOG_TAG = LocationController.class.getSimpleName();
-    private static DBHandler dbHandler = DBHandlerFactory.getDBHandler("Oracle");
 
     /* Location update & retrieval methods*/
 

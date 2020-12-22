@@ -6,7 +6,7 @@ import com.example.savaari.services.network.OnDataLoadedListener;
 import java.util.concurrent.Executor;
 
 public class Repository {
-    private static final String url = "https://8aadf4ca75f8.ngrok.io/";
+    private static final String url = "https://39929a7566c0.ngrok.io/";
     private Executor executor;
 
     Repository(Executor executor) {
@@ -16,10 +16,10 @@ public class Repository {
 
     //Find Driver
     public void findDriver(OnDataLoadedListener callback, int currentUserID, double srcLatitude,
-                           double srcLongitude, double destLatitude, double destLongitude) {
+                           double srcLongitude, double destLatitude, double destLongitude, int paymentMode) {
         
         executor.execute(() -> callback.onDataLoaded(NetworkUtil.getInstance().findDriver(url, currentUserID,
-                srcLatitude, srcLongitude, destLatitude, destLongitude)));
+                srcLatitude, srcLongitude, destLatitude, destLongitude, paymentMode)));
     }
 
     // Sign-Up

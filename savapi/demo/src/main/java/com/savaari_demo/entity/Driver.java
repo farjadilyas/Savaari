@@ -68,49 +68,33 @@ public class Driver extends User
 	}
 
 	// Check Ride Request Status
-	public RideRequest checkRideRequestStatus()
-	{
+	public RideRequest checkRideRequestStatus() {
+		return OracleDBHandler.getInstance().checkRideRequestStatus(this, 20000);
+	}
+
+	// Start Matchmaking service in Server
+	public RideRequest startMatchmaking() {
 		// TODO: Implement policy of checking rides
 		while(true)
 		{
-			RideRequest ride = OracleDBHandler.getInstance().checkRideRequestStatus(this);
-			if (ride != null)
-			{
-				return ride;
-			}
-			else
-			{
-				try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					System.out.println("checkRideStatus(): Exception thrown at sleep()");
-					e.printStackTrace();
+			RideRequest ride = OracleDBHandler.getInstance().checkRideRequestStatus(this, 20000);
+
+			// NULL means exception or timeout
+			if (ride != null) {
+				// 33 means something happened: logout or deactivated
+				if (ride.getFindStatus() != 33) {
+					return ride;
+				} else {
 					return null;
 				}
 			}
-		}
-	}
-
-	// Confirm Ride Request
-	public boolean confirmRideRequest(RideRequest rideRequest)
-	{
-		Ride ride = new Ride();
-
-		ride.setDriver(this);
-		ride.setRider(rideRequest.getRider());
-		ride.setRideStatus(rideRequest.getFindStatus() == 1 ? 2 : 0);
-		ride.setFindStatus(rideRequest.getFindStatus() + 1);
-
-		if (OracleDBHandler.getInstance().confirmRideRequest(ride)) {
-			return ride.recordRide();
-		}
-		return false;
+		} // end while
 	}
 
 	// Get Ride for Driver
 	public Ride getRideForDriver(RideRequest rideRequest)
 	{
-		return OracleDBHandler.getInstance().getRide(rideRequest);
+		return getRide(rideRequest);
 	}
 
 	// Saving Driver Location

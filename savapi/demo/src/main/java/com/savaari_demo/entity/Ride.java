@@ -27,14 +27,17 @@ public class Ride extends RideRequest {
     private double estimatedFare;
     private double fare;
     private int rideStatus;
-    private Integer paymentMethod; // TODO : Move Proper attributes to Ride Request
     private ArrayList<Location> stops;
 
     public Ride() {
-        rider = new Rider();
-        driver = new Driver();
-        //vehicle = new Vehicle();
         payment = new Payment();
+    }
+
+    public Ride(RideRequest rideRequest) {
+        setDriver(rideRequest.getDriver());
+        setRider(rideRequest.getRider());
+        setFindStatus(RideRequest.FOUND);
+        setRideStatus(RideRequest.MS_REQ_ACCEPTED);
     }
 
     // ---------------------------------------------------------------------------------
@@ -117,14 +120,6 @@ public class Ride extends RideRequest {
         this.endTime = endTime;
     }
 
-    public void setPaymentMethod(Integer paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public Integer getPaymentMethod() {
-        return paymentMethod;
-    }
-
     public ArrayList<Location> getStops() {
         return stops;
     }
@@ -138,14 +133,14 @@ public class Ride extends RideRequest {
     private double calculateFare()
     {
         // TODO: FARE POLICY and stuff ?
-        return 2150.89;
+        return (distanceTravelled / 1000) * 40;
     }
 
     // ---------------------------------------------------------------------------------
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
-    public Integer fetchRideStatus() {
-        return OracleDBHandler.getInstance().getRideStatus(this);
+    public void fetchRideStatus() {
+        OracleDBHandler.getInstance().getRideStatus(this);
     }
     public boolean markDriverArrival() {
         return OracleDBHandler.getInstance().markDriverArrival(this);
@@ -175,27 +170,20 @@ public class Ride extends RideRequest {
     }
 
     // Main Method for Ending Ride with Payment: Cash Mode
-    public boolean endRideWithPayment(double amountPaid)
+    public boolean endRideWithPayment(Double amountPaid, Double change)
     {
-        // TODO: Payment policy, where does payment sheningans happen?
-        payment = new Payment();
-        payment.setAmountPaid(amountPaid);
-        return (driver.resetDriver() && OracleDBHandler.getInstance().endRideWithPayment(this));
-    }
+        //TODO: handle credit card payment
 
-    public boolean recordRide() {
+        payment = new Payment(amountPaid, change, getPaymentMethod());
+        payment.record();
 
-        Payment newPayment = OracleDBHandler.getInstance().addPayment();
-
-        if (newPayment == null) {
-            System.out.println("Ride" + ":recordRide: payment is null");
-            return false;
+        // Add Payment to DB
+        if (payment.getPaymentID() > 0) {
+            return OracleDBHandler.getInstance().endRideWithPayment(this);
         }
         else {
-            // Payment created, set it in ride & record ride
-            setPayment(newPayment);
-            OracleDBHandler.getInstance().recordRide(this);
-            return true;
+            System.out.println("addPayment returned false!");
+            return false;
         }
     }
 }

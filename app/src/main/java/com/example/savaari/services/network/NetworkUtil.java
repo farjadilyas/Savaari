@@ -135,7 +135,7 @@ public class NetworkUtil
     *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
     */
     public Ride findDriver(String urlAddress, int currentUserID, double srcLatitude,
-                                        double srcLongitude, double destLatitude, double destLongitude) {
+                                        double srcLongitude, double destLatitude, double destLongitude, int paymentMode) {
         String url = urlAddress + "findDriver";
         try {
             JSONObject jsonParam = new JSONObject();
@@ -144,6 +144,7 @@ public class NetworkUtil
             jsonParam.put("SOURCE_LONG", srcLongitude);
             jsonParam.put("DEST_LAT", destLatitude);
             jsonParam.put("DEST_LONG", destLongitude);
+            jsonParam.put("PAYMENT_MODE", paymentMode);
 
             String resultString = sendPost(url, jsonParam, true);
 
@@ -354,7 +355,7 @@ public class NetworkUtil
 
     public boolean acknowledgeEndOfRide(String urlAddress, int rideID, int riderID) {
         Log.d(TAG, " :acknowledgeEndOfRide called!");
-        String url = urlAddress + "getRideStatus";
+        String url = urlAddress + "acknowledgeEndOfRide";
 
         JSONObject jsonParam = new JSONObject();
 
