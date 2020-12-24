@@ -102,7 +102,7 @@ public class RideRequest {
     }
 
 
-    public Object getPaymentMethod() {
+    public Integer getPaymentMethod() {
         return paymentMethod;
     }
 

@@ -20,7 +20,7 @@ public class DBHandlerFactory {
         return instance;
     }
 
-    public DBHandler getDBHandler() {
+    public DBHandler createDBHandler() {
 
         Properties prop = null;
         String propFileName = "config.properties";

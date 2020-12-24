@@ -1,6 +1,6 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.DBHandlerFactory;
 import com.savaari_demo.entity.*;
 
 public class MatchmakingController {
@@ -23,6 +23,31 @@ public class MatchmakingController {
     }
     // End of method:findDriver()
 
+    /* Rider-side in-ride methods*/
+
+    public Ride getRideForRider(Rider rider) {
+        return rider.getRideForRider();
+    }
+
+    public boolean acknowledgeEndOfRide(Ride ride) {
+        return ride.acknowledgeEndOfRide();
+    }
+
+    public void getRideStatus(Ride ride) {
+
+        ride.fetchRideStatus();
+    }
+
+    public boolean giveFeedbackForDriver(Ride ride, float rating) {
+        return ride.giveFeedbackForDriver(rating);
+    }
+
+    public boolean giveFeedbackForRider(Ride ride, float rating) {
+        return ride.giveFeedbackForRider(rating);
+    }
+    /* End of section */
+
+
 
     /* Driver-side matchmaking methods */
     // Setting Driver as Active
@@ -42,13 +67,13 @@ public class MatchmakingController {
         if (rideRequest.getFindStatus() == 1) {
 
             Ride ride = new Ride(rideRequest);
-            return OracleDBHandler.getInstance().confirmRideRequest(ride);
+            return DBHandlerFactory.getInstance().createDBHandler().confirmRideRequest(ride);
         }
         else {
             // Rider: FIND_STATUS = RideRequest.REJECTED
             // Driver: RIDE_STATUS = RideRequest.MS_DEFAULT
 
-            return OracleDBHandler.getInstance().rejectRideRequest(rideRequest);
+            return DBHandlerFactory.getInstance().createDBHandler().rejectRideRequest(rideRequest);
         }
     }
 
@@ -62,19 +87,6 @@ public class MatchmakingController {
 
     public double markArrivalAtDestination(Ride ride) {
         return ride.markArrivalAtDestination();
-    }
-
-    public Ride getRideForRider(Rider rider) {
-        return rider.getRideForRider();
-    }
-
-    public boolean acknowledgeEndOfRide(Ride ride) {
-        return ride.acknowledgeEndOfRide();
-    }
-
-    public void getRideStatus(Ride ride) {
-
-        ride.fetchRideStatus();
     }
 
     public Ride getRideForDriver(RideRequest rideRequest){

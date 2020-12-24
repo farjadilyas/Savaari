@@ -29,6 +29,8 @@ public class RideViewModel extends ViewModel {
 
     /* User account data*/
     private LatLng userCoordinates;
+
+    private Ride previousRide;
     private Ride ride;
 
     /* User locations data for pinging */
@@ -61,6 +63,7 @@ public class RideViewModel extends ViewModel {
     public Ride getRide() { return ride; }
 
     public void resetRide() {
+        setPreviousRide(ride);
         ride = new Ride();
         ride.getRider().setUserID(USER_ID);
     }
@@ -158,7 +161,7 @@ public class RideViewModel extends ViewModel {
             }
             rideFound.postValue(ride);
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, 0, ride.getRideType());
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, ride.getPaymentMethod(), ride.getRideType());
     }
 
     public void getRideStatus() {
@@ -192,7 +195,10 @@ public class RideViewModel extends ViewModel {
     }
 
     public void acknowledgeEndOfRide() {
-        repository.acknowledgeEndOfRide(object -> endOfRideAcknowledged.postValue(true), ride.getRideID(), ride.getRider().getUserID());
+        repository.acknowledgeEndOfRide(object -> {
+            ride.setRideStatus(Ride.END_ACKED);
+            endOfRideAcknowledged.postValue(true);
+        }, ride.getRideID(), ride.getRider().getUserID());
     }
 
     public void fetchDriverLocation() {
@@ -252,5 +258,13 @@ public class RideViewModel extends ViewModel {
                 }
             }, USER_ID);
         }
+    }
+
+    private void setPreviousRide(Ride ride) {
+        previousRide = ride;
+    }
+
+    public Ride getPreviousRide() {
+        return previousRide;
     }
 }

@@ -1,11 +1,13 @@
 package com.example.savaari.ride.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 
 public class Driver extends User{
 
     // Status flags values
-    private static final int
+    public static final int
             DV_DEFAULT = 0,
             DV_REQ_SENT = 1,
             DV_REQ_REJECTED= 2,
@@ -16,6 +18,7 @@ public class Driver extends User{
     private Boolean active;
     private Boolean takingRide;
     private int rideRequestStatus;
+    @JsonProperty("CNIC")
     private String CNIC;
     private String licenseNumber;
     private int status;

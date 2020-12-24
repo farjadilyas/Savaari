@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
@@ -26,6 +27,8 @@ public class DemoApplication
 	private static CRUDController crudController;
 	private static LocationController locationController;
 	private static ObjectMapper objectMapper;
+
+	private static HashMap<String, DBHandler> databaseHandlers;
 
 	/* MAIN METHOD */
 	public static void main(String[] args)
@@ -40,6 +43,8 @@ public class DemoApplication
 		matchmakingController = new MatchmakingController();
 		crudController = new CRUDController();
 		locationController = new LocationController();
+
+		//databaseHandlers = new HashMap<>();
 
 		SpringApplication.run(DemoApplication.class, args);
 	}
@@ -274,6 +279,24 @@ public class DemoApplication
 		}
 
 		return result;
+	}
+
+	@RequestMapping(value = "/selectActiveVehicle", method = RequestMethod.POST)
+	public String selectActiveVehicle(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
+
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		driver.setActiveVehicleID(Integer.parseInt(allParams.get("ACTIVE_VEHICLE_ID")));
+
+		JSONObject result = new JSONObject();
+		boolean vehicleSet = crudController.setActiveVehicle(driver);
+
+		result.put("STATUS", ((vehicleSet)? 200 : 404));
+		return result.toString();
 	}
 	/* End of section */
 
@@ -585,6 +608,42 @@ public class DemoApplication
 		return result.toString();
 	}
 
+	@RequestMapping(value = "/giveFeedbackForDriver", method = RequestMethod.POST)
+	public String giveFeedbackForDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+
+		JSONObject result = new JSONObject();
+		boolean feedbackSubmitted = matchmakingController.giveFeedbackForDriver(ride, Float.parseFloat(allParams.get("RATING")));
+
+		result.put("STATUS", ((feedbackSubmitted)? 200 : 404));
+		return result.toString();
+	}
+
+	@RequestMapping(value = "/giveFeedbackForRider", method = RequestMethod.POST)
+	public String giveFeedbackForRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	{
+		if (request.getSession(false) == null) {
+			return null;
+		}
+
+		Ride ride = new Ride();
+		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		ride.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+
+		JSONObject result = new JSONObject();
+		boolean feedbackSubmitted = matchmakingController.giveFeedbackForRider(ride, Float.parseFloat(allParams.get("RATING")));
+
+		result.put("STATUS", ((feedbackSubmitted)? 200 : 404));
+		return result.toString();
+	}
+
 	/* End of section */
 
 	/* Location update methods*/
@@ -724,6 +783,11 @@ public class DemoApplication
 
 	/* Vehicle methods */
 
+	/*
+	* Param: STATUS - previous status
+	* If STATUS = Vehicle.VH_REJECTED, must have old registrationRequestID
+	* ELIF STATUS = VH_DEFAULT, send new request
+	* */
 	@RequestMapping(value = "/sendVehicleRequest", method = RequestMethod.POST)
 	public String sendVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
 
@@ -732,13 +796,20 @@ public class DemoApplication
 
 		ArrayList<Vehicle> vehicles = new ArrayList<>();
 		Vehicle vehicle = new Vehicle();
-		vehicle.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REG_ID")));
+		if (allParams.containsKey("REGISTRATION_REQ_ID")) {
+			System.out.println("Setting reg req id: " + Integer.parseInt(allParams.get("REGISTRATION_REQ_ID")));
+			vehicle.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REQ_ID")));
+		}
+		else {
+			System.out.println("Default reg req id");
+			vehicle.setVehicleID(Vehicle.DEFAULT_ID);
+		}
 		vehicle.setMake(allParams.get("MAKE"));
 		vehicle.setModel(allParams.get("MODEL"));
 		vehicle.setYear(allParams.get("YEAR"));
 		vehicle.setNumberPlate(allParams.get("NUMBER_PLATE"));
 		vehicle.setColor(allParams.get("COLOR"));
-		vehicle.setStatus(Vehicle.VH_DEFAULT);
+		vehicle.setStatus(Integer.parseInt(allParams.get("STATUS")));
 
 		vehicles.add(vehicle);
 		driver.setVehicles(vehicles);
@@ -755,6 +826,12 @@ public class DemoApplication
 
 	/* Admin system methods*/
 
+	/*
+	* Param STATUS - new status
+	* VH_REQUEST_REJECTED  or VH_REQUEST_ACCEPTED
+	* VEHICLE_TYPE_ID
+	* DRIVER_ID and REGISTRATION_REQ_ID
+	* */
 	@RequestMapping(value = "/respondToVehicleRequest", method = RequestMethod.POST)
 	public String respondToVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
 		/* TODO: Admin login required?
@@ -767,14 +844,17 @@ public class DemoApplication
 
 		ArrayList<Vehicle> vehicles = new ArrayList<>();
 		Vehicle vehicleRequest = new Vehicle();
-		vehicleRequest.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REG_ID")));
+		vehicleRequest.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REQ_ID")));
 		vehicleRequest.setVehicleTypeID(Integer.parseInt(allParams.get("VEHICLE_TYPE_ID")));
 		vehicleRequest.setStatus(Integer.parseInt(allParams.get("STATUS")));
 		vehicles.add(vehicleRequest);
 
 		driver.setVehicles(vehicles);
 
-		crudController.respondToVehicleRequest(driver);
+        JSONObject result = new JSONObject();
+		boolean responseSent = crudController.respondToVehicleRequest(driver);
+        result.put("STATUS", ((responseSent)?200:404));
+        return result.toString();
 	}
 	@RequestMapping(value = "/respondToDriverRequest", method = RequestMethod.POST)
 	public String respondToDriverRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request)

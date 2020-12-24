@@ -3,7 +3,7 @@
  */
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.DBHandlerFactory;
 
 import java.util.ArrayList;
 
@@ -22,23 +22,23 @@ public class Rider extends User
     //Rider-side CRUD methods
 
     public Boolean signup() {
-        return OracleDBHandler.getInstance().addRider(this);
+        return DBHandlerFactory.getInstance().createDBHandler().addRider(this);
     }
     public Integer login() {
-        return OracleDBHandler.getInstance().loginRider(this);
+        return DBHandlerFactory.getInstance().createDBHandler().loginRider(this);
     }
 
     public boolean reset(boolean checkForResponse) {
-        return OracleDBHandler.getInstance().resetRider(this, false);
+        return DBHandlerFactory.getInstance().createDBHandler().resetRider(this, false);
     }
 
     public boolean fetchData() {
-        return OracleDBHandler.getInstance().fetchRiderData(this);
+        return DBHandlerFactory.getInstance().createDBHandler().fetchRiderData(this);
     }
 
     // Rider-side Match-making methods
     public Ride getRideForRider() {
-        RideRequest rideRequest = OracleDBHandler.getInstance().checkRideRequestStatus(this);
+        RideRequest rideRequest = DBHandlerFactory.getInstance().createDBHandler().checkRideRequestStatus(this);
 
         if (rideRequest == null) {
             return null;
@@ -78,7 +78,7 @@ public class Rider extends User
         rideRequest.setRideType(rideType);
 
         // Search for drivers that match criteria, TODO: Add criteria
-        ArrayList<Driver> drivers = OracleDBHandler.getInstance().searchDriverForRide();
+        ArrayList<Driver> drivers = DBHandlerFactory.getInstance().createDBHandler().searchDriverForRide(rideRequest);
 
         Ride fetchedRide = null;
         Integer findStatusResult = RideRequest.NOT_SENT;
@@ -90,13 +90,13 @@ public class Rider extends User
         for (Driver currentDriver : drivers) {
 
             rideRequest.setDriver(currentDriver);
-            requestSent = OracleDBHandler.getInstance().sendRideRequest(rideRequest);
+            requestSent = DBHandlerFactory.getInstance().createDBHandler().sendRideRequest(rideRequest);
 
             if (requestSent) {
                 rejectedAttempts = 0;
 
                 // Check find status corresponding to previous ride request
-                findStatusResult = OracleDBHandler.getInstance().checkFindStatus(this);
+                findStatusResult = DBHandlerFactory.getInstance().createDBHandler().checkFindStatus(this);
 
                 // Compare return status
                 if (findStatusResult== RideRequest.PAIRED) {
@@ -111,7 +111,7 @@ public class Rider extends User
 
                     // Reset rider's flags if no response to ride request (atomic operation)
                     if (!reset(true)) {
-                        if (OracleDBHandler.getInstance().checkFindStatus(this) == RideRequest.PAIRED) {
+                        if (DBHandlerFactory.getInstance().createDBHandler().checkFindStatus(this) == RideRequest.PAIRED) {
                             System.out.println("findDriver() : checkFindStatus() : DRIVER FOUND!");
                             fetchedRide = getRide(rideRequest);
                             break;
@@ -136,10 +136,10 @@ public class Rider extends User
 
     /* Rider location methods */
     public boolean saveLocation() {
-        return OracleDBHandler.getInstance().saveRiderLocation(this);
+        return DBHandlerFactory.getInstance().createDBHandler().saveRiderLocation(this);
     }
 
     public void fetchLocation() {
-        setCurrentLocation(OracleDBHandler.getInstance().getRiderLocation(this));
+        setCurrentLocation(DBHandlerFactory.getInstance().createDBHandler().getRiderLocation(this));
     }
 }

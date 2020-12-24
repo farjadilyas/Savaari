@@ -369,7 +369,28 @@ public class NetworkUtil
         }
         catch (JSONException e) {
             e.printStackTrace();
-            Log.d(TAG, " :getRideStatus() - JSONException");
+            Log.d(TAG, " :acknowledgeEndOfRide() - JSONException");
+            return false;
+        }
+    }
+
+    public boolean giveRatingForDriver(String urlAddress, int rideID, int driverID, float rating) {
+        Log.d(TAG, " :giveRatingForDriver called!");
+        String url = urlAddress + "giveRatingForDriver";
+
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("RIDE_ID", rideID);
+            jsonParam.put("DRIVER_ID", driverID);
+            jsonParam.put("RATING", rating);
+
+            String resultString = sendPost(url, jsonParam, true);
+            return ((resultString != null) && new JSONObject(resultString).getInt("STATUS") == 200);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :giveRatingForDriver() - JSONException");
             return false;
         }
     }

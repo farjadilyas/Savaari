@@ -1,6 +1,6 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.DBHandlerFactory;
 
 public class Payment {
 
@@ -59,6 +59,6 @@ public class Payment {
     }
 
     public void record() {
-        OracleDBHandler.getInstance().recordPayment(this);
+        DBHandlerFactory.getInstance().createDBHandler().recordPayment(this);
     }
 }

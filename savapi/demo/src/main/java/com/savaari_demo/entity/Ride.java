@@ -1,6 +1,6 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.DBHandlerFactory;
 
 import java.util.ArrayList;
 
@@ -133,18 +133,18 @@ public class Ride extends RideRequest {
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
     public void fetchRideStatus() {
-        OracleDBHandler.getInstance().getRideStatus(this);
+        DBHandlerFactory.getInstance().createDBHandler().getRideStatus(this);
     }
     public boolean markDriverArrival() {
-        return OracleDBHandler.getInstance().markDriverArrival(this);
+        return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
     }
-    public boolean startRideDriver() { return OracleDBHandler.getInstance().startRideDriver(this); }
+    public boolean startRideDriver() { return DBHandlerFactory.getInstance().createDBHandler().startRideDriver(this); }
 
 
     // Acknowledge end of ride (final call)
     public boolean acknowledgeEndOfRide() {
 
-        if (OracleDBHandler.getInstance().acknowledgeEndOfRide(this)) {
+        if (DBHandlerFactory.getInstance().createDBHandler().acknowledgeEndOfRide(this)) {
             return rider.reset(false);
         }
 
@@ -156,7 +156,7 @@ public class Ride extends RideRequest {
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
         fare = calculateFare();
-        if (OracleDBHandler.getInstance().markArrivalAtDestination(this)) {
+        if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
         }
         return -1;
@@ -172,11 +172,21 @@ public class Ride extends RideRequest {
 
         // Add Payment to DB
         if (payment.getPaymentID() > 0) {
-            return OracleDBHandler.getInstance().endRideWithPayment(this);
+            return DBHandlerFactory.getInstance().createDBHandler().endRideWithPayment(this);
         }
         else {
             System.out.println("addPayment returned false!");
             return false;
         }
+    }
+
+    /* Feedback methods */
+
+    public boolean giveFeedbackForDriver(float rating) {
+        return DBHandlerFactory.getInstance().createDBHandler().giveFeedbackForDriver(this, rating);
+    }
+
+    public boolean giveFeedbackForRider(float rating) {
+        return DBHandlerFactory.getInstance().createDBHandler().giveFeedbackForRider(this, rating);
     }
 }

@@ -1,6 +1,7 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.savaari_demo.DBHandlerFactory;
 
 import java.util.ArrayList;
 
@@ -18,6 +19,8 @@ public class Driver extends User
 	private Boolean active;
 	private Boolean takingRide;
 	private int rideRequestStatus;
+
+	@JsonProperty("CNIC")
 	private String CNIC;
 	private String licenseNumber;
 	private int status;
@@ -92,30 +95,30 @@ public class Driver extends User
 
 	// Sign-UP
 	public boolean signup() {
-		return OracleDBHandler.getInstance().addDriver(this);
+		return DBHandlerFactory.getInstance().createDBHandler().addDriver(this);
 	}
 
 	// Login
 	public Integer login()
 	{
-		return OracleDBHandler.getInstance().loginDriver(this);
+		return DBHandlerFactory.getInstance().createDBHandler().loginDriver(this);
 	}
 
 	// Fetch Data
 	public boolean fetchData()
 	{
-		return OracleDBHandler.getInstance().fetchDriverData(this);
+		return DBHandlerFactory.getInstance().createDBHandler().fetchDriverData(this);
 	}
 
 	// Set Mark Active
 	public boolean setMarkActive()
 	{
-		return OracleDBHandler.getInstance().markDriverActive(this);
+		return DBHandlerFactory.getInstance().createDBHandler().markDriverActive(this);
 	}
 
 	// Check Ride Request Status
 	public RideRequest checkRideRequestStatus() {
-		return OracleDBHandler.getInstance().checkRideRequestStatus(this, 20000);
+		return DBHandlerFactory.getInstance().createDBHandler().checkRideRequestStatus(this, 20000);
 	}
 
 	// Start Matchmaking service in Server
@@ -123,7 +126,7 @@ public class Driver extends User
 		// TODO: Implement policy of checking rides
 		while(true)
 		{
-			RideRequest ride = OracleDBHandler.getInstance().checkRideRequestStatus(this, 20000);
+			RideRequest ride = DBHandlerFactory.getInstance().createDBHandler().checkRideRequestStatus(this, 20000);
 
 			// NULL means exception or timeout
 			if (ride != null) {
@@ -146,18 +149,18 @@ public class Driver extends User
 	// Saving Driver Location
 	public boolean saveDriverLocation()
 	{
-		return OracleDBHandler.getInstance().saveDriverLocation(this);
+		return DBHandlerFactory.getInstance().createDBHandler().saveDriverLocation(this);
 	}
 
 	// Getting Driver Location
 	public void getDriverLocation()
 	{
-		setCurrentLocation(OracleDBHandler.getInstance().getDriverLocation(this));
+		setCurrentLocation(DBHandlerFactory.getInstance().createDBHandler().getDriverLocation(this));
 	}
 
 	// Reset Driver
 	public boolean resetDriver() {
-		return OracleDBHandler.getInstance().resetDriver(this);
+		return DBHandlerFactory.getInstance().createDBHandler().resetDriver(this);
 	}
 
 	public ArrayList<Vehicle> getVehicles() {
@@ -170,13 +173,17 @@ public class Driver extends User
 
 	public boolean sendRegistrationRequest()
 	{
-		return OracleDBHandler.getInstance().sendRegistrationRequest(this);
+		return DBHandlerFactory.getInstance().createDBHandler().sendRegistrationRequest(this);
 	}
 
 	public boolean sendVehicleRequest() {
-		return OracleDBHandler.getInstance().sendVehicleRequest(this);
+		return DBHandlerFactory.getInstance().createDBHandler().sendVehicleRequest(this);
 	}
 	public boolean respondToVehicleRequest() {
-		return OracleDBHandler.getInstance().respondToVehicleRequest(this);
+		return DBHandlerFactory.getInstance().createDBHandler().respondToVehicleRequest(this);
+	}
+
+	public boolean setActiveVehicle() {
+		return DBHandlerFactory.getInstance().createDBHandler().setActiveVehicle(this);
 	}
 }

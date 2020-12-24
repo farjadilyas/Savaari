@@ -8,8 +8,8 @@
 
     <style name="BlackTheme" parent="AppTheme">
         <item name="splashBackgroundColor">#382B73</item>
-        <item name="backgroundColor">#FF121212</item>
-        <item name="foregroundColor">#000000</item>
+        <item name="backgroundColor">#000000</item>
+        <item name="foregroundColor">#FF121212</item>
         <item name="deselectedForegroundColor">#A9A9A9</item>
         <item name="textColor">#FFFFFF</item>
         <item name="lightTextColor">#9C9C9C</item>
