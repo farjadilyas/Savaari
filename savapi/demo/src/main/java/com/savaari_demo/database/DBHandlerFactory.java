@@ -1,4 +1,4 @@
-package com.savaari_demo;
+package com.savaari_demo.database;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -7,13 +7,12 @@ import java.util.Properties;
 public class DBHandlerFactory {
 
     private static DBHandlerFactory instance = null;
-    private DBHandler dbHandler = null;
 
     private DBHandlerFactory() {
 
     }
 
-    public static DBHandlerFactory getInstance() {
+    public synchronized static DBHandlerFactory getInstance() {
         if (instance == null) {
             instance = new DBHandlerFactory();
         }
@@ -22,9 +21,9 @@ public class DBHandlerFactory {
 
     public DBHandler createDBHandler() {
 
-        Properties prop = null;
+        Properties prop;
         String propFileName = "config.properties";
-        InputStream inputStream = null;
+        InputStream inputStream;
 
         try {
             prop = new Properties();
@@ -39,8 +38,7 @@ public class DBHandlerFactory {
             // Get property value
             String dbHandlerClassName = prop.getProperty("dbHandler");
 
-            //TODO: figure out how to instantiate singleton & should OracleDBHandler be a singleton?
-            return (DBHandler) Class.forName(dbHandlerClassName).newInstance();
+            return (DBHandler) Class.forName(dbHandlerClassName).getDeclaredConstructor().newInstance();
         }
         catch (Exception e) {
             e.printStackTrace();

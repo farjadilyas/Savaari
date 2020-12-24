@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
+import com.savaari_demo.database.DBHandler;
 import com.savaari_demo.entity.*;
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;

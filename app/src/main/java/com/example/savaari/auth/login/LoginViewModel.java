@@ -100,7 +100,5 @@ public class LoginViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-
-        Log.d("this happened!", "the fuck");
     }
 }

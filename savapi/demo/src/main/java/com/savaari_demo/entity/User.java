@@ -1,6 +1,6 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.DBHandlerFactory;
+import com.savaari_demo.database.DBHandlerFactory;
 
 public class User {
     public static final int DEFAULT_ID = -1;

@@ -1,11 +1,17 @@
 package com.example.savaari.auth.login;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.biometrics.BiometricPrompt;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -22,10 +28,12 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
 import com.example.savaari.Util;
+import com.example.savaari.auth.biometric.BiometricCallback;
+import com.example.savaari.auth.biometric.BiometricCallbackV28;
 import com.example.savaari.auth.signup.SignUpActivity;
 import com.example.savaari.ride.RideActivity;
 
-public class LoginActivity extends Util {
+public class LoginActivity extends Util implements BiometricCallback {
 
     private LoginViewModel loginViewModel;      // input validation
     private EditText usernameEditText, passwordEditText, recoveryEmailEditText;
@@ -52,6 +60,11 @@ public class LoginActivity extends Util {
         loginFormStateWatcher();
         recoveryFormStateWatcher();
         loginRequestHandler();
+
+        /*
+        if (BiometricUtils.isBiometricAuthAvailable(LoginActivity.this)) {
+            displayBiometricPrompt(this);
+        }*/
 
         // Launches Sign up Activity
         newAccountButton.setOnClickListener(new View.OnClickListener() {
@@ -275,6 +288,36 @@ public class LoginActivity extends Util {
         }
     }
 
+    private CancellationSignal getCancellationSignal() {
+
+        CancellationSignal cancellationSignal = new CancellationSignal();
+        cancellationSignal.setOnCancelListener(new
+                   CancellationSignal.OnCancelListener() {
+                       @Override
+                       public void onCancel() {
+                          onAuthenticationCancelled();
+                       }
+                   });
+        return cancellationSignal;
+    }
+
+    @TargetApi(Build.VERSION_CODES.P)
+    private void displayBiometricPrompt(final BiometricCallback biometricCallback) {
+        Log.d("BIOMETRICS", "THIS WAS CALLED!");
+        BiometricPrompt biometricPrompt = new BiometricPrompt.Builder(LoginActivity.this)
+                .setTitle("Login to your Savaari account")
+                .setSubtitle("Biometric Authentication")
+                .setDescription("Place your finger on the sensor")
+                .setNegativeButton("Cancel", getMainExecutor(), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        biometricCallback.onAuthenticationCancelled();
+                    }
+                })
+                .build();
+        biometricPrompt.authenticate(getCancellationSignal(), getMainExecutor(), new BiometricCallbackV28(biometricCallback));
+    }
+
     @Override
     public void onBackPressed() {
         if (isEmailSent) {
@@ -286,5 +329,30 @@ public class LoginActivity extends Util {
         else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onAuthenticationSuccessful() {
+
+    }
+
+    @Override
+    public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
+
+    }
+
+    @Override
+    public void onAuthenticationError(int errorCode, CharSequence errorString) {
+
+    }
+
+    @Override
+    public void onAuthenticationFailed() {
+
+    }
+
+    @Override
+    public void onAuthenticationCancelled() {
+
     }
 }

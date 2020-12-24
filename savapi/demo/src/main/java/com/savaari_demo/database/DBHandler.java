@@ -1,4 +1,4 @@
-package com.savaari_demo;
+package com.savaari_demo.database;
 
 import com.savaari_demo.entity.*;
 
