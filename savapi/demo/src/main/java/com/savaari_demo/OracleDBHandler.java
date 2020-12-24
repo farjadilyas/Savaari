@@ -1,6 +1,7 @@
 package com.savaari_demo;
 
 import com.savaari_demo.entity.*;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -1023,9 +1024,10 @@ public class OracleDBHandler implements DBHandler {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
                     "UPDATE DRIVER_DETAILS D" +
-                            " SET D.RATING = (D.RATING*(D.NUM_RATINGS/D.NUM_RATINGS+1)) + (" + rating + "*(D.NUM_RATINGS+1)), " +
-                            " D.NUM_RATING = D.NUM_RATING + 1" +
-                            " WHERE USER_ID = " + ride.getDriver().getUserID()
+                            " SET D.RATING = D.RATING*(cast(D.NUM_RATINGS as DECIMAL)/CAST(D.NUM_RATINGS+1 AS DECIMAL)) + ("
+                            + rating +"/CAST(D.NUM_RATINGS+1 AS DECIMAL)), " +
+                            " D.NUM_RATINGS = D.NUM_RATINGS + 1" +
+                            " WHERE D.USER_ID = " + ride.getDriver().getUserID()
             );
 
             return sqlQuery.executeUpdate() > 0;
@@ -1041,10 +1043,11 @@ public class OracleDBHandler implements DBHandler {
     public boolean giveFeedbackForRider(Ride ride, float rating) {
         try {
             PreparedStatement sqlQuery = connect.prepareStatement(
-                    "UPDATE RIDER_DETAILS D" +
-                            " SET D.RATING = (D.RATING*(D.NUM_RATINGS/D.NUM_RATINGS+1)) + (" + rating + "*(D.NUM_RATINGS+1)), " +
-                            " D.NUM_RATING = D.NUM_RATING + 1" +
-                            " WHERE USER_ID = " + ride.getRider().getUserID()
+                    "UPDATE RIDER_DETAILS R" +
+                            " SET R.RATING = R.RATING*(cast(R.NUM_RATINGS as DECIMAL)/CAST(R.NUM_RATINGS+1 AS DECIMAL)) + ("
+                            + rating +"/CAST(R.NUM_RATINGS+1 AS DECIMAL)), " +
+                            " R.NUM_RATINGS = R.NUM_RATINGS + 1" +
+                            " WHERE R.USER_ID = " + ride.getRider().getUserID()
             );
 
             return sqlQuery.executeUpdate() > 0;

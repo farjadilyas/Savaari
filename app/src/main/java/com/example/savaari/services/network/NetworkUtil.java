@@ -277,7 +277,7 @@ public class NetworkUtil
                 return -1;
             }
             else {
-                return (new JSONObject(resultString).getBoolean("result")? 1 : 0);
+                return ((new JSONObject(resultString).getInt("STATUS") == 200)? 1 : 0);
             }
         }
         catch (JSONException e)
@@ -374,9 +374,9 @@ public class NetworkUtil
         }
     }
 
-    public boolean giveRatingForDriver(String urlAddress, int rideID, int driverID, float rating) {
-        Log.d(TAG, " :giveRatingForDriver called!");
-        String url = urlAddress + "giveRatingForDriver";
+    public boolean giveFeedbackForDriver(String urlAddress, int rideID, int driverID, float rating) {
+        Log.d(TAG, " :giveFeedbackForDriver called!");
+        String url = urlAddress + "giveFeedbackForDriver";
 
         JSONObject jsonParam = new JSONObject();
 
@@ -390,7 +390,7 @@ public class NetworkUtil
         }
         catch (JSONException e) {
             e.printStackTrace();
-            Log.d(TAG, " :giveRatingForDriver() - JSONException");
+            Log.d(TAG, " :giveFeedbackForDriver() - JSONException");
             return false;
         }
     }

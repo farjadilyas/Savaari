@@ -200,6 +200,12 @@ public class RideViewModel extends ViewModel {
             endOfRideAcknowledged.postValue(true);
         }, ride.getRideID(), ride.getRider().getUserID());
     }
+    
+    public void giveFeedbackForDriver(float rating) {
+        repository.giveFeedbackForDriver(object -> {
+            Log.d(LOG_TAG, "giveFeedbackForDriver: success!");
+        }, previousRide.getRideID(), previousRide.getDriver().getUserID(), rating);
+    }
 
     public void fetchDriverLocation() {
         Log.d(LOG_TAG, "fetchDriverLocation called!");

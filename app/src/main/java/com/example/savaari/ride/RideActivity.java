@@ -864,7 +864,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
 
             Log.d(TAG, "submitted rating: " + feedbackRatingBar.getRating());
-            rideViewModel.getRide().getDriver().setRating(feedbackRatingBar.getRating());
+            rideViewModel.giveFeedbackForDriver(feedbackRatingBar.getRating());
 
             toggleEndOfRideDetailsPanel();
             toggleRideSearchBar(true, true);
@@ -983,7 +983,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             farePrompt.setVisibility(View.VISIBLE);
             paymentOptionReminderConfig.setVisibility(View.VISIBLE);
             endOfRideStatusTextView.setText(R.string.you_have_arrived);
-            paymentOptionReminderTextView.setText("Your fare is " + ride.getFare() + "PKR");
+            farePrompt.setText("Your fare is " + ride.getFare() + "PKR");
             endOfRideDetailsPanel.setVisibility(View.VISIBLE);
         }
         else if (rideViewModel.getRide().getRideStatus() == Ride.END_ACKED) {

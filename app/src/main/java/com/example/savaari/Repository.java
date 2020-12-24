@@ -69,4 +69,8 @@ public class Repository {
     public void acknowledgeEndOfRide(OnDataLoadedListener callback, int rideID, int riderID) {
         executor.execute(() -> callback.onDataLoaded(NetworkUtil.getInstance().acknowledgeEndOfRide(url, rideID, riderID)));
     }
+
+    public void giveFeedbackForDriver(OnDataLoadedListener callback, int rideID, int driverID, float rating) {
+        executor.execute(() -> callback.onDataLoaded(NetworkUtil.getInstance().giveFeedbackForDriver(url, rideID, driverID, rating)));
+    }
 }
