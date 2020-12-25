@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class Ride extends RideRequest {
 
     // Main Attributes
+    // Main Attributes
     public static final int
             RS_DEFAULT = 10,
             PICKUP = 11,
@@ -21,11 +22,9 @@ public class Ride extends RideRequest {
     private long startTime;
     private long endTime;
     private double distanceTravelled;
-    private int rideType;
     private double estimatedFare;
     private double fare;
     private int rideStatus;
-    private Integer paymentMethod;
     private ArrayList<Location> stops;
 
     public Ride() {
@@ -34,6 +33,8 @@ public class Ride extends RideRequest {
         payment = new Payment();
         stops = new ArrayList<>();
         rideStatus = -1;
+        setPaymentMethod(1);
+        setRideType(1);
     }
 
     public int getRideID() {
@@ -81,14 +82,6 @@ public class Ride extends RideRequest {
         this.endTime = endTime;
     }
 
-    public int getRideType() {
-        return rideType;
-    }
-
-    public void setRideType(int rideType) {
-        this.rideType = rideType;
-    }
-
     public double getEstimatedFare() {
         return estimatedFare;
     }
@@ -103,14 +96,6 @@ public class Ride extends RideRequest {
 
     public void setRideStatus(int rideStatus) {
         this.rideStatus = rideStatus;
-    }
-
-    public Object getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(Integer paymentMethod) {
-        this.paymentMethod = paymentMethod;
     }
 
     public ArrayList<Location> getStops() {

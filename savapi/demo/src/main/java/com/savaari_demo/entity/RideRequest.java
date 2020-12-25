@@ -2,19 +2,17 @@ package com.savaari_demo.entity;
 
 public class RideRequest {
 
-    /*
     public static final int
-    DEFAULT = 50,
-    ERROR = 51,
-    NO_CHANGE = 52,
-    REJECTED = 53,
-    FOUND = 54;*/
+    MS_DEFAULT = 0,
+    MS_REQ_RECEIVED = 1,
+    MS_REQ_ACCEPTED = 2;
 
     // Match status - used in business logic
     public static final int
-    NO_CHANGE = 0,
-    REJECTED = 1,
-    FOUND = 2;
+            NOT_SENT = -1,
+            NO_CHANGE = 0,
+            REJECTED = 1,
+            FOUND = 2;
 
     // Match return status  - returned to clients
     public static final int
@@ -32,6 +30,8 @@ public class RideRequest {
     protected Location dropoffLocation;
     protected String dropoffTitle;
     protected int findStatus;
+    private Integer paymentMethod;
+    private int rideType;
 
     public RideRequest() {
         rider = new Rider();
@@ -92,5 +92,21 @@ public class RideRequest {
 
     public void setFindStatus(int findStatus) {
         this.findStatus = findStatus;
+    }
+
+    public void setPaymentMethod(Integer paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public Integer getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public int getRideType() {
+        return rideType;
+    }
+
+    public void setRideType(int rideType) {
+        this.rideType = rideType;
     }
 }

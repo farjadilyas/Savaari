@@ -1,8 +1,10 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.database.DBHandlerFactory;
 
 public class User {
+    public static final int DEFAULT_ID = -1;
+
     private int userID;
     private String username;
     private String password;
@@ -14,7 +16,7 @@ public class User {
     private float rating;
 
     User() {
-        userID = -1;
+        userID = User.DEFAULT_ID;
     }
 
     public int getUserID() {
@@ -94,7 +96,7 @@ public class User {
 
     public Ride getRide(RideRequest rideRequest) {
 
-        return OracleDBHandler.getInstance().getRide(rideRequest);
+        return DBHandlerFactory.getInstance().createDBHandler().getRide(rideRequest);
         //result.put("IS_TAKING_RIDE", (result.getInt("STATUS_CODE") == 200));
     }
 }

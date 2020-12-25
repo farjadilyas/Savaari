@@ -8,12 +8,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,6 +31,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -43,10 +46,13 @@ import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
 import com.example.savaari.ThemeVar;
 import com.example.savaari.Util;
-import com.example.savaari.ride.adapter.OnItemClickListener;
+import com.example.savaari.ride.adapter.ItemClickListener;
+import com.example.savaari.ride.adapter.PaymentMethodAdapter;
+import com.example.savaari.ride.adapter.PaymentMethodItem;
 import com.example.savaari.ride.adapter.RideTypeAdapter;
 import com.example.savaari.ride.adapter.RideTypeItem;
 import com.example.savaari.ride.entity.Ride;
+import com.example.savaari.ride.entity.Vehicle;
 import com.example.savaari.services.location.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
@@ -77,6 +83,7 @@ import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.PendingResult;
 import com.google.maps.internal.PolylineEncoding;
+import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 
@@ -89,7 +96,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RideActivity extends Util implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener,
-        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, OnItemClickListener {
+        GoogleMap.OnPolylineClickListener, GoogleMap.OnInfoWindowClickListener, ItemClickListener {
 
     private static final String TAG = "RideActivity";
 
@@ -112,9 +119,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* Drawing the route on Maps*/
     private Polyline destinationPolyline = null;
     private Marker destinationMarker = null;
-
-    private Marker pickupMarker = null;
+    private DirectionsLeg destinationLeg = null;
     private Polyline pickupPolyline = null;
+    private Marker pickupMarker = null;
+    private String pickupDuration = "2 min";
+    private String dropoffDuration = "5 min";
 
     /* Nav Views */
     private DrawerLayout drawer;
@@ -130,6 +139,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private ProgressBar progressBar;
     private Button searchRideButton;
 
+    /* Ride Type Select Panel Variables */
     private LinearLayout rideTypeSelector;
     private LinearLayout paymentMethodSelector;
     private LinearLayout rideTypePanel;
@@ -139,11 +149,32 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private TextView rideTypeHeader;
     private ArrayList<RideTypeItem> rideTypeItems;
 
+    /* Payment Method Select Panel Variables */
+    private LinearLayout paymentMethodPanel;
+    private ImageView paymentMethodImage;
+    private TextView paymentMethodText;
+    private TextView paymentMethodHeader;
+    private ArrayList<PaymentMethodItem> paymentMethodItems;
+
+    /* Ride Details Panel Variables */
     private LinearLayout rideDetailsPanel;
     private ImageView riderImage;
     private TextView rideStatusMessage;
     private TextView driverName;
-    private RatingBar ratingBar;
+    private TextView ratingTextView;
+    private TextView carNameTextView;
+    private Button callDriverButton;
+    private Button shareDriverDetailsButton;
+
+    /* End of Ride Details Panel Variables */
+    private LinearLayout endOfRideDetailsPanel;
+    private TextView endOfRideStatusTextView;
+    private TextView farePrompt;
+    private LinearLayout paymentOptionReminderConfig;
+    private ImageView paymentOptionReminderImage;
+    private TextView paymentOptionReminderTextView;
+    private RatingBar feedbackRatingBar;
+    private Button submitRating;
 
     private RideViewModel rideViewModel = null;
     /* State variables - references to ViewModel variables */
@@ -157,7 +188,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
 
     private int FIND_DRIVER_ATTEMPTS = 0;
-    private int FIND_DRIVER_ATTEMPTS_LIMIT = 2;
+    private int FIND_DRIVER_ATTEMPTS_LIMIT = 20;
 
 
     // Main onCreate Function to override
@@ -171,11 +202,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         Window w = getWindow();
         w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-        /* Register Broadcast Receiver for NetworkService */
-        //registerRideReceiver();
-
         Intent recvIntent = getIntent();
         USER_ID = recvIntent.getIntExtra("USER_ID", -1);
+
+        if (!recvIntent.getBooleanExtra("API_CONNECTION", true)) {
+            Toast.makeText(this, "No network connection", Toast.LENGTH_SHORT).show();
+        }
 
         mUserLocations = new ArrayList<>();
 
@@ -197,17 +229,25 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             getLocationPermission();
 
             rideTypeItems = new ArrayList<>();
+            paymentMethodItems = new ArrayList<>();
 
-
-            // set up the RecyclerView
+            // set up the RecyclerView for RideType
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_rtype_bike, "Bike", "PKR 81"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Smol Car", "PKR 173"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Med Car", "PKR 224"));
             rideTypeItems.add(new RideTypeItem(R.drawable.ic_car, "Big Car", "PKR 443"));
             RideTypeAdapter rideTypeAdapter = new RideTypeAdapter(rideTypeItems, this);
-            RecyclerView recyclerView = findViewById(R.id.select_ride_type);
-            recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(rideTypeAdapter);
+            RecyclerView rideTypeRecylerView = findViewById(R.id.select_ride_type);
+            rideTypeRecylerView.setLayoutManager(new LinearLayoutManager(this));
+            rideTypeRecylerView.setAdapter(rideTypeAdapter);
+
+            // Set up the RecyclerView for PaymentMethod
+            paymentMethodItems.add(new PaymentMethodItem(R.drawable.ic_money, "Cash"));
+            paymentMethodItems.add(new PaymentMethodItem(R.drawable.ic_visa, "**** 3161"));
+            PaymentMethodAdapter paymentMethodAdapter = new PaymentMethodAdapter(paymentMethodItems, this);
+            RecyclerView paymentMethodRecyclerView = findViewById(R.id.select_payment_method);
+            paymentMethodRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            paymentMethodRecyclerView.setAdapter(paymentMethodAdapter);
         }
     }
 
@@ -258,6 +298,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     /* -------Matchmaking & In-Ride ViewModel CALLKS AND OBSERVERS -----*/
 
     private void findDriver() {
+        Log.d(TAG, "findDriver() called!");
+
         if (FIND_DRIVER_ATTEMPTS > FIND_DRIVER_ATTEMPTS_LIMIT) {
             Toast.makeText(RideActivity.this, "Sorry, we could not find a driver", Toast.LENGTH_SHORT).show();
         }
@@ -266,13 +308,22 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
+    private static double round (double value, int precision) {
+        int scale = (int) Math.pow(10, precision);
+        return (double) Math.round(value * scale) / scale;
+    }
+
+    private void setRideDetailsInPanel() {
+        driverName.setText(rideViewModel.getRide().getDriver().getFirstName() + " " + rideViewModel.getRide().getDriver().getLastName());
+        Vehicle rideVehicle = rideViewModel.getRide().getVehicle();
+        carNameTextView.setText(rideVehicle.getColor() + " " + rideVehicle.getMake() + " " + rideVehicle.getModel());
+        ratingTextView.setText(String.valueOf(round(rideViewModel.getRide().getDriver().getRating(), 1)));
+    }
+
     // Called if a ride is found, forwards new rides to newRideFoundAction()
     private void rideFoundAction(Ride ride) {
 
         this.ride = ride;
-
-        driverName.setText(rideViewModel.getRide().getDriver().getUsername());
-        ratingBar.setRating(rideViewModel.getRide().getDriver().getRating());
 
         if (ride.getFindStatus() == Ride.ALREADY_PAIRED) {
             switch (ride.getRideStatus()) {
@@ -283,9 +334,9 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     pickupMarker = googleMap.addMarker(options);
                     calculateDirections(ride.getDriver().getCurrentLocation(), pickupMarker, false);
 
-                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " is arriving in 5 minutes");
+                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " is arriving in " + pickupDuration);
                     toggleRideDetailsBar(true, true);
-
+                    setRideDetailsInPanel();
                     startPickupAction();
                     break;
 
@@ -293,6 +344,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     setRoute(rideViewModel.getRide().getPickupLocation(), rideViewModel.getRide().getDropoffLocation(), "");
                     rideStatusMessage.setText(ride.getDriver().getUsername() + " has arrived");
                     toggleRideDetailsBar(true, true);
+                    setRideDetailsInPanel();
                     break;
 
                 case Ride.CANCELLED:
@@ -302,20 +354,27 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                 case Ride.STARTED:
                     setRoute(rideViewModel.getRide().getPickupLocation(), rideViewModel.getRide().getDropoffLocation(), "");
-                    rideStatusMessage.setText("Estimated Time to Destination: 6 min");
+                    rideStatusMessage.setText("Estimated Time to Destination: " + dropoffDuration);
                     toggleRideDetailsBar(true, true);
+                    setRideDetailsInPanel();
                     break;
 
                 case Ride.ARRIVED_AT_DEST:
-                    Toast.makeText(this, "Thank you for riding with Savaari", Toast.LENGTH_SHORT).show();
+                    toggleRideDetailsBar(false, true);
+                    toggleEndOfRideDetailsPanel();
+
+                    //TODO: Show payment panel
+                    //setRideDetailsInPanel();
                     break;
                 case Ride.PAYMENT_MADE:
-                    //TODO: acknowledgeEndOfRide()
+                    rideViewModel.acknowledgeEndOfRide();
+
+                    //TODO: Show rating panel
                     break;
                 case Ride.END_ACKED:
                     //Impossible
                     Log.d(TAG, "Received END_ACKED in existing ride - impossible case");
-                    break;
+                    return;
             }
             watchRideStatus();
         }
@@ -337,9 +396,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                 findStatusMessage = "Driver found: id: " + ride.getDriver().getUserID() + ", name: " + ride.getDriver().getUsername();
 
-                rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " is arriving in 5 minutes");
+                rideStatusMessage.setText(rideViewModel.getRide().getDriver().getFirstName() + " " + rideViewModel.getRide().getDriver().getLastName()
+                        + " is arriving in " + pickupDuration);
                 toggleRideDetailsBar(true, true);
-
+                setRideDetailsInPanel();
                 startPickupAction();
                 watchRideStatus();
                 break;
@@ -373,7 +433,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (statusChanged) {
             switch (ride.getRideStatus()) {
                 case Ride.DRIVER_ARRIVED:
-                    pickupPolyline.remove();
+                    removePolyline(pickupPolyline);
                     rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " has arrived");
                     break;
                 case Ride.CANCELLED:
@@ -382,19 +442,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                     findDriver();
                     break;
                 case Ride.STARTED:
-                    rideStatusMessage.setText("Estimated Time to Destination: 6 min");
+                    rideStatusMessage.setText("Estimated Time to Destination: " + dropoffDuration);
                     //Toast.makeText(this, "Your ride was cancelled. Trying again...", Toast.LENGTH_SHORT).show();
                     break;
                 case Ride.ARRIVED_AT_DEST:
-                    Toast.makeText(this, "You have reached your destination", Toast.LENGTH_SHORT).show();
+                    toggleRideDetailsBar(false, true);
+                    toggleEndOfRideDetailsPanel();
+                    //Toast.makeText(this, "You have reached your destination, fare: " + ride.getFare(), Toast.LENGTH_SHORT).show();
                     break;
                 case Ride.PAYMENT_MADE:
-                    Toast.makeText(this, "Payment made", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this, "Payment made", Toast.LENGTH_SHORT).show();
                     rideViewModel.acknowledgeEndOfRide();
                     rideViewModel.isEndOfRideAcknowledged().observe(this, this::endOfRideAcknowledgedAction);
                     break;
                 case Ride.END_ACKED:
-                    Toast.makeText(this, "Thank you for riding with Savaari", Toast.LENGTH_SHORT).show();
                     break;
 
             }
@@ -430,9 +491,22 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void endOfRideAcknowledgedAction(Boolean endOfRideAcknowledged) {
         if (endOfRideAcknowledged) {
+
+            // Stop repeating get driver location & get ride status
+            if (future != null) {
+                future.cancel(true);
+            }
+
+            toggleEndOfRideDetailsPanel();
+
             Toast.makeText(this, "End of ride acknowledged!", Toast.LENGTH_SHORT).show();
-            toggleRideDetailsBar(false, true);
-            toggleRideSearchBar(true, true);
+            rideViewModel.resetRide();
+            ride = rideViewModel.getRide();
+
+            removePolyline(destinationPolyline);
+            removeMarker(pickupMarker);
+            removeMarker(driverMarker);
+            removeMarker(destinationMarker);
         }
         else {
             Log.d(TAG, ":endOfRideAcknowledgedAction: not acknowledged");
@@ -445,7 +519,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     private void onSearchRideAction() {
-        Log.d("onSearchRideAction: ", String.valueOf(ride.getPickupLocation() == null));
+        Log.d(TAG, "onSearchRideAction called");
         if (ride.getPickupLocation() == null) {
             ride.setPickupLocation(userLocation, "Current location");
         }
@@ -590,9 +664,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (dest != null) {
             ride.setDropoffLocation(dest, title);
 
-            if (destinationMarker != null) {
-                destinationMarker.remove();
-            }
+            removeMarker(destinationMarker);
 
             MarkerOptions options = new MarkerOptions()
                     .position(ride.getDropoffLocation())
@@ -630,6 +702,12 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         assert autocompleteFragmentSrc != null;
         autocompleteFragmentSrc.setPlaceFields(Arrays.asList(Place.Field.LAT_LNG, Place.Field.ID, Place.Field.NAME));
 
+        //Get color from reference attr
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = getTheme();
+        theme.resolveAttribute(R.attr.textColor, typedValue, true);
+        @ColorInt int color = typedValue.data;
+
         //Set the hint text in both fragments
         View srcFragmentView = autocompleteFragmentSrc.getView(),
         destFragmentView = autocompleteFragmentDest.getView();
@@ -637,10 +715,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         destTextInput = destFragmentView.findViewById(R.id.places_autocomplete_search_input);
         srcTextInput.setHint(R.string.add_source);
         srcTextInput.setTextSize(18);
-        srcTextInput.setTextColor(R.attr.textColor);
+        srcTextInput.setTextColor(color);
         destTextInput.setHint(R.string.add_dest);
         destTextInput.setTextSize(18);
-        destTextInput.setTextColor(R.attr.textColor);
+        destTextInput.setTextColor(color);
 
         // Source selected listener
         autocompleteFragmentSrc.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -681,6 +759,20 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         });
     }
 
+    private void removeMarker(Marker marker) {
+        if (marker != null) {
+            marker.remove();
+        }
+        marker = null;
+    }
+
+    private void removePolyline(Polyline polyline) {
+        if (polyline != null) {
+            polyline.remove();
+        }
+        polyline = null;
+    }
+
     private void initializeViews() {
         drawer = findViewById(R.id.drawer_layout);
 
@@ -709,11 +801,30 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         searchRideButton = findViewById(R.id.go_btn);
         searchRideButton.setEnabled(false);
 
-        ratingBar = findViewById(R.id.rider_rating);
+        ratingTextView = findViewById(R.id.rider_rating);
         riderImage = findViewById(R.id.rider_img);
         driverName = findViewById(R.id.rider_name);
         rideStatusMessage = findViewById(R.id.ride_status_txt);
         rideDetailsPanel = findViewById(R.id.ride_details_panel);
+        carNameTextView = findViewById(R.id.car_name);
+        callDriverButton = findViewById(R.id.call_driver_btn);
+        shareDriverDetailsButton = findViewById(R.id.share_details_btn);
+
+        callDriverButton.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+            // Call driver
+            String phoneNo = rideViewModel.getRide().getDriver().getPhoneNo();
+
+            if (phoneNo != null) {
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + phoneNo));
+                startActivity(intent);
+            }
+            else {
+                Toast.makeText(RideActivity.this, "Driver phone number not available",Toast.LENGTH_SHORT).show();
+            }
+        });
 
         rideTypeHeader = findViewById(R.id.ride_type_header);
         rideTypeImage = findViewById(R.id.ride_type_img);
@@ -721,9 +832,42 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         rideTypePrice = findViewById(R.id.ride_type_price);
         rideTypePanel = findViewById(R.id.ride_type_panel);
 
-        rideConfigBar.setOnClickListener(v -> {
+        paymentMethodHeader = findViewById(R.id.payment_method_header);
+        paymentMethodImage = findViewById(R.id.payment_img);
+        paymentMethodText = findViewById(R.id.payment_txt);
+        paymentMethodPanel = findViewById(R.id.payment_method_panel);
+
+        rideTypeSelector.setOnClickListener(v -> {
             rideTypeHeader.setText(R.string.select_ride_type);
             toggleRideTypePanel(true, true);
+        });
+
+        paymentMethodSelector.setOnClickListener(v -> {
+            paymentMethodHeader.setText(R.string.select_payment_method);
+            togglePaymentMethodPanel(true, true);
+        });
+
+        /* Initialize End of Ride Details Panel */
+        endOfRideDetailsPanel = findViewById(R.id.end_of_ride_details_panel);
+        endOfRideStatusTextView = findViewById(R.id.end_of_ride_status_txt);
+        farePrompt = findViewById(R.id.fare_prompt);
+        paymentOptionReminderConfig = findViewById(R.id.payment_option_reminder_config);
+        paymentOptionReminderImage = findViewById(R.id.payment_option_reminder_img);
+        paymentOptionReminderTextView = findViewById(R.id.payment_option_reminder_txt);
+        feedbackRatingBar = findViewById(R.id.feedback_rating_bar);
+        submitRating = findViewById(R.id.submit_rating);
+
+        feedbackRatingBar.setNumStars(5);
+        feedbackRatingBar.setRating(5f);
+
+        submitRating.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+            Log.d(TAG, "submitted rating: " + feedbackRatingBar.getRating());
+            rideViewModel.giveFeedbackForDriver(feedbackRatingBar.getRating());
+
+            toggleEndOfRideDetailsPanel();
+            toggleRideSearchBar(true, true);
         });
     }
 
@@ -782,9 +926,11 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         }
     }
 
-    // Set visibility of the Ride Details bar
+    // Set visibility of the Ride Details bar & init if necessary
     private void toggleRideDetailsBar(boolean visibility, boolean withAnimation) {
         if (visibility) {
+            ratingTextView.setText(String.valueOf(round(rideViewModel.getRide().getDriver().getRating(),1)));
+
             if (withAnimation) {
                 rideDetailsPanel.setAnimation(inFromBottomAnimation(400));
             }
@@ -810,6 +956,51 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 rideTypePanel.setAnimation(outToBottomAnimation(400));
             }
             rideTypePanel.setVisibility(View.GONE);
+        }
+    }
+
+    private void togglePaymentMethodPanel(boolean visibility , boolean withAnimation) {
+        if (visibility) {
+            if (withAnimation) {
+                paymentMethodPanel.setAnimation(inFromBottomAnimation(400));
+            }
+            paymentMethodPanel.setVisibility(View.VISIBLE);
+        }
+        else {
+            if (withAnimation) {
+                paymentMethodPanel.setAnimation(outToBottomAnimation(400));
+            }
+            paymentMethodPanel.setVisibility(View.GONE);
+        }
+    }
+
+    private void toggleEndOfRideDetailsPanel() {
+        if (rideViewModel.getRide().getRideStatus() == Ride.ARRIVED_AT_DEST) {
+            // Show Ride Fare
+            endOfRideDetailsPanel.setAnimation(inFromBottomAnimation(400));
+            feedbackRatingBar.setVisibility(View.GONE);
+            submitRating.setVisibility(View.GONE);
+            farePrompt.setVisibility(View.VISIBLE);
+            paymentOptionReminderConfig.setVisibility(View.VISIBLE);
+            endOfRideStatusTextView.setText(R.string.you_have_arrived);
+            farePrompt.setText("Your fare is " + ride.getFare() + "PKR");
+            endOfRideDetailsPanel.setVisibility(View.VISIBLE);
+        }
+        else if (rideViewModel.getRide().getRideStatus() == Ride.END_ACKED) {
+            // Prompt for rating
+            endOfRideDetailsPanel.setAnimation(outToBottomAnimation(200));
+            endOfRideDetailsPanel.setVisibility(View.GONE);
+            endOfRideDetailsPanel.setAnimation(inFromBottomAnimation(400));
+            farePrompt.setVisibility(View.GONE);
+            paymentOptionReminderConfig.setVisibility(View.GONE);
+            feedbackRatingBar.setVisibility(View.VISIBLE);
+            submitRating.setVisibility(View.VISIBLE);
+            endOfRideStatusTextView.setText(R.string.thank_you_ride);
+            endOfRideDetailsPanel.setVisibility(View.VISIBLE);
+        }
+        else if (rideViewModel.getPreviousRide().getRideStatus() == Ride.END_ACKED) {
+            endOfRideDetailsPanel.setAnimation(outToBottomAnimation(400));
+            endOfRideDetailsPanel.setVisibility(View.GONE);
         }
     }
 
@@ -985,15 +1176,19 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
                 destinationPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 destinationPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.maps_blue));
+                dropoffDuration = route.legs[0].duration.humanReadable;
                 destinationMarker.setSnippet("Duration: " + route.legs[0].duration);
                 destinationMarker.showInfoWindow();
             }
             else {
+                /*
                 if (pickupPolyline != null) {
                     destinationPolyline.remove();
-                }
+                }*/
+                removePolyline(pickupPolyline);
                 pickupPolyline = googleMap.addPolyline(new PolylineOptions().addAll(newDecodedPath));
                 pickupPolyline.setColor(ContextCompat.getColor(RideActivity.this, R.color.success_green));
+                pickupDuration = route.legs[0].duration.humanReadable;
                 pickupMarker.setSnippet("Duration: " + route.legs[0].duration);
                 pickupMarker.showInfoWindow();
             }
@@ -1109,12 +1304,24 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     }
 
     @Override
-    public void OnClick(int position) {
-        rideViewModel.getRide().setRideType(position);
+    public void onRideTypeItemClick(int position) {
+        rideViewModel.getRide().setRideType(position + 1);
         toggleRideTypePanel(false, true);
 
         rideTypeImage.setImageResource(rideTypeItems.get(position).getRideTypeImage());
         rideTypeName.setText(rideTypeItems.get(position).getRideTypeName());
         rideTypePrice.setText(rideTypeItems.get(position).getRideTypePrice());
+    }
+
+    @Override
+    public void onPaymentMethodItemClick(int position) {
+        rideViewModel.getRide().setPaymentMethod(position + 1);
+        togglePaymentMethodPanel(false, true);
+
+        paymentMethodImage.setImageResource(paymentMethodItems.get(position).getPaymentImage());
+        paymentMethodText.setText(paymentMethodItems.get(position).getPaymentText());
+
+        paymentOptionReminderImage.setImageResource(paymentMethodItems.get(position).getPaymentImage());
+        paymentOptionReminderTextView.setText(paymentMethodItems.get(position).getPaymentText());
     }
 }

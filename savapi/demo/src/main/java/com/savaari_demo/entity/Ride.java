@@ -1,6 +1,6 @@
 package com.savaari_demo.entity;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.database.DBHandlerFactory;
 
 import java.util.ArrayList;
 
@@ -23,18 +23,20 @@ public class Ride extends RideRequest {
     private long startTime;
     private long endTime;
     private double distanceTravelled;
-    private int rideType;
     private double estimatedFare;
     private double fare;
     private int rideStatus;
-    private Integer paymentMethod; // TODO : Move Proper attributes to Ride Request
     private ArrayList<Location> stops;
 
     public Ride() {
-        rider = new Rider();
-        driver = new Driver();
-        //vehicle = new Vehicle();
         payment = new Payment();
+    }
+
+    public Ride(RideRequest rideRequest) {
+        setDriver(rideRequest.getDriver());
+        setRider(rideRequest.getRider());
+        setFindStatus(RideRequest.FOUND);
+        setRideStatus(RideRequest.MS_REQ_ACCEPTED);
     }
 
     // ---------------------------------------------------------------------------------
@@ -78,12 +80,6 @@ public class Ride extends RideRequest {
     public void setDropoffLocation(Location dropoffLocation) {
         this.dropoffLocation = dropoffLocation;
     }
-    public int getRideType() {
-        return rideType;
-    }
-    public void setRideType(int rideType) {
-        this.rideType = rideType;
-    }
     public double getEstimatedFare() {
         return estimatedFare;
     }
@@ -117,14 +113,6 @@ public class Ride extends RideRequest {
         this.endTime = endTime;
     }
 
-    public void setPaymentMethod(Integer paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public Integer getPaymentMethod() {
-        return paymentMethod;
-    }
-
     public ArrayList<Location> getStops() {
         return stops;
     }
@@ -138,26 +126,26 @@ public class Ride extends RideRequest {
     private double calculateFare()
     {
         // TODO: FARE POLICY and stuff ?
-        return 2150.89;
+        return (distanceTravelled / 1000) * 40;
     }
 
     // ---------------------------------------------------------------------------------
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
-    public Integer fetchRideStatus() {
-        return OracleDBHandler.getInstance().getRideStatus(this);
+    public void fetchRideStatus() {
+        DBHandlerFactory.getInstance().createDBHandler().getRideStatus(this);
     }
     public boolean markDriverArrival() {
-        return OracleDBHandler.getInstance().markDriverArrival(this);
+        return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
     }
-    public boolean startRideDriver() { return OracleDBHandler.getInstance().startRideDriver(this); }
+    public boolean startRideDriver() { return DBHandlerFactory.getInstance().createDBHandler().startRideDriver(this); }
 
 
     // Acknowledge end of ride (final call)
     public boolean acknowledgeEndOfRide() {
 
-        if (OracleDBHandler.getInstance().acknowledgeEndOfRide(this)) {
-            return rider.reset();
+        if (DBHandlerFactory.getInstance().createDBHandler().acknowledgeEndOfRide(this)) {
+            return rider.reset(false);
         }
 
         return false;
@@ -168,34 +156,37 @@ public class Ride extends RideRequest {
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
         fare = calculateFare();
-        if (OracleDBHandler.getInstance().markArrivalAtDestination(this)) {
+        if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
         }
         return -1;
     }
 
     // Main Method for Ending Ride with Payment: Cash Mode
-    public boolean endRideWithPayment(double amountPaid)
+    public boolean endRideWithPayment(Double amountPaid, Double change)
     {
-        // TODO: Payment policy, where does payment sheningans happen?
-        payment = new Payment();
-        payment.setAmountPaid(amountPaid);
-        return (driver.resetDriver() && OracleDBHandler.getInstance().endRideWithPayment(this));
-    }
+        //TODO: handle credit card payment
 
-    public boolean recordRide() {
+        payment = new Payment(amountPaid, change, getPaymentMethod());
+        payment.record();
 
-        Payment newPayment = OracleDBHandler.getInstance().addPayment();
-
-        if (newPayment == null) {
-            System.out.println("Ride" + ":recordRide: payment is null");
-            return false;
+        // Add Payment to DB
+        if (payment.getPaymentID() > 0) {
+            return DBHandlerFactory.getInstance().createDBHandler().endRideWithPayment(this);
         }
         else {
-            // Payment created, set it in ride & record ride
-            setPayment(newPayment);
-            OracleDBHandler.getInstance().recordRide(this);
-            return true;
+            System.out.println("addPayment returned false!");
+            return false;
         }
+    }
+
+    /* Feedback methods */
+
+    public boolean giveFeedbackForDriver(float rating) {
+        return DBHandlerFactory.getInstance().createDBHandler().giveFeedbackForDriver(this, rating);
+    }
+
+    public boolean giveFeedbackForRider(float rating) {
+        return DBHandlerFactory.getInstance().createDBHandler().giveFeedbackForRider(this, rating);
     }
 }

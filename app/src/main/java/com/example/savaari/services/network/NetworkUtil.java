@@ -135,7 +135,7 @@ public class NetworkUtil
     *   SET OF RIDER-SIDE MATCHMAKING FUNCTIONS ----------------------------------------------------
     */
     public Ride findDriver(String urlAddress, int currentUserID, double srcLatitude,
-                                        double srcLongitude, double destLatitude, double destLongitude) {
+                                        double srcLongitude, double destLatitude, double destLongitude, int paymentMode, int rideType) {
         String url = urlAddress + "findDriver";
         try {
             JSONObject jsonParam = new JSONObject();
@@ -144,6 +144,8 @@ public class NetworkUtil
             jsonParam.put("SOURCE_LONG", srcLongitude);
             jsonParam.put("DEST_LAT", destLatitude);
             jsonParam.put("DEST_LONG", destLongitude);
+            jsonParam.put("PAYMENT_MODE", paymentMode);
+            jsonParam.put("RIDE_TYPE", rideType);
 
             String resultString = sendPost(url, jsonParam, true);
 
@@ -275,7 +277,7 @@ public class NetworkUtil
                 return -1;
             }
             else {
-                return (new JSONObject(resultString).getBoolean("result")? 1 : 0);
+                return ((new JSONObject(resultString).getInt("STATUS") == 200)? 1 : 0);
             }
         }
         catch (JSONException e)
@@ -354,7 +356,7 @@ public class NetworkUtil
 
     public boolean acknowledgeEndOfRide(String urlAddress, int rideID, int riderID) {
         Log.d(TAG, " :acknowledgeEndOfRide called!");
-        String url = urlAddress + "getRideStatus";
+        String url = urlAddress + "acknowledgeEndOfRide";
 
         JSONObject jsonParam = new JSONObject();
 
@@ -367,7 +369,28 @@ public class NetworkUtil
         }
         catch (JSONException e) {
             e.printStackTrace();
-            Log.d(TAG, " :getRideStatus() - JSONException");
+            Log.d(TAG, " :acknowledgeEndOfRide() - JSONException");
+            return false;
+        }
+    }
+
+    public boolean giveFeedbackForDriver(String urlAddress, int rideID, int driverID, float rating) {
+        Log.d(TAG, " :giveFeedbackForDriver called!");
+        String url = urlAddress + "giveFeedbackForDriver";
+
+        JSONObject jsonParam = new JSONObject();
+
+        try {
+            jsonParam.put("RIDE_ID", rideID);
+            jsonParam.put("DRIVER_ID", driverID);
+            jsonParam.put("RATING", rating);
+
+            String resultString = sendPost(url, jsonParam, true);
+            return ((resultString != null) && new JSONObject(resultString).getInt("STATUS") == 200);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            Log.d(TAG, " :giveFeedbackForDriver() - JSONException");
             return false;
         }
     }

@@ -1,8 +1,6 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.DBHandler;
-import com.savaari_demo.DBHandlerFactory;
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Location;
 import com.savaari_demo.entity.Rider;
@@ -13,7 +11,6 @@ public class LocationController
 {
     // Main Attributes
     private static final String LOG_TAG = LocationController.class.getSimpleName();
-    private static DBHandler dbHandler = DBHandlerFactory.getDBHandler("Oracle");
 
     /* Location update & retrieval methods*/
 
@@ -36,10 +33,10 @@ public class LocationController
     }
 
     public ArrayList<Location> getDriverLocations() {
-        return OracleDBHandler.getInstance().getDriverLocations();
+        return DBHandlerFactory.getInstance().createDBHandler().getDriverLocations();
     }
     public ArrayList<Location> getRiderLocations() {
-        return OracleDBHandler.getInstance().getRiderLocations();
+        return DBHandlerFactory.getInstance().createDBHandler().getRiderLocations();
     }
     /* End of section */
 }

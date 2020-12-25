@@ -15,7 +15,7 @@ public class LoginViewModel extends ViewModel {
     private static String LOG_TAG = LoginViewModel.class.getSimpleName();
 
     private final Repository repository;
-    private MutableLiveData<Integer> userID = new MutableLiveData<>(-1);
+    private MutableLiveData<Integer> userID = new MutableLiveData<>();
     private MutableLiveData<LoginFormState> loginFormState = new MutableLiveData<>();
     private MutableLiveData<RecoveryFormState> recoveryFormState = new MutableLiveData<>();
 
@@ -100,7 +100,5 @@ public class LoginViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-
-        Log.d("this happened!", "the fuck");
     }
 }

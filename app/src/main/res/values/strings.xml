@@ -116,6 +116,8 @@
     <string name = "searching_ride">Finding  a driver for you</string>
     <string name = "select_ride_type">Select a ride type</string>
 
+    <string name = "select_payment_method">Select a payment method</string>
+
 
     <!-- ==================Settings Section ============== -->
 
@@ -134,6 +136,9 @@
     <string name="blue_theme">Blue Theme</string>
     <string name="dark_red_theme">ToDo Original (Dark)</string>
     <string name="dark_blue_theme">Dark Blue Theme</string>
+    <string name="submit">Submit</string>
+    <string name="you_have_arrived">You have arrived</string>
+    <string name="thank_you_ride">Thanks for riding with us</string>
 
 
 </resources>

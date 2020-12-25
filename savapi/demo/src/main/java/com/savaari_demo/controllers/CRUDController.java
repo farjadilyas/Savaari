@@ -1,8 +1,9 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.OracleDBHandler;
+import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -52,7 +53,7 @@ public class CRUDController
 
     public JSONArray riderDetails()
     {
-        JSONArray jsonArray =  OracleDBHandler.getInstance().riderDetails();
+        JSONArray jsonArray =  DBHandlerFactory.getInstance().createDBHandler().riderDetails();
         if (jsonArray != null)
         {
             return jsonArray;
@@ -69,7 +70,7 @@ public class CRUDController
 
     public JSONArray driverDetails()
     {
-        JSONArray jsonArray =  OracleDBHandler.getInstance().driverDetails();
+        JSONArray jsonArray =  DBHandlerFactory.getInstance().createDBHandler().driverDetails();
         if (jsonArray != null)
         {
             return jsonArray;
@@ -106,4 +107,26 @@ public class CRUDController
         return null;
     }
     /* End of section */
+
+    /* Vehicle methods */
+
+    public boolean setActiveVehicle(Driver driver) {
+        return driver.setActiveVehicle();
+    }
+
+    public boolean respondToVehicleRequest(Driver driver) {
+        return driver.respondToVehicleRequest();
+    }
+
+    public boolean registerDriver(Driver driver) {
+        return driver.sendRegistrationRequest();
+    }
+
+    public boolean sendVehicleRequest(Driver driver) {
+        return driver.sendVehicleRequest();
+    }
+    public boolean respondToDriverRequest(Driver driver)
+    {
+        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRequest(driver);
+    }
 }
