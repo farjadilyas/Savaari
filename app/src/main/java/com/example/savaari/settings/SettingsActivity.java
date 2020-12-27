@@ -9,7 +9,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NavUtils;
 
 import com.example.savaari.R;
-import com.example.savaari.Util;
+import com.example.savaari.utility.Util;
 import com.example.savaari.auth.login.LoginActivity;
 import com.example.savaari.services.location.LocationUpdateUtil;
 

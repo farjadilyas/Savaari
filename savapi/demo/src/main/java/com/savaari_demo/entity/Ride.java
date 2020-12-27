@@ -1,6 +1,8 @@
 package com.savaari_demo.entity;
 
 import com.savaari_demo.database.DBHandlerFactory;
+import com.savaari_demo.entity.policy.Policy;
+import com.savaari_demo.entity.policy.PolicyFactory;
 
 import java.util.ArrayList;
 
@@ -25,6 +27,7 @@ public class Ride extends RideRequest {
     private double distanceTravelled;
     private double estimatedFare;
     private double fare;
+    private Policy policy;
     private int rideStatus;
     private ArrayList<Location> stops;
 
@@ -33,10 +36,14 @@ public class Ride extends RideRequest {
     }
 
     public Ride(RideRequest rideRequest) {
+
+        // TODO: consider composition
         setDriver(rideRequest.getDriver());
         setRider(rideRequest.getRider());
         setFindStatus(RideRequest.FOUND);
         setRideStatus(RideRequest.MS_REQ_ACCEPTED);
+        setPolicy(PolicyFactory.getInstance().determinePolicy(rideRequest));
+        getPolicy().calculateEstimatedFare(this);
     }
 
     // ---------------------------------------------------------------------------------
@@ -104,29 +111,31 @@ public class Ride extends RideRequest {
     public void setFare(double fare) {
         this.fare = fare;
     }
-
     public void setStartTime(long startTime) {
         this.startTime = startTime;
     }
-
     public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
-
     public ArrayList<Location> getStops() {
         return stops;
     }
-
     public void setStops(ArrayList<Location> stops) {
         this.stops = stops;
     }
 
+    public Policy getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(Policy policy) {
+        this.policy = policy;
+    }
+
     // ---------------------------------------------------------------------------------
-    // PRIVATE METHODS for POLICIES
-    private double calculateFare()
-    {
-        // TODO: FARE POLICY and stuff ?
-        return (distanceTravelled / 1000) * 40;
+    // PUBLIC METHODS for POLICIES
+    public long getRideDuration() {
+        return endTime - startTime;
     }
 
     // ---------------------------------------------------------------------------------
@@ -155,7 +164,8 @@ public class Ride extends RideRequest {
 
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
-        fare = calculateFare();
+        getPolicy().calculateFare(this);
+
         if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
         }

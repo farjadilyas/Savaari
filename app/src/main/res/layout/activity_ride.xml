@@ -115,7 +115,7 @@
             android:layout_alignParentBottom="true"
             android:background="@drawable/rounded_box_2"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <View
                 android:id="@+id/sticky_top"
@@ -592,35 +592,35 @@
             android:background="@drawable/rounded_box_2"
             android:visibility="gone">
 
-        <View android:id="@+id/ride_type_sticky_top"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="0dp"
-            android:layout_width="60dp"
-            android:layout_height="8dp"
-            android:layout_gravity="center"
-            android:background="@drawable/rounded_box"
-            android:backgroundTint= "?attr/lightTextColor" />
+            <View android:id="@+id/ride_type_sticky_top"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="0dp"
+                android:layout_width="60dp"
+                android:layout_height="8dp"
+                android:layout_gravity="center"
+                android:background="@drawable/rounded_box"
+                android:backgroundTint= "?attr/lightTextColor" />
 
-        <TextView
-            android:id="@+id/ride_type_header"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:gravity="center"
-            android:padding="16dp"
-            android:text="@string/select_ride_type"
-            android:textAlignment="center"
-            android:textAppearance="@style/TextAppearance.AppCompat.Display4"
-            android:textColor="?attr/textColor"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/ride_type_header"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/select_ride_type"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textColor="?attr/textColor"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-        <View android:id="@+id/tile_divider_2"
-            android:layout_width="match_parent"
-            android:layout_marginStart="60dp"
-            android:layout_marginEnd="60dp"
-            android:layout_height="1dp"
-            android:background="?android:attr/dividerHorizontal"
-            android:backgroundTint="?attr/textColor" />
+            <View android:id="@+id/tile_divider_2"
+                android:layout_width="match_parent"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
+                android:layout_height="1dp"
+                android:background="?android:attr/dividerHorizontal"
+                android:backgroundTint="?attr/textColor" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/select_ride_type"

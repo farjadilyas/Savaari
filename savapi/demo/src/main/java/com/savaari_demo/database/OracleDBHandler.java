@@ -1,6 +1,8 @@
 package com.savaari_demo.database;
 
 import com.savaari_demo.entity.*;
+
+import com.savaari_demo.entity.policy.PolicyFactory;
 import org.apache.commons.dbutils.DbUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -73,7 +75,53 @@ public class OracleDBHandler implements DBHandler {
         }
         catch (Exception e) {
             System.out.println("Exception in OracleDBHandler: executeUpdate");
+            e.printStackTrace();
             return -1;
+        }
+    }
+
+    @Override
+    public boolean loadRideTypes(ArrayList<RideType> rideTypes) {
+
+        if (rideTypes == null) {
+            rideTypes = new ArrayList<>();
+        }
+        Connection connect = null;
+        ResultSet resultSet = null;
+        RideType fetchedRideType = null;
+
+        try {
+            connect = DBCPDataSource.getConnection();
+
+            String query = "SELECT TYPE_ID, NAME, MAX_PASSENGERS, BASE_FARE, PER_KM_CHARGE, PER_MIN_CHARGE, MIN_FARE" +
+                    " FROM RIDE_TYPES";
+
+            resultSet = connect.createStatement().executeQuery(query);
+
+            while (resultSet.next()) {
+                fetchedRideType = new RideType(
+                        resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getInt(3),
+                        resultSet.getDouble(4),
+                        resultSet.getDouble(5),
+                        resultSet.getDouble(6),
+                        resultSet.getDouble(7)
+
+                );
+
+                rideTypes.add(fetchedRideType);
+            }
+
+            return true;
+        }
+        catch (Exception e) {
+            System.out.println("Exception in OracleDBHandler: loadRideTypes");
+            e.printStackTrace();
+            return false;
+        }
+        finally {
+            closeAll(connect, null, resultSet);
         }
     }
 
@@ -276,7 +324,8 @@ public class OracleDBHandler implements DBHandler {
         ResultSet resultSet = null;
 
         try {
-            String sqlQuery = "SELECT USER_NAME, FIRST_NAME, LAST_NAME, PHONE_NO, CNIC, LICENSE_NO, EMAIL_ADDRESS, STATUS, IS_ACTIVE, ACTIVE_VEHICLE_ID FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
+            String sqlQuery = "SELECT USER_NAME, FIRST_NAME, LAST_NAME, PHONE_NO, CNIC, LICENSE_NO, EMAIL_ADDRESS, " +
+                    " STATUS, IS_ACTIVE, ACTIVE_VEHICLE_ID FROM DRIVER_DETAILS WHERE USER_ID = " + driver.getUserID();
 
             connect = DBCPDataSource.getConnection();
             resultSet = connect.createStatement().executeQuery(sqlQuery);
@@ -502,7 +551,7 @@ public class OracleDBHandler implements DBHandler {
             connect = DBCPDataSource.getConnection();
             sqlStatement = connect.prepareStatement(
                     "UPDATE DRIVER_DETAILS SET RIDER_ID = ?, RIDE_STATUS = 1, SOURCE_LAT = ?, SOURCE_LONG = ?," +
-                            "DEST_LAT = ?, DEST_LONG = ?, PAYMENT_MODE = ?, RIDE_TYPE = ? WHERE USER_ID = ? AND IS_ACTIVE = 1 AND RIDE_STATUS = 0");
+                            "DEST_LAT = ?, DEST_LONG = ?, PAYMENT_MODE = ?, RIDE_TYPE = ?, SPLIT_FARE = ? WHERE USER_ID = ? AND IS_ACTIVE = 1 AND RIDE_STATUS = 0");
 
             sqlStatement.setInt(1, rideRequest.getRider().getUserID());
             sqlStatement.setDouble(2, rideRequest.getPickupLocation().getLatitude());
@@ -511,7 +560,8 @@ public class OracleDBHandler implements DBHandler {
             sqlStatement.setDouble(5, rideRequest.getDropoffLocation().getLongitude());
             sqlStatement.setInt(6, rideRequest.getPaymentMethod());
             sqlStatement.setInt(7, rideRequest.getRideType());
-            sqlStatement.setInt(8, rideRequest.getDriver().getUserID());
+            sqlStatement.setBoolean(8, rideRequest.isSplittingFare());
+            sqlStatement.setInt(9, rideRequest.getDriver().getUserID());
 
             int numRowsUpdated = sqlStatement.executeUpdate();
             if (numRowsUpdated == 1) {
@@ -568,7 +618,8 @@ public class OracleDBHandler implements DBHandler {
         try {
             connect = DBCPDataSource.getConnection();
             sqlStatement = connect.prepareStatement(
-                    "SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, D.PAYMENT_MODE, D.RIDE_TYPE"
+                    "SELECT D.RIDE_STATUS, D.RIDER_ID, R.USER_NAME, D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, " +
+                            " D.DEST_LONG, D.PAYMENT_MODE, D.RIDE_TYPE, D.SPLIT_FARE"
                     + " FROM DRIVER_DETAILS D LEFT JOIN RIDER_DETAILS R ON D.RIDER_ID = R.USER_ID"
                     + " WHERE D.USER_ID = ? AND D.IS_ACTIVE = 1");
 
@@ -580,7 +631,6 @@ public class OracleDBHandler implements DBHandler {
             while (currentTime <= endTime)
             {
                 // Close result set before executing if appropriate
-                closeResultSet(resultSet);
                 resultSet = sqlStatement.executeQuery();
 
                 //TODO: why is it returning this when a request isn't present
@@ -621,6 +671,7 @@ public class OracleDBHandler implements DBHandler {
                         destLocation.setLongitude(resultSet.getDouble(7));
 
                         rideRequest.setRideType(resultSet.getInt(8));
+                        rideRequest.setSplittingFare(resultSet.getBoolean(9));
 
                         rideRequest.setRider(rider);
                         rideRequest.setPickupLocation(pickLocation);
@@ -632,6 +683,8 @@ public class OracleDBHandler implements DBHandler {
                     System.out.println("db:checkRideReqStat: op3");
                     return rideRequest;
                 }
+
+                closeResultSet(resultSet);
             } // End while
 
             return null;
@@ -784,7 +837,8 @@ public class OracleDBHandler implements DBHandler {
         String query = "INSERT INTO RIDES " +
                 "SELECT 0, R.USER_ID AS RIDER_ID, D.USER_ID AS DRIVER_ID, D.ACTIVE_VEHICLE_ID AS VEHICLE_ID, NULL AS PAYMENT_ID, " +
                 "D.SOURCE_LAT, D.SOURCE_LONG, D.DEST_LAT, D.DEST_LONG, CURRENT_TIME(), NULL AS FINISH_TIME, 0 AS DIST_TRAVELLED, " +
-                "D.RIDE_TYPE AS RIDE_TYPE, 0 AS ESTIMATED_FARE, 0 AS FARE, " + Ride.PICKUP + " AS STATUS " +
+                "D.RIDE_TYPE AS RIDE_TYPE, " + ride.getPolicy().getPolicyID() + " AS POLICY_ID, "
+                + ride.getEstimatedFare() + " AS ESTIMATED_FARE, 0 AS FARE, " + Ride.PICKUP + " AS STATUS " +
                 "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
                 "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getDriver().getUserID() +
                 " AND D.RIDER_ID = " + ride.getRider().getUserID();
@@ -837,7 +891,7 @@ public class OracleDBHandler implements DBHandler {
         String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, " +
                 "RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE, " +
                 "RD.FARE, D.ACTIVE_VEHICLE_ID, V.MAKE, V.MODEL, V.YEAR, DV.NUMBER_PLATE, DV.COLOR, R.RATING, D.RATING," +
-                " D.FIRST_NAME, D.LAST_NAME, D.PHONE_NO\n" +
+                " D.FIRST_NAME, D.LAST_NAME, D.PHONE_NO, RD.POLICY_ID\n" +
                 " FROM RIDES RD\n" +
                 " INNER JOIN RIDER_DETAILS R ON RD.RIDER_ID = R.USER_ID" +
                 " INNER JOIN DRIVER_DETAILS D ON RD.DRIVER_ID = D.USER_ID" +
@@ -861,6 +915,8 @@ public class OracleDBHandler implements DBHandler {
 
                 ride = new Ride();
                 ride.setRideID(resultSet.getInt(1));
+
+                ride.setPolicy(PolicyFactory.getInstance().determinePolicy(resultSet.getInt(27)));
 
                 // Set rider attributes
                 ride.getRider().setUserID(rideRequest.getRider().getUserID());

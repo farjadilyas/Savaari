@@ -1,5 +1,7 @@
 package com.example.savaari.ride.entity;
 
+import com.example.savaari.ride.entity.policy.Policy;
+
 import java.util.ArrayList;
 
 public class Ride extends RideRequest {
@@ -24,6 +26,7 @@ public class Ride extends RideRequest {
     private double distanceTravelled;
     private double estimatedFare;
     private double fare;
+    private Policy policy;
     private int rideStatus;
     private ArrayList<Location> stops;
 
@@ -114,11 +117,23 @@ public class Ride extends RideRequest {
         this.distanceTravelled = distanceTravelled;
     }
 
+    public Policy getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(Policy policy) {
+        this.policy = policy;
+    }
+
     public double getFare() {
         return fare;
     }
 
     public void setFare(double fare) {
         this.fare = fare;
+    }
+
+    public long getRideDuration() {
+        return endTime - startTime;
     }
 }

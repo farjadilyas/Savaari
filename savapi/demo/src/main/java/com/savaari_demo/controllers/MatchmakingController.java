@@ -3,14 +3,16 @@ package com.savaari_demo.controllers;
 import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.*;
 
+import java.util.ArrayList;
+
 public class MatchmakingController {
     // Main Attributes
     private static final String LOG_TAG = MatchmakingController.class.getSimpleName();
+    private static final ArrayList<RideType> rideTypes = new ArrayList<>();
 
     // Main Constructor
-    public MatchmakingController()
-    {
-        // Empty Constructor
+    public MatchmakingController() {
+        DBHandlerFactory.getInstance().createDBHandler().loadRideTypes(rideTypes);
     }
 
     /*
@@ -18,8 +20,21 @@ public class MatchmakingController {
      * Shortlists potential drivers, sends request to ideal
      * Waits for and returns response (driver accepts/declines)
      */
-    public Ride findDriver(Rider rider, Location source, Location destination, int paymentMode, int rideType) {
-        return rider.findDriver(source, destination, paymentMode, rideType);
+    public Ride searchForRide(Rider rider, Location source, Location destination, int paymentMode, int rideTypeID) {
+
+        RideType rideType = null;
+        for (RideType currentRideType : rideTypes) {
+            if (currentRideType.getTypeID() == rideTypeID) {
+                rideType = currentRideType;
+                break;
+            }
+        }
+
+        if (rideType == null) {
+            System.out.println("rideTypeID not matched");
+        }
+
+        return rider.searchForRide(source, destination, paymentMode, rideType);
     }
     // End of method:findDriver()
 

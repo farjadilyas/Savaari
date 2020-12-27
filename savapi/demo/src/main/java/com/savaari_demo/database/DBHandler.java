@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 public interface DBHandler {
 
+    boolean loadRideTypes(ArrayList<RideType> rideTypes);
+
     /* CRUD Methods*/
     Boolean addRider(Rider rider);
     Boolean addDriver(Driver driver);

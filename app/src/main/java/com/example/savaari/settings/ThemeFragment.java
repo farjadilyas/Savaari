@@ -22,7 +22,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.savaari.R;
-import com.example.savaari.ThemeVar;
+import com.example.savaari.utility.ThemeVar;
 import com.example.savaari.ride.RideActivity;
 
 /**

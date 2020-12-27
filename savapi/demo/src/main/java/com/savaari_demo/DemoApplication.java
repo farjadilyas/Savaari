@@ -9,6 +9,7 @@ import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
 import com.savaari_demo.database.DBHandler;
 import com.savaari_demo.entity.*;
+import com.savaari_demo.entity.policy.PolicyFactory;
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -306,7 +307,7 @@ public class DemoApplication
 
 	/* Rider-side matchmaking method*/
 	@RequestMapping(value = "/findDriver", method = RequestMethod.POST)
-	public String findDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	public String searchForRide(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
 			return null;
@@ -315,7 +316,7 @@ public class DemoApplication
 		Rider rider = new Rider();
 		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
 
-		Ride fetchedRide = matchmakingController.findDriver(rider,
+		Ride fetchedRide = matchmakingController.searchForRide(rider,
 				new Location(Double.parseDouble(allParams.get("SOURCE_LAT")),
 						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
 				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
@@ -492,6 +493,17 @@ public class DemoApplication
 		return jsonObject.toString();
 	}
 
+	@RequestMapping(value = "/test", method = RequestMethod.POST)
+	public String markArrivalAtDestination(@RequestBody String allParams, HttpServletRequest request)
+	{
+		try {
+			TestJackson testJackson = objectMapper.readValue(allParams, TestJackson.class);
+		}
+		catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
+
 	@RequestMapping(value = "/markArrivalAtDestination", method = RequestMethod.POST)
 	public String markArrivalAtDestination(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
@@ -503,17 +515,32 @@ public class DemoApplication
 
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+
+		ride.setRideType(new RideType(Integer.parseInt(allParams.get("TYPE_ID")),
+				allParams.get("NAME"),
+				Integer.parseInt(allParams.get("MAX_PASSENGERS")),
+				Double.parseDouble(allParams.get("BASE_FARE")),
+				Double.parseDouble(allParams.get("PER_KM_CHARGE")),
+				Double.parseDouble(allParams.get("PER_MIN_CHARGE")),
+				Double.parseDouble(allParams.get("MIN_FARE"))));
+
+		ride.setStartTime(Long.parseLong(allParams.get("START_TIME")));
+		ride.setEndTime(Long.parseLong(allParams.get("END_TIME")));
 		ride.setDistanceTravelled(Double.parseDouble(allParams.get("DIST_TRAVELLED")));
 		ride.getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+		ride.setPolicy(PolicyFactory.getInstance().determinePolicy(Integer.parseInt(allParams.get("POLICY_ID"))));
 
-		JSONObject result = new JSONObject();
+		JSONObject result;
 		double fare = matchmakingController.markArrivalAtDestination(ride);
-		if (fare > 0) {
-			result.put("FARE", fare);
-		} else {
 
+		if (fare > 0) {
+			result = new JSONObject();
+			result.put("FARE", fare);
+			return result.toString();
 		}
-		return result.toString();
+		else {
+			return null;
+		}
 	}
 
 	//TODO: send payment, not change and package into ride

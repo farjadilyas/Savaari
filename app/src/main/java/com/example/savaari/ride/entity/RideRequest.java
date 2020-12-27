@@ -34,6 +34,7 @@ public class RideRequest {
     private int findStatus;
     private Integer paymentMethod;
     private int rideType;
+    private boolean splittingFare;
 
     public RideRequest() {
         rider = new Rider();
@@ -116,5 +117,13 @@ public class RideRequest {
 
     public void setRideType(int rideType) {
         this.rideType = rideType;
+    }
+
+    public boolean isSplittingFare() {
+        return splittingFare;
+    }
+
+    public void setSplittingFare(boolean splittingFare) {
+        this.splittingFare = splittingFare;
     }
 }

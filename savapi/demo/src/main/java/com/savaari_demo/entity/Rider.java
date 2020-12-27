@@ -61,8 +61,8 @@ public class Rider extends User
     }
 
 
-    public Ride findDriver(Location source,
-                                 Location destination, int paymentMode, int rideType) {
+    public Ride searchForRide(Location source,
+                              Location destination, int paymentMode, RideType rideType) {
 
         // TODO: Policy? Where does this come from?
         int MAX_REJECTED_ATTEMPTS = 5;
@@ -88,6 +88,8 @@ public class Rider extends User
 
         // Send request to next best driver
         for (Driver currentDriver : drivers) {
+
+            System.out.println("Sending ride request");
 
             rideRequest.setDriver(currentDriver);
             requestSent = DBHandlerFactory.getInstance().createDBHandler().sendRideRequest(rideRequest);
