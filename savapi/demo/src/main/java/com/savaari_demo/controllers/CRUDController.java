@@ -111,22 +111,21 @@ public class CRUDController
     /* Vehicle methods */
 
     public boolean setActiveVehicle(Driver driver) {
-        return driver.setActiveVehicle();
+        return driver.selectActiveVehicle();
     }
 
-    public boolean respondToVehicleRequest(Driver driver) {
-        return driver.respondToVehicleRequest();
+    public boolean respondToVehicleRegistrationRequest(Driver driver) {
+        return driver.respondToVehicleRegistrationRequest();
     }
 
     public boolean registerDriver(Driver driver) {
         return driver.sendRegistrationRequest();
     }
 
-    public boolean sendVehicleRequest(Driver driver) {
-        return driver.sendVehicleRequest();
+    public boolean sendVehicleRegistrationRequest(Driver driver) {
+        return driver.sendVehicleRegistrationRequest();
     }
-    public boolean respondToDriverRequest(Driver driver)
-    {
-        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRequest(driver);
+    public boolean respondToDriverRegistrationRequest(Driver driver) {
+        return driver.respondToDriverRegistrationRequest();
     }
 }

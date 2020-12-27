@@ -20,7 +20,6 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
-    private Vehicle vehicle;
     private Payment payment;
     private long startTime;
     private long endTime;
@@ -42,7 +41,7 @@ public class Ride extends RideRequest {
         setRider(rideRequest.getRider());
         setFindStatus(RideRequest.FOUND);
         setRideStatus(RideRequest.MS_REQ_ACCEPTED);
-        setPolicy(PolicyFactory.getInstance().determinePolicy(rideRequest));
+        setPolicy(PolicyFactory.getInstance().determinePolicy(this));
         getPolicy().calculateEstimatedFare(this);
     }
 
@@ -63,12 +62,6 @@ public class Ride extends RideRequest {
     }
     public void setRideID(int rideID) { this.rideID = rideID; }
     public int getRideID() { return rideID; }
-    public Vehicle getVehicle() {
-        return vehicle;
-    }
-    public void setVehicle(Vehicle vehicle) {
-        this.vehicle = vehicle;
-    }
     public Payment getPayment() {
         return payment;
     }
@@ -147,7 +140,7 @@ public class Ride extends RideRequest {
     public boolean markDriverArrival() {
         return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
     }
-    public boolean startRideDriver() { return DBHandlerFactory.getInstance().createDBHandler().startRideDriver(this); }
+    public boolean startRide() { return DBHandlerFactory.getInstance().createDBHandler().startRide(this); }
 
 
     // Acknowledge end of ride (final call)
@@ -164,7 +157,7 @@ public class Ride extends RideRequest {
 
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
-        getPolicy().calculateFare(this);
+        policy.calculateFare(this);
 
         if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
@@ -178,10 +171,9 @@ public class Ride extends RideRequest {
         //TODO: handle credit card payment
 
         payment = new Payment(amountPaid, change, getPaymentMethod());
-        payment.record();
 
         // Add Payment to DB
-        if (payment.getPaymentID() > 0) {
+        if (payment.record()) {
             return DBHandlerFactory.getInstance().createDBHandler().endRideWithPayment(this);
         }
         else {

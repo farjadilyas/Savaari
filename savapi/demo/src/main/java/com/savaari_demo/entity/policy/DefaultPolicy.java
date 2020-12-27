@@ -11,7 +11,7 @@ public class DefaultPolicy implements Policy {
     private DefaultPolicy() {
     }
 
-    public synchronized static Policy newInstance() {
+    public synchronized static Policy getInstance() {
         if (instance == null) {
             instance = new DefaultPolicy();
         }
@@ -22,22 +22,6 @@ public class DefaultPolicy implements Policy {
 
     @Override
     public void calculateFare(Ride ride) {
-        /*
-        RideType rideType = null;
-
-        // Fetch & assign correct ride type or assume list is in order
-        for (RideType currentRideType : rideTypes) {
-            if (currentRideType.getTypeID() == ride.getRideType()) {
-                rideType = currentRideType;
-                break;
-            }
-        }
-
-        if (rideType == null) {
-            System.out.println("DefaultPolicy: RideType not found");
-            return;
-        }*/
-
         System.out.println("Dist travelled: " + (ride.getDistanceTravelled()/1000));
         System.out.println("Ride duration: " +((ride.getRideDuration()/1000.0)/60.0));
         System.out.println("Start time: " + ride.getStartTime());

@@ -315,7 +315,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void setRideDetailsInPanel() {
         driverName.setText(rideViewModel.getRide().getDriver().getFirstName() + " " + rideViewModel.getRide().getDriver().getLastName());
-        Vehicle rideVehicle = rideViewModel.getRide().getVehicle();
+        Vehicle rideVehicle = rideViewModel.getRide().getDriver().getActiveVehicle();
         carNameTextView.setText(rideVehicle.getColor() + " " + rideVehicle.getMake() + " " + rideVehicle.getModel());
         ratingTextView.setText(String.valueOf(round(rideViewModel.getRide().getDriver().getRating(), 1)));
     }
@@ -1318,7 +1318,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     @Override
     public void onRideTypeItemClick(int position) {
-        rideViewModel.getRide().setRideType(position + 1);
+        rideViewModel.getRide().getRideType().setTypeID(position + 1);
         toggleRideTypePanel(false, true);
 
         rideTypeImage.setImageResource(rideTypeItems.get(position).getRideTypeImage());

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SpringBootApplication
@@ -263,6 +264,7 @@ public class DemoApplication
 	public String driverData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
+			System.out.println("Driver data: Invalid session");
 			return null;
 		}
 
@@ -292,7 +294,7 @@ public class DemoApplication
 
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
-		driver.setActiveVehicleID(Integer.parseInt(allParams.get("ACTIVE_VEHICLE_ID")));
+		driver.setActiveVehicle(new Vehicle(Integer.parseInt(allParams.get("ACTIVE_VEHICLE_ID"))));
 
 		JSONObject result = new JSONObject();
 		boolean vehicleSet = crudController.setActiveVehicle(driver);
@@ -316,12 +318,14 @@ public class DemoApplication
 		Rider rider = new Rider();
 		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
 
+		RideType rideType = new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID")));
+
 		Ride fetchedRide = matchmakingController.searchForRide(rider,
 				new Location(Double.parseDouble(allParams.get("SOURCE_LAT")),
 						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
 				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
 						Double.parseDouble(allParams.get("DEST_LONG")), null),
-				Integer.parseInt(allParams.get("PAYMENT_MODE")), Integer.parseInt(allParams.get("RIDE_TYPE")));
+				Integer.parseInt(allParams.get("PAYMENT_MODE")), rideType);
 
 		String result = null;
 
@@ -419,6 +423,7 @@ public class DemoApplication
 		RideRequest rideRequest = new RideRequest();
 		rideRequest.getDriver().setUserID(Integer.parseInt(allParams.get("USER_ID")));
 		rideRequest.getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
+		rideRequest.setRideType(new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID"))));
 
 		Ride ride = matchmakingController.getRideForDriver(rideRequest);
 
@@ -456,7 +461,7 @@ public class DemoApplication
 		return jsonObject.toString();
 	}
 	@RequestMapping(value = "/markArrival", method = RequestMethod.POST)
-	public String markDriverArrival(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	public String markArrivalAtPickup(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
 			return null;
@@ -466,7 +471,7 @@ public class DemoApplication
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
 		JSONObject jsonObject = new JSONObject();
-		if (matchmakingController.markDriverArrival(ride)) {
+		if (matchmakingController.markArrivalAtPickup(ride)) {
 			jsonObject.put("STATUS", 200);
 		} else {
 			jsonObject.put("STATUS", 404);
@@ -475,7 +480,7 @@ public class DemoApplication
 	}
 
 	@RequestMapping(value = "/startRideDriver", method = RequestMethod.POST)
-	public String startRideDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	public String startRide(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
 			return null;
@@ -485,7 +490,7 @@ public class DemoApplication
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
 		JSONObject jsonObject = new JSONObject();
-		if (matchmakingController.startRideDriver(ride)) {
+		if (matchmakingController.startRide(ride)) {
 			jsonObject.put("STATUS", 200);
 		} else {
 			jsonObject.put("STATUS", 404);
@@ -494,13 +499,44 @@ public class DemoApplication
 	}
 
 	@RequestMapping(value = "/test", method = RequestMethod.POST)
-	public String markArrivalAtDestination(@RequestBody String allParams, HttpServletRequest request)
+	public String test(@RequestBody String allParams, HttpServletRequest request)
 	{
+		if (request.getSession(false) == null) {
+			request.getSession(true);
+		}
+		@SuppressWarnings("unchecked")
+		JSONObject jsonObject = new JSONObject();
+
+		MatchmakingController matchmakingController;
+		TestJackson testJackson;
+
 		try {
-			TestJackson testJackson = objectMapper.readValue(allParams, TestJackson.class);
+			jsonObject.put("STATUS" ,200);
+
+
+			List<String> msgs = (List<String>) request.getSession().getAttribute("MY_SESSION_MESSAGES");
+			if (msgs == null) {
+				testJackson = objectMapper.readValue(allParams, TestJackson.class);
+				matchmakingController = new MatchmakingController();
+				matchmakingController.setTestJackson(testJackson);
+				System.out.println("Result: " + matchmakingController.getJacksonTest().username + matchmakingController.getJacksonTest().password);
+
+				msgs = new ArrayList<>();
+				msgs.add(objectMapper.writeValueAsString(matchmakingController));
+				request.getSession().setAttribute("MY_SESSION_MESSAGES", msgs);
+			}
+			else {
+				matchmakingController = objectMapper.readValue(msgs.get(0), MatchmakingController.class);
+				System.out.println("Persisted Result: " + matchmakingController.getJacksonTest().username + matchmakingController.getJacksonTest().password);
+			}
+			request.getSession().setAttribute("MY_SESSION_MESSAGES", msgs);
+
+			return jsonObject.toString();
 		}
 		catch (JsonProcessingException e) {
 			e.printStackTrace();
+			jsonObject.put("STATUS" ,404);
+			return jsonObject.toString();
 		}
 	}
 
@@ -516,7 +552,7 @@ public class DemoApplication
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
-		ride.setRideType(new RideType(Integer.parseInt(allParams.get("TYPE_ID")),
+		ride.setRideType(new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID")),
 				allParams.get("NAME"),
 				Integer.parseInt(allParams.get("MAX_PASSENGERS")),
 				Double.parseDouble(allParams.get("BASE_FARE")),
@@ -817,7 +853,7 @@ public class DemoApplication
 	* ELIF STATUS = VH_DEFAULT, send new request
 	* */
 	@RequestMapping(value = "/sendVehicleRequest", method = RequestMethod.POST)
-	public String sendVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
+	public String sendVehicleRegistrationRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
 
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
@@ -843,7 +879,7 @@ public class DemoApplication
 		driver.setVehicles(vehicles);
 
 		JSONObject result = new JSONObject();
-		boolean requestSent = crudController.sendVehicleRequest(driver);
+		boolean requestSent = crudController.sendVehicleRegistrationRequest(driver);
 
         result.put("STATUS", ((requestSent)?200:404));
 		return result.toString();
@@ -880,7 +916,7 @@ public class DemoApplication
 		driver.setVehicles(vehicles);
 
         JSONObject result = new JSONObject();
-		boolean responseSent = crudController.respondToVehicleRequest(driver);
+		boolean responseSent = crudController.respondToVehicleRegistrationRequest(driver);
         result.put("STATUS", ((responseSent)?200:404));
         return result.toString();
 	}
@@ -892,7 +928,7 @@ public class DemoApplication
 		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
 		driver.setStatus(Integer.parseInt(allParams.get("STATUS")));
 
-		boolean status = crudController.respondToDriverRequest(driver);
+		boolean status = crudController.respondToDriverRegistrationRequest(driver);
 
 		// Packaging Response
 		JSONObject jsonObject = new JSONObject();
@@ -908,7 +944,7 @@ public class DemoApplication
 
 	// Test method
     @RequestMapping(value = "/jacksonTest", method = RequestMethod.POST)
-    public String sendVehicleRequest(@RequestBody String body, HttpServletRequest request) {
+    public String jacksonTest(@RequestBody String body, HttpServletRequest request) {
         JSONObject jsonObject = new JSONObject();
         try {
             Driver driver = objectMapper.readValue(body, Driver.class);

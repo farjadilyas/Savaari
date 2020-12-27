@@ -58,7 +58,8 @@ public class Payment {
         this.paymentMode = paymentMode;
     }
 
-    public void record() {
+    public boolean record() {
         DBHandlerFactory.getInstance().createDBHandler().recordPayment(this);
+        return paymentID > 0;
     }
 }

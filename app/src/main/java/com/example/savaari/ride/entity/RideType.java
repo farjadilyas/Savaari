@@ -1,13 +1,21 @@
 package com.example.savaari.ride.entity;
 
 public class RideType {
-    private int typeID = 1;
-    private String name = "Smol";
-    private int maxPassengers = 4;
-    private double baseFare = 17.71;
-    private double perKMCharge = 12.13;
-    private double perMinuteCharge = 3.61;
-    private double minimumFare = 71;
+    private int typeID;
+    private String name;
+    private int maxPassengers;
+    private double baseFare;
+    private double perKMCharge;
+    private double perMinuteCharge;
+    private double minimumFare;
+
+    public RideType() {
+
+    }
+
+    public RideType(int typeID) {
+        this.typeID = typeID;
+    }
 
     public RideType(int typeID, String name, int maxPassengers, double baseFare, double perKMCharge,
              double perMinuteCharge, double minimumFare) {

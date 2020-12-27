@@ -1,18 +1,25 @@
 package com.savaari_demo.controllers;
 
+import com.savaari_demo.TestJackson;
 import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.*;
-
-import java.util.ArrayList;
 
 public class MatchmakingController {
     // Main Attributes
     private static final String LOG_TAG = MatchmakingController.class.getSimpleName();
-    private static final ArrayList<RideType> rideTypes = new ArrayList<>();
+    TestJackson testJackson;
 
     // Main Constructor
     public MatchmakingController() {
-        DBHandlerFactory.getInstance().createDBHandler().loadRideTypes(rideTypes);
+        // Empty
+    }
+
+    public void setTestJackson(TestJackson testJackson) {
+        this.testJackson = testJackson;
+    }
+
+    public TestJackson getJacksonTest() {
+        return testJackson;
     }
 
     /*
@@ -20,20 +27,7 @@ public class MatchmakingController {
      * Shortlists potential drivers, sends request to ideal
      * Waits for and returns response (driver accepts/declines)
      */
-    public Ride searchForRide(Rider rider, Location source, Location destination, int paymentMode, int rideTypeID) {
-
-        RideType rideType = null;
-        for (RideType currentRideType : rideTypes) {
-            if (currentRideType.getTypeID() == rideTypeID) {
-                rideType = currentRideType;
-                break;
-            }
-        }
-
-        if (rideType == null) {
-            System.out.println("rideTypeID not matched");
-        }
-
+    public Ride searchForRide(Rider rider, Location source, Location destination, int paymentMode, RideType rideType) {
         return rider.searchForRide(source, destination, paymentMode, rideType);
     }
     // End of method:findDriver()
@@ -92,12 +86,12 @@ public class MatchmakingController {
         }
     }
 
-    public boolean markDriverArrival(Ride ride) {
+    public boolean markArrivalAtPickup(Ride ride) {
         return ride.markDriverArrival();
     }
 
-    public boolean startRideDriver(Ride ride) {
-        return ride.startRideDriver();
+    public boolean startRide(Ride ride) {
+        return ride.startRide();
     }
 
     public double markArrivalAtDestination(Ride ride) {

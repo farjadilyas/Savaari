@@ -33,7 +33,7 @@ public class RideRequest {
     private String dropoffTitle;
     private int findStatus;
     private Integer paymentMethod;
-    private int rideType;
+    private RideType rideType;
     private boolean splittingFare;
 
     public RideRequest() {
@@ -41,8 +41,7 @@ public class RideRequest {
         driver = new Driver();
         pickupLocation = null;
         dropoffLocation = null;
-        findStatus = DEFAULT;
-        rideType = 1;
+        rideType = new RideType(1);
     }
 
     public Rider getRider() {
@@ -111,11 +110,11 @@ public class RideRequest {
         this.paymentMethod = paymentMethod;
     }
 
-    public int getRideType() {
+    public RideType getRideType() {
         return rideType;
     }
 
-    public void setRideType(int rideType) {
+    public void setRideType(RideType rideType) {
         this.rideType = rideType;
     }
 

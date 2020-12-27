@@ -22,7 +22,7 @@ public class Driver extends User{
     private String CNIC;
     private String licenseNumber;
     private int status;
-    private int activeVehicleID;
+    private Vehicle activeVehicle;
     private ArrayList<Vehicle> vehicles;
 
     // Main Constructors
@@ -80,12 +80,12 @@ public class Driver extends User{
         this.status = status;
     }
 
-    public int getActiveVehicleID() {
-        return activeVehicleID;
+    public Vehicle getActiveVehicle() {
+        return activeVehicle;
     }
 
-    public void setActiveVehicleID(int activeVehicleID) {
-        this.activeVehicleID = activeVehicleID;
+    public void setActiveVehicle(Vehicle activeVehicle) {
+        this.activeVehicle = activeVehicle;
     }
 
     public ArrayList<Vehicle> getVehicles() {

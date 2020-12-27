@@ -22,8 +22,8 @@ public interface DBHandler {
     boolean sendRegistrationRequest(Driver driver);
 
     /*Driver-Vehicle methods*/
-    boolean sendVehicleRequest(Driver driver);
-    boolean respondToVehicleRequest(Driver driver);
+    boolean sendVehicleRegistrationRequest(Driver driver, Vehicle currentVehicleRequest);
+    boolean respondToVehicleRegistrationRequest(Driver driver, Vehicle currentVehicleRequest);
     boolean setActiveVehicle(Driver driver);
 
     /* Unused CRUD methods */
@@ -39,7 +39,7 @@ public interface DBHandler {
     boolean rejectRideRequest(RideRequest rideRequest);
     boolean confirmRideRequest(Ride ride);
     boolean markDriverArrival(Ride ride);
-    boolean startRideDriver(Ride ride);
+    boolean startRide(Ride ride);
     boolean markArrivalAtDestination(Ride ride);
 
     /* Rider-side matchmaking DB calls*/
@@ -68,5 +68,5 @@ public interface DBHandler {
     ArrayList<Location> getRiderLocations();
     ArrayList<Location> getDriverLocations();
 
-    boolean respondToDriverRequest(Driver driver);
+    boolean respondToDriverRegistrationRequest(Driver driver);
 }

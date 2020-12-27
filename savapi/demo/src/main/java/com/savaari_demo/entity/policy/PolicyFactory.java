@@ -1,6 +1,6 @@
 package com.savaari_demo.entity.policy;
 
-import com.savaari_demo.entity.RideRequest;
+import com.savaari_demo.entity.Ride;
 
 public class PolicyFactory {
 
@@ -17,23 +17,23 @@ public class PolicyFactory {
         return instance;
     }
 
-    public Policy determinePolicy(RideRequest rideRequest) {
-        if (rideRequest.isSplittingFare()) {
-            return DefaultPolicy.newInstance();
+    public Policy determinePolicy(Ride ride) {
+        if (ride.isSplittingFare()) {
+            return DefaultPolicy.getInstance();
         }
         else {
             //return FareSplitPolicy.newInstance();
-            return DefaultPolicy.newInstance();
+            return DefaultPolicy.getInstance();
         }
     }
 
     public Policy determinePolicy(int policyID) {
         if (policyID == 1) {
-            return DefaultPolicy.newInstance();
+            return DefaultPolicy.getInstance();
         }
         else {
             //return FareSplitPolicy.newInstance();
-            return DefaultPolicy.newInstance();
+            return DefaultPolicy.getInstance();
         }
     }
 }

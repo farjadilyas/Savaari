@@ -19,7 +19,6 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
-    private Vehicle vehicle;
     private Payment payment;
     private long startTime;
     private long endTime;
@@ -37,7 +36,6 @@ public class Ride extends RideRequest {
         stops = new ArrayList<>();
         rideStatus = -1;
         setPaymentMethod(1);
-        setRideType(1);
     }
 
     public int getRideID() {
@@ -46,14 +44,6 @@ public class Ride extends RideRequest {
 
     public void setRideID(int rideID) {
         this.rideID = rideID;
-    }
-
-    public Vehicle getVehicle() {
-        return vehicle;
-    }
-
-    public void setVehicle(Vehicle vehicle) {
-        this.vehicle = vehicle;
     }
 
     public Payment getPayment() {
