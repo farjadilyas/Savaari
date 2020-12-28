@@ -10,6 +10,8 @@ import android.widget.ImageView;
 
 import com.example.savaari.auth.login.LoginActivity;
 import com.example.savaari.ride.RideActivity;
+import com.example.savaari.utility.ThemeVar;
+import com.example.savaari.utility.Util;
 
 
 public class MainActivity extends Util {

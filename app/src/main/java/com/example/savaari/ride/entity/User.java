@@ -17,6 +17,7 @@ public class User {
 
     User() {
         rating = (float) 4.4;
+        currentLocation = new Location();
     }
 
     public int getUserID() {

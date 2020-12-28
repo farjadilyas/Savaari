@@ -43,7 +43,7 @@ public class NetworkUtil
         // Empty
     }
 
-    public static NetworkUtil getInstance() {
+    public synchronized static NetworkUtil getInstance() {
         if (instance == null) {
             instance = new NetworkUtil();
         }
@@ -145,7 +145,7 @@ public class NetworkUtil
             jsonParam.put("DEST_LAT", destLatitude);
             jsonParam.put("DEST_LONG", destLongitude);
             jsonParam.put("PAYMENT_MODE", paymentMode);
-            jsonParam.put("RIDE_TYPE", rideType);
+            jsonParam.put("RIDE_TYPE_ID", rideType);
 
             String resultString = sendPost(url, jsonParam, true);
 

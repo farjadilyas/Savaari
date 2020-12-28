@@ -26,7 +26,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
-import com.example.savaari.Util;
+import com.example.savaari.utility.Util;
 
 import java.util.Objects;
 

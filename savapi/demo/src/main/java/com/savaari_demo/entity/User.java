@@ -1,6 +1,8 @@
 package com.savaari_demo.entity;
 
 import com.savaari_demo.database.DBHandlerFactory;
+import de.mkammerer.argon2.Argon2;
+import de.mkammerer.argon2.Argon2Factory;
 
 public class User {
     public static final int DEFAULT_ID = -1;
@@ -29,6 +31,16 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public static String hashPassword(String password) {
+        Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id, 8, 16);
+        return argon2.hash(2, 256 * 256, 8, password);
+    }
+
+    public static boolean verifyPassword(String hash, String password) {
+        Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id, 8, 16);
+        return (argon2.verify(hash, password));
     }
 
     public String getPhoneNo() {

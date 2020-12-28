@@ -1,4 +1,4 @@
-package com.example.savaari;
+package com.example.savaari.utility;
 
 public class ThemeVar {
     static int s = 4;

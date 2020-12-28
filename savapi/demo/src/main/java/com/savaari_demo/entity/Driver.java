@@ -24,7 +24,7 @@ public class Driver extends User
 	private String CNIC;
 	private String licenseNumber;
 	private int status;
-	private int activeVehicleID;
+	private Vehicle activeVehicle;
 	private ArrayList<Vehicle> vehicles;
 
 	// Main Constructors
@@ -83,20 +83,17 @@ public class Driver extends User
 		this.status = status;
 	}
 
-	public int getActiveVehicleID() {
-		return activeVehicleID;
+	public Vehicle getActiveVehicle() {
+		return activeVehicle;
 	}
 
-	public void setActiveVehicleID(int activeVehicleID) {
-		this.activeVehicleID = activeVehicleID;
+	public void setActiveVehicle(Vehicle activeVehicle) {
+		this.activeVehicle = activeVehicle;
 	}
 
 	// Main Methods for System Interactions
 
 	// Sign-UP
-	public boolean signup() {
-		return DBHandlerFactory.getInstance().createDBHandler().addDriver(this);
-	}
 
 	// Login
 	public Integer login()
@@ -171,19 +168,19 @@ public class Driver extends User
 		this.vehicles = vehicles;
 	}
 
-	public boolean sendRegistrationRequest()
-	{
+	public boolean sendRegistrationRequest() {
 		return DBHandlerFactory.getInstance().createDBHandler().sendRegistrationRequest(this);
 	}
 
-	public boolean sendVehicleRequest() {
-		return DBHandlerFactory.getInstance().createDBHandler().sendVehicleRequest(this);
-	}
-	public boolean respondToVehicleRequest() {
-		return DBHandlerFactory.getInstance().createDBHandler().respondToVehicleRequest(this);
+	public boolean sendVehicleRegistrationRequest() {
+		for (Vehicle currentVehicleRequest : vehicles) {
+			DBHandlerFactory.getInstance().createDBHandler().sendVehicleRegistrationRequest(this,
+					currentVehicleRequest);
+		}
+		return true;
 	}
 
-	public boolean setActiveVehicle() {
+	public boolean selectActiveVehicle() {
 		return DBHandlerFactory.getInstance().createDBHandler().setActiveVehicle(this);
 	}
 }

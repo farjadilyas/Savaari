@@ -1,6 +1,8 @@
 package com.savaari_demo.entity;
 
 import com.savaari_demo.database.DBHandlerFactory;
+import com.savaari_demo.entity.policy.Policy;
+import com.savaari_demo.entity.policy.PolicyFactory;
 
 import java.util.ArrayList;
 
@@ -18,13 +20,13 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
-    private Vehicle vehicle;
     private Payment payment;
     private long startTime;
     private long endTime;
     private double distanceTravelled;
     private double estimatedFare;
     private double fare;
+    private Policy policy;
     private int rideStatus;
     private ArrayList<Location> stops;
 
@@ -33,10 +35,14 @@ public class Ride extends RideRequest {
     }
 
     public Ride(RideRequest rideRequest) {
+
+        // TODO: consider composition
         setDriver(rideRequest.getDriver());
         setRider(rideRequest.getRider());
         setFindStatus(RideRequest.FOUND);
         setRideStatus(RideRequest.MS_REQ_ACCEPTED);
+        setPolicy(PolicyFactory.getInstance().determinePolicy(this));
+        getPolicy().calculateEstimatedFare(this);
     }
 
     // ---------------------------------------------------------------------------------
@@ -56,12 +62,6 @@ public class Ride extends RideRequest {
     }
     public void setRideID(int rideID) { this.rideID = rideID; }
     public int getRideID() { return rideID; }
-    public Vehicle getVehicle() {
-        return vehicle;
-    }
-    public void setVehicle(Vehicle vehicle) {
-        this.vehicle = vehicle;
-    }
     public Payment getPayment() {
         return payment;
     }
@@ -104,29 +104,31 @@ public class Ride extends RideRequest {
     public void setFare(double fare) {
         this.fare = fare;
     }
-
     public void setStartTime(long startTime) {
         this.startTime = startTime;
     }
-
     public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
-
     public ArrayList<Location> getStops() {
         return stops;
     }
-
     public void setStops(ArrayList<Location> stops) {
         this.stops = stops;
     }
 
+    public Policy getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(Policy policy) {
+        this.policy = policy;
+    }
+
     // ---------------------------------------------------------------------------------
-    // PRIVATE METHODS for POLICIES
-    private double calculateFare()
-    {
-        // TODO: FARE POLICY and stuff ?
-        return (distanceTravelled / 1000) * 40;
+    // PUBLIC METHODS for POLICIES
+    public long getRideDuration() {
+        return endTime - startTime;
     }
 
     // ---------------------------------------------------------------------------------
@@ -138,7 +140,7 @@ public class Ride extends RideRequest {
     public boolean markDriverArrival() {
         return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
     }
-    public boolean startRideDriver() { return DBHandlerFactory.getInstance().createDBHandler().startRideDriver(this); }
+    public boolean startRide() { return DBHandlerFactory.getInstance().createDBHandler().startRide(this); }
 
 
     // Acknowledge end of ride (final call)
@@ -155,7 +157,8 @@ public class Ride extends RideRequest {
 
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
-        fare = calculateFare();
+        policy.calculateFare(this);
+
         if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
         }
@@ -168,10 +171,9 @@ public class Ride extends RideRequest {
         //TODO: handle credit card payment
 
         payment = new Payment(amountPaid, change, getPaymentMethod());
-        payment.record();
 
         // Add Payment to DB
-        if (payment.getPaymentID() > 0) {
+        if (payment.record()) {
             return DBHandlerFactory.getInstance().createDBHandler().endRideWithPayment(this);
         }
         else {

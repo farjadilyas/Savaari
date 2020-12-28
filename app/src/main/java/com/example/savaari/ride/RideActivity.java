@@ -44,8 +44,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
-import com.example.savaari.ThemeVar;
-import com.example.savaari.Util;
 import com.example.savaari.ride.adapter.ItemClickListener;
 import com.example.savaari.ride.adapter.PaymentMethodAdapter;
 import com.example.savaari.ride.adapter.PaymentMethodItem;
@@ -55,6 +53,8 @@ import com.example.savaari.ride.entity.Ride;
 import com.example.savaari.ride.entity.Vehicle;
 import com.example.savaari.services.location.LocationUpdateUtil;
 import com.example.savaari.settings.SettingsActivity;
+import com.example.savaari.utility.ThemeVar;
+import com.example.savaari.utility.Util;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -315,7 +315,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void setRideDetailsInPanel() {
         driverName.setText(rideViewModel.getRide().getDriver().getFirstName() + " " + rideViewModel.getRide().getDriver().getLastName());
-        Vehicle rideVehicle = rideViewModel.getRide().getVehicle();
+        Vehicle rideVehicle = rideViewModel.getRide().getDriver().getActiveVehicle();
         carNameTextView.setText(rideVehicle.getColor() + " " + rideVehicle.getMake() + " " + rideVehicle.getModel());
         ratingTextView.setText(String.valueOf(round(rideViewModel.getRide().getDriver().getRating(), 1)));
     }
@@ -425,7 +425,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
     private void watchRideStatus() {
         Log.d(TAG, "watchRideStatus() called!");
         future = ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay(() -> rideViewModel.getRideStatus(),
-                0L, 8L, TimeUnit.SECONDS);
+                0L, 4L, TimeUnit.SECONDS);
         rideViewModel.isRideStatusChanged().observe(RideActivity.this, this::onRideStatusChanged);
     }
 
@@ -434,7 +434,8 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             switch (ride.getRideStatus()) {
                 case Ride.DRIVER_ARRIVED:
                     removePolyline(pickupPolyline);
-                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getUsername() + " has arrived");
+                    rideStatusMessage.setText(rideViewModel.getRide().getDriver().getFirstName() + " " +
+                            rideViewModel.getRide().getDriver().getLastName()+ " has arrived");
                     break;
                 case Ride.CANCELLED:
                     Toast.makeText(this, "Your ride was cancelled. Trying again...", Toast.LENGTH_SHORT).show();
@@ -448,10 +449,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
                 case Ride.ARRIVED_AT_DEST:
                     toggleRideDetailsBar(false, true);
                     toggleEndOfRideDetailsPanel();
-                    //Toast.makeText(this, "You have reached your destination, fare: " + ride.getFare(), Toast.LENGTH_SHORT).show();
+
+                    //TODO: Handle case where this is skipped
                     break;
                 case Ride.PAYMENT_MADE:
-                    //Toast.makeText(this, "Payment made", Toast.LENGTH_SHORT).show();
                     rideViewModel.acknowledgeEndOfRide();
                     rideViewModel.isEndOfRideAcknowledged().observe(this, this::endOfRideAcknowledgedAction);
                     break;
@@ -475,7 +476,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         progressBar.setVisibility(View.INVISIBLE);
 
         ((SavaariApplication) getApplication()).scheduledExecutor.scheduleWithFixedDelay((Runnable) () -> rideViewModel.fetchDriverLocation(),
-                0L, 8L, TimeUnit.SECONDS);
+                0L, 4L, TimeUnit.SECONDS);
 
         MarkerOptions options = new MarkerOptions()
                 .position(rideViewModel.getRide().getDriver().getCurrentLocation())
@@ -493,9 +494,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         if (endOfRideAcknowledged) {
 
             // Stop repeating get driver location & get ride status
-            if (future != null) {
-                future.cancel(true);
-            }
+            cancelScheduledCalls();
 
             toggleEndOfRideDetailsPanel();
 
@@ -515,6 +514,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     private void backToSearchRide() {
         progressBar.setVisibility(View.INVISIBLE);
+
+        /* Reset UI elements */
+        paymentMethodImage.setImageResource(paymentMethodItems.get(0).getPaymentImage());
+        paymentMethodText.setText(paymentMethodItems.get(0).getPaymentText());
         toggleRideSearchBar(true, true);
     }
 
@@ -867,7 +870,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             rideViewModel.giveFeedbackForDriver(feedbackRatingBar.getRating());
 
             toggleEndOfRideDetailsPanel();
-            toggleRideSearchBar(true, true);
+            backToSearchRide();
         });
     }
 
@@ -882,7 +885,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         initializeViews();
         toggleRideSearchBar(false, false);
-        toggleRideDetailsBar(false, false);
+        //toggleRideDetailsBar(false, false);
 
         // Set observer for ViewModel:driverPaired
         rideViewModel.isRideFound().observe(this, this::rideFoundAction);
@@ -928,7 +931,10 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
     // Set visibility of the Ride Details bar & init if necessary
     private void toggleRideDetailsBar(boolean visibility, boolean withAnimation) {
-        if (visibility) {
+        Log.d(TAG, "toggleRideDetailsBar called! " + visibility + ", " + withAnimation);
+
+        if (visibility && rideDetailsPanel.getVisibility() != View.VISIBLE) {
+            Log.d(TAG, "toggleRideDetailsBar called! op1");
             ratingTextView.setText(String.valueOf(round(rideViewModel.getRide().getDriver().getRating(),1)));
 
             if (withAnimation) {
@@ -936,11 +942,15 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
             }
             rideDetailsPanel.setVisibility(View.VISIBLE);
         }
-        else {
+        else if (!visibility && rideDetailsPanel.getVisibility() != View.GONE){
+            Log.d(TAG, "toggleRideDetailsBar called! op2");
             if (withAnimation) {
                 rideDetailsPanel.setAnimation(outToBottomAnimation(400));
             }
             rideDetailsPanel.setVisibility(View.GONE);
+        }
+        else {
+            Log.d(TAG, "toggleRideDetailsBar called! op3");
         }
     }
 
@@ -1294,18 +1304,21 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
         return true;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+    private void cancelScheduledCalls() {
         if (future != null) {
             future.cancel(true);
         }
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cancelScheduledCalls();
+    }
+
+    @Override
     public void onRideTypeItemClick(int position) {
-        rideViewModel.getRide().setRideType(position + 1);
+        rideViewModel.getRide().getRideType().setTypeID(position + 1);
         toggleRideTypePanel(false, true);
 
         rideTypeImage.setImageResource(rideTypeItems.get(position).getRideTypeImage());

@@ -31,11 +31,13 @@ public class RideRequest {
     protected String dropoffTitle;
     protected int findStatus;
     private Integer paymentMethod;
-    private int rideType;
+    private RideType rideType;
+    private boolean splittingFare;
 
     public RideRequest() {
         rider = new Rider();
         driver = new Driver();
+        setSplittingFare(false);
     }
 
     public Rider getRider() {
@@ -102,11 +104,19 @@ public class RideRequest {
         return paymentMethod;
     }
 
-    public int getRideType() {
+    public boolean isSplittingFare() {
+        return splittingFare;
+    }
+
+    public void setSplittingFare(boolean splittingFare) {
+        this.splittingFare = splittingFare;
+    }
+
+    public RideType getRideType() {
         return rideType;
     }
 
-    public void setRideType(int rideType) {
+    public void setRideType(RideType rideType) {
         this.rideType = rideType;
     }
 }

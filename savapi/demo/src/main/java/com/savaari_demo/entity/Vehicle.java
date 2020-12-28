@@ -25,7 +25,12 @@ public class Vehicle
 
     // Main Methods
     public Vehicle() {
-        // Empty Constructor
+        // Default Constructor
+        vehicleID = DEFAULT_ID;
+    }
+
+    public Vehicle(int vehicleID) {
+        this.vehicleID = vehicleID;
     }
 
     public Vehicle(int vehicleID, String make, String model, String year, int rideTypeID, String numberPlate,

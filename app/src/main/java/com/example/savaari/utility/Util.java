@@ -1,4 +1,4 @@
-package com.example.savaari;
+package com.example.savaari.utility;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.savaari.R;
 
 public class Util extends AppCompatActivity {
 

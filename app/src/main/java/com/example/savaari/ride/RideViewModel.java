@@ -161,7 +161,7 @@ public class RideViewModel extends ViewModel {
             }
             rideFound.postValue(ride);
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, ride.getPaymentMethod(), ride.getRideType());
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, ride.getPaymentMethod(), ride.getRideType().getTypeID());
     }
 
     public void getRideStatus() {
