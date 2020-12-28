@@ -41,6 +41,7 @@ public class RideRequest {
         driver = new Driver();
         pickupLocation = null;
         dropoffLocation = null;
+        setPaymentMethod(1);
         rideType = new RideType(1);
     }
 

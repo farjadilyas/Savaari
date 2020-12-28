@@ -4,7 +4,6 @@ package com.savaari_demo;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.DataFormatReaders;
 import com.savaari_demo.controllers.AdminSystem;
 import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
@@ -735,7 +734,7 @@ public class DemoApplication
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
-		matchmakingController.getRideStatus(ride);
+		matchmakingController.getRideStatus();
 
 		if (ride.getRideStatus() != RideRequest.DEFAULT) {
 			JSONObject result = new JSONObject();
@@ -755,13 +754,19 @@ public class DemoApplication
 			return null;
 		}
 
+		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
+				MatchmakingController.class.getName());
+
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 		ride.getRideParameters().setRider(new Rider());
 		ride.getRideParameters().getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
 
 		JSONObject result = new JSONObject();
-		result.put("STATUS_CODE", ((matchmakingController.acknowledgeEndOfRide(ride))? 200 : 404));
+		result.put("STATUS_CODE", ((matchmakingController.acknowledgeEndOfRide())? 200 : 404));
+
+		//TODO: delete attribute
+		storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
 		return result.toString();
 	}
 
