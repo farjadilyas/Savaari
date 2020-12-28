@@ -18,7 +18,7 @@ public class PolicyFactory {
     }
 
     public Policy determinePolicy(Ride ride) {
-        if (ride.isSplittingFare()) {
+        if (ride.getRideParameters().isSplittingFare()) {
             return DefaultPolicy.getInstance();
         }
         else {

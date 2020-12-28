@@ -1,25 +1,16 @@
 package com.savaari_demo.controllers;
 
-import com.savaari_demo.TestJackson;
 import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.*;
 
 public class MatchmakingController {
     // Main Attributes
     private static final String LOG_TAG = MatchmakingController.class.getSimpleName();
-    TestJackson testJackson;
+    Ride ride;
 
     // Main Constructor
     public MatchmakingController() {
         // Empty
-    }
-
-    public void setTestJackson(TestJackson testJackson) {
-        this.testJackson = testJackson;
-    }
-
-    public TestJackson getJacksonTest() {
-        return testJackson;
     }
 
     /*
@@ -28,22 +19,23 @@ public class MatchmakingController {
      * Waits for and returns response (driver accepts/declines)
      */
     public Ride searchForRide(Rider rider, Location source, Location destination, int paymentMode, RideType rideType) {
-        return rider.searchForRide(source, destination, paymentMode, rideType);
+        ride = rider.searchForRide(source, destination, paymentMode, rideType);
+        return ride;
     }
     // End of method:findDriver()
 
     /* Rider-side in-ride methods*/
 
     public Ride getRideForRider(Rider rider) {
-        return rider.getRideForRider();
+        ride = rider.getRideForRider();
+        return ride;
     }
 
-    public boolean acknowledgeEndOfRide(Ride ride) {
+    public boolean acknowledgeEndOfRide() {
         return ride.acknowledgeEndOfRide();
     }
 
-    public void getRideStatus(Ride ride) {
-
+    public void getRideStatus() {
         ride.fetchRideStatus();
     }
 

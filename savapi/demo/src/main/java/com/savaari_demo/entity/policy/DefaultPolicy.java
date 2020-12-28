@@ -27,10 +27,10 @@ public class DefaultPolicy implements Policy {
         System.out.println("Start time: " + ride.getStartTime());
         System.out.println("End time: " + ride.getEndTime());
 
-        double calculatedFare = Math.max(ride.getRideType().getBaseFare()
-                + ride.getRideType().getPerKMCharge()*(ride.getDistanceTravelled()/1000)
-                + ((ride.getRideDuration()/1000.0)/60.0)*ride.getRideType().getPerMinuteCharge(),
-                ride.getRideType().getMinimumFare());
+        double calculatedFare = Math.max(ride.getRideParameters().getRideType().getBaseFare()
+                + ride.getRideParameters().getRideType().getPerKMCharge()*(ride.getDistanceTravelled()/1000)
+                + ((ride.getRideDuration()/1000.0)/60.0)*ride.getRideParameters().getRideType().getPerMinuteCharge(),
+                ride.getRideParameters().getRideType().getMinimumFare());
 
         ride.setFare(calculatedFare);
     }

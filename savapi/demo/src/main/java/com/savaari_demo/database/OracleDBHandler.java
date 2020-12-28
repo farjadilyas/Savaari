@@ -200,6 +200,7 @@ public class OracleDBHandler implements DBHandler {
 
             // If email address & password verified
             if (resultSet.next() && User.verifyPassword(resultSet.getString(2), driver.getPassword())) {
+                System.out.println("Logged in!");
                 return resultSet.getInt("USER_ID");
             }
             else {
@@ -415,7 +416,7 @@ public class OracleDBHandler implements DBHandler {
     @Override
     public boolean resetRider(Rider rider, boolean checkForResponse) {
         return (executeUpdate(
-                "UPDATE RIDER_DETAILS SET FIND_STATUS = " + Ride.NOT_SENT +", DRIVER_ID = " + Driver.DEFAULT_ID +
+                "UPDATE RIDER_DETAILS SET FIND_STATUS = " + RideRequest.NOT_SENT +", DRIVER_ID = " + Driver.DEFAULT_ID +
                         " WHERE USER_ID = " + rider.getUserID() +
                         ((checkForResponse)? " AND FIND_STATUS <> " + RideRequest.FOUND : ""))) > 0;
     }
@@ -736,15 +737,15 @@ public class OracleDBHandler implements DBHandler {
             // Notify rider query
             sqlStatement = connect.prepareStatement(
                     "UPDATE RIDER_DETAILS SET FIND_STATUS = ?, DRIVER_ID = ? WHERE USER_ID = ? AND FIND_STATUS = "
-                            + RideRequest.NO_CHANGE + " AND DRIVER_ID = " + ride.getDriver().getUserID());
+                            + RideRequest.NO_CHANGE + " AND DRIVER_ID = " + ride.getRideParameters().getDriver().getUserID());
 
             sqlStatement.setInt(1, RideRequest.FOUND);
-            sqlStatement.setInt(2, ride.getDriver().getUserID());
-            sqlStatement.setInt(3, ride.getRider().getUserID());
+            sqlStatement.setInt(2, ride.getRideParameters().getDriver().getUserID());
+            sqlStatement.setInt(3, ride.getRideParameters().getRider().getUserID());
 
             int numRowsUpdated = sqlStatement.executeUpdate();
             if (numRowsUpdated <= 0) {
-                resetDriver(ride.getDriver());
+                resetDriver(ride.getRideParameters().getDriver());
                 return false;
             }
             closeStatement(sqlStatement);
@@ -752,7 +753,7 @@ public class OracleDBHandler implements DBHandler {
             // Notify driver query
             sqlStatement = connect.prepareStatement("UPDATE DRIVER_DETAILS SET RIDE_STATUS = ? WHERE USER_ID = ?");
             sqlStatement.setInt(1, RideRequest.MS_REQ_ACCEPTED);
-            sqlStatement.setInt(2, ride.getDriver().getUserID());
+            sqlStatement.setInt(2, ride.getRideParameters().getDriver().getUserID());
 
             numRowsUpdated = sqlStatement.executeUpdate();
 
@@ -762,7 +763,7 @@ public class OracleDBHandler implements DBHandler {
         catch (Exception e) {
             System.out.println("Exception in DBHandler: confirmRideRequest()");
             e.printStackTrace();
-            resetDriver(ride.getDriver());
+            resetDriver(ride.getRideParameters().getDriver());
             return false;
         }
         finally {
@@ -847,8 +848,8 @@ public class OracleDBHandler implements DBHandler {
                 "D.RIDE_TYPE AS RIDE_TYPE, " + ride.getPolicy().getPolicyID() + " AS POLICY_ID, "
                 + ride.getEstimatedFare() + " AS ESTIMATED_FARE, 0 AS FARE, " + Ride.PICKUP + " AS STATUS " +
                 "FROM DRIVER_DETAILS AS D, RIDER_DETAILS AS R " +
-                "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getDriver().getUserID() +
-                " AND D.RIDER_ID = " + ride.getRider().getUserID();
+                "WHERE D.RIDER_ID = R.USER_ID AND D.USER_ID = " + ride.getRideParameters().getDriver().getUserID() +
+                " AND D.RIDER_ID = " + ride.getRideParameters().getRider().getUserID();
 
         return (executeUpdate(query) > 0);
     }
@@ -873,7 +874,7 @@ public class OracleDBHandler implements DBHandler {
 
                 int findStatus = resultSet.getInt(1);
 
-                rideRequest = new Ride();
+                rideRequest = new RideRequest();
                 rideRequest.setRider(rider);
                 rideRequest.setDriver(new Driver());
 
@@ -932,17 +933,17 @@ public class OracleDBHandler implements DBHandler {
                 ride.setPolicy(PolicyFactory.getInstance().determinePolicy(resultSet.getInt(27)));
 
                 // Set rider attributes
-                ride.getRider().setUserID(rideRequest.getRider().getUserID());
-                ride.getRider().setUsername(resultSet.getString(2));
+                ride.getRideParameters().getRider().setUserID(rideRequest.getRider().getUserID());
+                ride.getRideParameters().getRider().setUsername(resultSet.getString(2));
 
                 // Set driver attributes
-                ride.getDriver().setUserID(rideRequest.getDriver().getUserID());
-                ride.getDriver().setUsername(resultSet.getString(3));
-                ride.getDriver().setCurrentLocation(new Location(resultSet.getDouble(13),
+                ride.getRideParameters().getDriver().setUserID(rideRequest.getDriver().getUserID());
+                ride.getRideParameters().getDriver().setUsername(resultSet.getString(3));
+                ride.getRideParameters().getDriver().setCurrentLocation(new Location(resultSet.getDouble(13),
                         resultSet.getDouble(14)));
 
                 // Set ride attributes
-                ride.setRideType(new RideType(resultSet.getInt(10),
+                ride.getRideParameters().setRideType(new RideType(resultSet.getInt(10),
                         resultSet.getString(28),
                         resultSet.getInt(29),
                         resultSet.getDouble(30),
@@ -952,13 +953,13 @@ public class OracleDBHandler implements DBHandler {
 
                 ride.getPayment().setPaymentID(resultSet.getInt(4));
 
-                ride.setPickupLocation(new Location(resultSet.getDouble(5), resultSet.getDouble(6)));
-                ride.setDropoffLocation(new Location(resultSet.getDouble(7), resultSet.getDouble(8)));
+                ride.getRideParameters().setPickupLocation(new Location(resultSet.getDouble(5), resultSet.getDouble(6)));
+                ride.getRideParameters().setDropoffLocation(new Location(resultSet.getDouble(7), resultSet.getDouble(8)));
                 ride.setStartTime(resultSet.getTimestamp(9).getTime());
                 ride.setEstimatedFare(resultSet.getInt(11));
                 ride.setRideStatus(resultSet.getInt(12));
                 ride.setFare(resultSet.getDouble(15));
-                ride.setFindStatus(Ride.PAIRED);
+                ride.getRideParameters().setFindStatus(RideRequest.PAIRED);
 
                 Vehicle vehicle = new Vehicle();
                 vehicle.setVehicleID(resultSet.getInt(16));
@@ -968,13 +969,13 @@ public class OracleDBHandler implements DBHandler {
                 vehicle.setNumberPlate(resultSet.getString(20));
                 vehicle.setColor(resultSet.getString(21));
 
-                ride.getRider().setRating(resultSet.getFloat(22));
-                ride.getDriver().setRating(resultSet.getFloat(23));
-                ride.getDriver().setFirstName(resultSet.getString(24));
-                ride.getDriver().setLastName(resultSet.getString(25));
-                ride.getDriver().setPhoneNo(resultSet.getString(26));
+                ride.getRideParameters().getRider().setRating(resultSet.getFloat(22));
+                ride.getRideParameters().getDriver().setRating(resultSet.getFloat(23));
+                ride.getRideParameters().getDriver().setFirstName(resultSet.getString(24));
+                ride.getRideParameters().getDriver().setLastName(resultSet.getString(25));
+                ride.getRideParameters().getDriver().setPhoneNo(resultSet.getString(26));
 
-                ride.getDriver().setActiveVehicle(vehicle);
+                ride.getRideParameters().getDriver().setActiveVehicle(vehicle);
             }
             //result.put("STATUS_CODE", 300);
 
@@ -997,7 +998,7 @@ public class OracleDBHandler implements DBHandler {
         Connection connect = null;
         ResultSet resultSet = null;
 
-        ride.setRideStatus(Ride.DEFAULT);
+        ride.setRideStatus(RideRequest.DEFAULT);
         String sqlQuery = "SELECT STATUS, FARE FROM RIDES WHERE RIDE_ID = " + ride.getRideID();
 
         try {
@@ -1051,7 +1052,7 @@ public class OracleDBHandler implements DBHandler {
 
                 numRowsUpdated = sqlStatement.executeUpdate();
 
-                return (numRowsUpdated > 0 && resetDriver(ride.getDriver()));
+                return (numRowsUpdated > 0 && resetDriver(ride.getRideParameters().getDriver()));
 
             } else {
                 return false;
@@ -1082,7 +1083,7 @@ public class OracleDBHandler implements DBHandler {
                 " SET D.RATING = D.RATING*(cast(D.NUM_RATINGS as DECIMAL)/CAST(D.NUM_RATINGS+1 AS DECIMAL)) + ("
                 + rating +"/CAST(D.NUM_RATINGS+1 AS DECIMAL)), " +
                 " D.NUM_RATINGS = D.NUM_RATINGS + 1" +
-                " WHERE D.USER_ID = " + ride.getDriver().getUserID()) > 0);
+                " WHERE D.USER_ID = " + ride.getRideParameters().getDriver().getUserID()) > 0);
     }
 
     @Override
@@ -1092,7 +1093,7 @@ public class OracleDBHandler implements DBHandler {
                 " SET R.RATING = R.RATING*(cast(R.NUM_RATINGS as DECIMAL)/CAST(R.NUM_RATINGS+1 AS DECIMAL)) + ("
                 + rating +"/CAST(R.NUM_RATINGS+1 AS DECIMAL)), " +
                 " R.NUM_RATINGS = R.NUM_RATINGS + 1" +
-                " WHERE R.USER_ID = " + ride.getRider().getUserID()) > 0);
+                " WHERE R.USER_ID = " + ride.getRideParameters().getRider().getUserID()) > 0);
     }
 
     @Override

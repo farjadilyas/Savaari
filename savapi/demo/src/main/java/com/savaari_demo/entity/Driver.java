@@ -91,6 +91,14 @@ public class Driver extends User
 		this.activeVehicle = activeVehicle;
 	}
 
+	public void setRegistrationDetails(String firstName, String lastName, String phoneNo, String CNIC, String licenseNumber) {
+		setFirstName(firstName);
+		setLastName(lastName);
+		setPhoneNo(phoneNo);
+		setCNIC(CNIC);
+		setLicenseNumber(licenseNumber);
+	}
+
 	// Main Methods for System Interactions
 
 	// Sign-UP
@@ -172,15 +180,19 @@ public class Driver extends User
 		return DBHandlerFactory.getInstance().createDBHandler().sendRegistrationRequest(this);
 	}
 
-	public boolean sendVehicleRegistrationRequest() {
+	public boolean sendVehicleRegistrationRequest(Vehicle vehicle) {
+		vehicles.add(vehicle);
+
 		for (Vehicle currentVehicleRequest : vehicles) {
 			DBHandlerFactory.getInstance().createDBHandler().sendVehicleRegistrationRequest(this,
 					currentVehicleRequest);
+			currentVehicleRequest.setStatus(Vehicle.VH_REQ_SENT);
 		}
 		return true;
 	}
 
-	public boolean selectActiveVehicle() {
+	public boolean selectActiveVehicle(Vehicle vehicle) {
+		activeVehicle = vehicle;
 		return DBHandlerFactory.getInstance().createDBHandler().setActiveVehicle(this);
 	}
 }

@@ -6,7 +6,7 @@ import com.savaari_demo.entity.policy.PolicyFactory;
 
 import java.util.ArrayList;
 
-public class Ride extends RideRequest {
+public class Ride {
 
     // Main Attributes
     public static final int
@@ -20,6 +20,7 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
+    private RideRequest rideParameters;
     private Payment payment;
     private long startTime;
     private long endTime;
@@ -36,10 +37,9 @@ public class Ride extends RideRequest {
 
     public Ride(RideRequest rideRequest) {
 
-        // TODO: consider composition
-        setDriver(rideRequest.getDriver());
-        setRider(rideRequest.getRider());
-        setFindStatus(RideRequest.FOUND);
+        rideParameters = rideRequest;
+        rideParameters.setFindStatus(RideRequest.FOUND);
+
         setRideStatus(RideRequest.MS_REQ_ACCEPTED);
         setPolicy(PolicyFactory.getInstance().determinePolicy(this));
         getPolicy().calculateEstimatedFare(this);
@@ -48,6 +48,15 @@ public class Ride extends RideRequest {
     // ---------------------------------------------------------------------------------
     //                          GETTER and SETTER
     // ---------------------------------------------------------------------------------
+
+    public RideRequest getRideParameters() {
+        return rideParameters;
+    }
+
+    public void setRideParameters(RideRequest rideParameters) {
+        this.rideParameters = rideParameters;
+    }
+
     public Long getStartTime() {
         return startTime;
     }
@@ -147,7 +156,7 @@ public class Ride extends RideRequest {
     public boolean acknowledgeEndOfRide() {
 
         if (DBHandlerFactory.getInstance().createDBHandler().acknowledgeEndOfRide(this)) {
-            return rider.reset(false);
+            return getRideParameters().getRider().reset(false);
         }
 
         return false;
