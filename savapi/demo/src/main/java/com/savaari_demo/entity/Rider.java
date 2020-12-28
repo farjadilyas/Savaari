@@ -21,9 +21,6 @@ public class Rider extends User
 
     //Rider-side CRUD methods
 
-    public Boolean signup() {
-        return DBHandlerFactory.getInstance().createDBHandler().addRider(this);
-    }
     public Integer login() {
         return DBHandlerFactory.getInstance().createDBHandler().loginRider(this);
     }

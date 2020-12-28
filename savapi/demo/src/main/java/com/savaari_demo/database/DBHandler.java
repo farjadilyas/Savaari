@@ -11,8 +11,8 @@ public interface DBHandler {
     boolean loadRideTypes(ArrayList<RideType> rideTypes);
 
     /* CRUD Methods*/
-    Boolean addRider(Rider rider);
-    Boolean addDriver(Driver driver);
+    Boolean addRider(String username, String emailAddress, String password);
+    Boolean addDriver(String username, String emailAddress, String password);
     Integer loginRider(Rider rider);
     Integer loginDriver(Driver driver);
     boolean fetchRiderData(Rider rider);
@@ -23,7 +23,7 @@ public interface DBHandler {
 
     /*Driver-Vehicle methods*/
     boolean sendVehicleRegistrationRequest(Driver driver, Vehicle currentVehicleRequest);
-    boolean respondToVehicleRegistrationRequest(Driver driver, Vehicle currentVehicleRequest);
+    boolean respondToVehicleRegistrationRequest(Vehicle currentVehicleRequest);
     boolean setActiveVehicle(Driver driver);
 
     /* Unused CRUD methods */
@@ -69,4 +69,9 @@ public interface DBHandler {
     ArrayList<Location> getDriverLocations();
 
     boolean respondToDriverRegistrationRequest(Driver driver);
+
+    boolean addAdmin(Administrator admin);
+    boolean loginAdmin(Administrator admin);
+    ArrayList<Vehicle> getVehicleRequests();
+    ArrayList<Driver> getDriverRequests();
 }

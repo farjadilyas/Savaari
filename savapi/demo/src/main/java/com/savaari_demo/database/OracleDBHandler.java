@@ -88,7 +88,7 @@ public class OracleDBHandler implements DBHandler {
         }
         Connection connect = null;
         ResultSet resultSet = null;
-        RideType fetchedRideType = null;
+        RideType fetchedRideType;
 
         try {
             connect = DBCPDataSource.getConnection();
@@ -127,26 +127,26 @@ public class OracleDBHandler implements DBHandler {
 
     //Add a new Rider
     @Override
-    public Boolean addRider(Rider rider) {
+    public Boolean addRider(String username, String emailAddress, String password) {
 
         String q = String.format("INSERT INTO `RIDER_DETAILS` (`USER_ID`, `" +
                         "USER_NAME`, `PASSWORD`, `EMAIL_ADDRESS`, `FIND_STATUS`, `DRIVER_ID`) " +
                         " VALUES(%d, '%s', '%s', '%s', %d, %d)",
-                0, rider.getUsername(), rider.getPassword(), rider.getEmailAddress(), RideRequest.NOT_SENT,
+                0, username, password, emailAddress, RideRequest.NOT_SENT,
                 Driver.DEFAULT_ID);
         System.out.println(q);
         return (executeUpdate(q)) > 0;
     }
 
     @Override
-    public Boolean addDriver(Driver driver) {
+    public Boolean addDriver(String username, String emailAddress, String password) {
 
         return (executeUpdate(String.format("INSERT INTO `DRIVER_DETAILS` (`USER_ID`, `" +
         "USER_NAME`, `PASSWORD`, `EMAIL_ADDRESS`) VALUES(%d, '%s', '%s', '%s')",
                 0,
-                driver.getUsername(),
-                driver.getPassword(),
-                driver.getEmailAddress()))) > 0;
+                username,
+                password,
+                emailAddress))) > 0;
     }
 
     @Override
@@ -164,13 +164,13 @@ public class OracleDBHandler implements DBHandler {
         Connection connect = null;
         ResultSet resultSet = null;
         try {
-            String sqlQuery = "SELECT USER_ID FROM RIDER_DETAILS WHERE EMAIL_ADDRESS = '" + rider.getEmailAddress()
-                    + "' AND PASSWORD = '" + rider.getPassword() + "'";
+            String sqlQuery = "SELECT USER_ID, PASSWORD FROM RIDER_DETAILS WHERE EMAIL_ADDRESS = '" + rider.getEmailAddress() + "'";
 
             connect = DBCPDataSource.getConnection();
             resultSet = connect.createStatement().executeQuery(sqlQuery);
 
-            if (resultSet.next()) {
+            // If email address & password verified
+            if (resultSet.next() && User.verifyPassword(resultSet.getString(2), rider.getPassword())) {
                 return resultSet.getInt("USER_ID");
             }
             else {
@@ -193,13 +193,13 @@ public class OracleDBHandler implements DBHandler {
         ResultSet resultSet = null;
 
         try {
-            String sqlQuery = "SELECT USER_ID FROM DRIVER_DETAILS WHERE EMAIL_ADDRESS = '" + driver.getEmailAddress()
-                    + "' AND PASSWORD = '" + driver.getPassword() + "'";
+            String sqlQuery = "SELECT USER_ID, PASSWORD FROM DRIVER_DETAILS WHERE EMAIL_ADDRESS = '" + driver.getEmailAddress() + "'";
 
             connect = DBCPDataSource.getConnection();
             resultSet = connect.createStatement().executeQuery(sqlQuery);
 
-            if (resultSet.next()) {
+            // If email address & password verified
+            if (resultSet.next() && User.verifyPassword(resultSet.getString(2), driver.getPassword())) {
                 return resultSet.getInt("USER_ID");
             }
             else {
@@ -1328,7 +1328,7 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public boolean respondToVehicleRegistrationRequest(Driver driver, Vehicle currentVehicleRequest) {
+    public boolean respondToVehicleRegistrationRequest(Vehicle currentVehicleRequest) {
 
         Connection connect = null;
         PreparedStatement approveVehicleRequestStatement = null,
@@ -1339,18 +1339,17 @@ public class OracleDBHandler implements DBHandler {
 
             String approveVehicleRequestQuery =
                     "INSERT INTO DRIVERS_VEHICLES\n" +
-                    " SELECT " + driver.getUserID() + ", 0, ?,VRR.NUMBER_PLATE, " + Vehicle.VH_ACCEPTANCE_ACK + ", VRR.COLOR" +
+                    " SELECT VRR.DRIVER_ID,  0, ?, VRR.NUMBER_PLATE, " + Vehicle.VH_ACCEPTANCE_ACK + ", VRR.COLOR" +
                     " FROM VEHICLE_REGISTRATION_REQ VRR" +
-                    " WHERE VRR.DRIVER_ID = " + driver.getUserID() + " AND VRR.REGISTRATION_REQ_ID = ?";
+                    " WHERE VRR.REGISTRATION_REQ_ID = ?";
 
             String deleteVehicleRequestQuery =
                     "DELETE FROM VEHICLE_REGISTRATION_REQ" +
-                            " WHERE DRIVER_ID = ? AND REGISTRATION_REQ_ID = ?";
+                            " WHERE REGISTRATION_REQ_ID = ?";
 
             String rejectVehicleRequestQuery = "UPDATE VEHICLE_REGISTRATION_REQ" +
                     " SET STATUS = " + Vehicle.VH_REQ_REJECTED +
-                    " WHERE DRIVER_ID = ?" +
-                    " AND REGISTRATION_REQ_ID = ?";
+                    " WHERE REGISTRATION_REQ_ID = ?";
 
             connect = DBCPDataSource.getConnection();
             approveVehicleRequestStatement = connect.prepareStatement(approveVehicleRequestQuery);
@@ -1365,15 +1364,13 @@ public class OracleDBHandler implements DBHandler {
                 numRowsUpdated = approveVehicleRequestStatement.executeUpdate();
 
                 if (numRowsUpdated > 0) {
-                    deleteVehicleRequestStatement.setInt(1, driver.getUserID());
-                    deleteVehicleRequestStatement.setInt(2, currentVehicleRequest.getVehicleID());
+                    deleteVehicleRequestStatement.setInt(1, currentVehicleRequest.getVehicleID());
 
                     deleteVehicleRequestStatement.executeUpdate();
                 }
             }
             else if (currentVehicleRequest.getStatus() == Vehicle.VH_REQ_REJECTED) {
-                rejectVehicleRequestStatement.setInt(1, driver.getUserID());
-                rejectVehicleRequestStatement.setInt(2, currentVehicleRequest.getVehicleID());
+                rejectVehicleRequestStatement.setInt(1, currentVehicleRequest.getVehicleID());
 
                 rejectVehicleRequestStatement.executeUpdate();
             }
@@ -1439,5 +1436,138 @@ public class OracleDBHandler implements DBHandler {
         return (executeUpdate(String.format("UPDATE DRIVER_DETAILS SET STATUS = %d WHERE USER_ID = %d",
                 driver.getStatus(),
                 driver.getUserID())) > 0);
+    }
+
+    @Override
+    public boolean addAdmin(Administrator admin) {
+        return (executeUpdate(String.format("INSERT INTO ADMIN_DETAILS" +
+                " VALUES(0, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
+                admin.getEmailAddress(),
+                admin.getPassword(),
+                admin.getFirstName(),
+                admin.getLastName(),
+                admin.getPhoneNo(),
+                admin.getCNIC(),
+                admin.getCredentials())) > 0);
+    }
+
+    @Override
+    public boolean loginAdmin(Administrator admin) {
+        Connection connect = null;
+        ResultSet resultSet = null;
+        try {
+            String sqlQuery = "SELECT USER_ID, EMAIL_ADDRESS, PASSWORD, FIRST_NAME, LAST_NAME, PHONE_NO, CNIC, CREDENTIALS" +
+                    " FROM ADMIN_DETAILS WHERE EMAIL_ADDRESS = '" + admin.getEmailAddress() + "'";
+
+            connect = DBCPDataSource.getConnection();
+            resultSet = connect.createStatement().executeQuery(sqlQuery);
+
+            // If email address & password verified
+            if (resultSet.next() && User.verifyPassword(resultSet.getString(2), admin.getPassword())) {
+                admin.Initialize(resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getString(3),
+                        resultSet.getString(4),
+                        resultSet.getString(5),
+                        resultSet.getString(6),
+                        resultSet.getString(7),
+                        resultSet.getInt(8));
+
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Exception in DBHandler:loginAdmin()");
+            e.printStackTrace();
+            return false;
+        }
+        finally {
+            closeAll(connect, null, resultSet);
+        }
+    }
+
+    @Override
+    public ArrayList<Vehicle> getVehicleRequests() {
+        Connection connect = null;
+        ResultSet resultSet = null;
+
+        Vehicle vehicleRequest;
+        ArrayList<Vehicle> result = new ArrayList<>();
+
+        try {
+            connect = DBCPDataSource.getConnection();
+
+            String query = "SELECT REGISTRATION_REQ_ID, MAKE, MODEL, YEAR, NUMBER_PLATE, STATUS, COLOR" +
+                    " FROM VEHICLE_REGISTRATION_REQ WHERE STATUS = " + Vehicle.VH_REQ_SENT;
+
+            resultSet = connect.createStatement().executeQuery(query);
+
+            // Loop through and add to list of vehicle requests
+            while (resultSet.next()) {
+                vehicleRequest = new Vehicle(resultSet.getInt(1), resultSet.getString(2),
+                        resultSet.getString(3), resultSet.getString(4), 0,
+                        resultSet.getString(5), resultSet.getInt(6),
+                        resultSet.getString(7));
+
+                result.add(vehicleRequest);
+            }
+
+            return result;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        finally {
+            closeAll(connect, null, resultSet);
+        }
+    }
+
+    @Override
+    public ArrayList<Driver> getDriverRequests() {
+        Connection connect = null;
+        ResultSet resultSet = null;
+
+        Driver driverRequest;
+        ArrayList<Driver> result = new ArrayList<>();
+
+        try {
+            connect = DBCPDataSource.getConnection();
+
+            String query = "SELECT USER_ID, USER_NAME, FIRST_NAME, LAST_NAME, PHONE_NO, CNIC, LICENSE_NO, EMAIL_ADDRESS, " +
+                    " STATUS, IS_ACTIVE, ACTIVE_VEHICLE_ID FROM DRIVER_DETAILS WHERE STATUS = " + Driver.DV_REQ_SENT;
+
+            resultSet = connect.createStatement().executeQuery(query);
+
+            // Loop through and add to list of vehicle requests
+            while (resultSet.next()) {
+                driverRequest = new Driver();
+                driverRequest.setUserID(resultSet.getInt(1));
+                driverRequest.setUsername(resultSet.getString(2));
+                driverRequest.setFirstName(resultSet.getString(3));
+                driverRequest.setLastName(resultSet.getString(4));
+                driverRequest.setPhoneNo(resultSet.getString(5));
+                driverRequest.setCNIC(resultSet.getString(6));
+                driverRequest.setLicenseNumber(resultSet.getString(7));
+                driverRequest.setEmailAddress(resultSet.getString(8));
+                driverRequest.setStatus(resultSet.getInt(9));
+                driverRequest.setActive(resultSet.getInt(10) == 1);
+                driverRequest.setActiveVehicle(new Vehicle(resultSet.getInt(11)));
+
+                result.add(driverRequest);
+            }
+
+            return result;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        finally {
+            closeAll(connect, null, resultSet);
+        }
     }
 }

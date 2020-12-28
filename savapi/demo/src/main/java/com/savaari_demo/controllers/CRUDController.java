@@ -4,6 +4,7 @@ import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
 
+import com.savaari_demo.entity.User;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -29,25 +30,14 @@ public class CRUDController
     // Adding a new Rider Account
     public boolean addRider(String username, String email_address, String password)
     {
-        // TODO add logic of if Rider Exists already
-        Rider rider = new Rider();
-        rider.setUsername(username);
-        rider.setEmailAddress(email_address);
-        rider.setPassword(password);
-
-        return rider.signup();
+        return DBHandlerFactory.getInstance().createDBHandler().addRider(username, email_address,
+                User.hashPassword(password));
     }
 
     // Add a new inactive Driver method
     public boolean addDriver(String username, String email_address, String password) {
-
-        // TODO Add logic of if Driver exists already
-        Driver driver = new Driver();
-        driver.setUsername(username);
-        driver.setEmailAddress(email_address);
-        driver.setPassword(password);
-
-        return driver.signup();
+        return DBHandlerFactory.getInstance().createDBHandler().addDriver(username, email_address,
+                User.hashPassword(password));
     }
 
 
@@ -114,18 +104,11 @@ public class CRUDController
         return driver.selectActiveVehicle();
     }
 
-    public boolean respondToVehicleRegistrationRequest(Driver driver) {
-        return driver.respondToVehicleRegistrationRequest();
-    }
-
     public boolean registerDriver(Driver driver) {
         return driver.sendRegistrationRequest();
     }
 
     public boolean sendVehicleRegistrationRequest(Driver driver) {
         return driver.sendVehicleRegistrationRequest();
-    }
-    public boolean respondToDriverRegistrationRequest(Driver driver) {
-        return driver.respondToDriverRegistrationRequest();
     }
 }

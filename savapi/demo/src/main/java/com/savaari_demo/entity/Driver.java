@@ -94,9 +94,6 @@ public class Driver extends User
 	// Main Methods for System Interactions
 
 	// Sign-UP
-	public boolean signup() {
-		return DBHandlerFactory.getInstance().createDBHandler().addDriver(this);
-	}
 
 	// Login
 	public Integer login()
@@ -181,18 +178,6 @@ public class Driver extends User
 					currentVehicleRequest);
 		}
 		return true;
-	}
-	public boolean respondToVehicleRegistrationRequest() {
-		for (Vehicle currentVehicleRequest : vehicles) {
-			DBHandlerFactory.getInstance().createDBHandler().respondToVehicleRegistrationRequest(this,
-					currentVehicleRequest);
-		}
-
-		return true;
-	}
-
-	public boolean respondToDriverRegistrationRequest() {
-		return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRegistrationRequest(this);
 	}
 
 	public boolean selectActiveVehicle() {
