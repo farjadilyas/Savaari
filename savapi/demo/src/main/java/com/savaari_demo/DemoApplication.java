@@ -29,9 +29,7 @@ public class DemoApplication
 	private static MatchmakingController matchmakingController;
 	private static LocationController locationController;
 	private static AdminSystem adminSystem;
-
 	private static ObjectMapper objectMapper;
-
 	private static HashMap<String, DBHandler> databaseHandlers;
 
 	/* MAIN METHOD */
@@ -248,6 +246,8 @@ public class DemoApplication
 	@RequestMapping(value = "/login_driver", method = RequestMethod.POST)
 	public String loginDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+		CRUDController crudController = new CRUDController();
+
 		Driver driver = new Driver();
 		driver.setEmailAddress(allParams.get("username"));
 		driver.setPassword(allParams.get("password"));
@@ -310,11 +310,34 @@ public class DemoApplication
 	@RequestMapping(value = "/persistDriverLogin", method = RequestMethod.POST)
 	public String persistDriverLogin(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		// TODO Verify Driver Account
+		JSONObject result = new JSONObject();
+		Driver driver = new Driver();
+		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+
 		if (request.getSession(false) == null) {
 			request.getSession(true);
+
+			CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+
+			if (crudController != null) {
+				crudController.persistDriverLogin(driver);
+				storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
+				result.put("STATUS", 200);
+				result.put("USER_ID", driver.getUserID());
+			}
+			else {
+				result.put("STATUS_CODE", 404);
+				result.put("USER_ID", Driver.DEFAULT_ID);
+			}
+
+			return result.toString();
 		}
-		return new JSONObject().put("STATUS", 200).toString();
+		else {
+			result.put("STATUS_CODE", 200);
+			result.put("USER_ID", driver.getUserID());
+		}
+
+		return result.toString();
 	}
 
 	// TODO: Add layer that checks user is logged out in database
@@ -386,13 +409,11 @@ public class DemoApplication
 			System.out.println("Driver data: Invalid session");
 			return null;
 		}
-
-		Driver driver = new Driver();
-		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
 
 		String result = null;
-
-		if (crudController.driverData(driver)) {
+		Driver driver = crudController.driverData();
+		if (driver != null) {
 			try {
 				result = objectMapper.writeValueAsString(driver);
 			}
@@ -476,6 +497,8 @@ public class DemoApplication
 		if (request.getSession(false) == null) {
 			return null;
 		}
+
+		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class, MatchmakingController.class.getName());
 
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
@@ -636,7 +659,7 @@ public class DemoApplication
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
-		ride.setRideType(new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID")),
+		ride.getRideParameters().setRideType(new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID")),
 				allParams.get("NAME"),
 				Integer.parseInt(allParams.get("MAX_PASSENGERS")),
 				Double.parseDouble(allParams.get("BASE_FARE")),

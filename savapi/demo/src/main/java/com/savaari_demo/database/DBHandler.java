@@ -14,7 +14,7 @@ public interface DBHandler {
     Boolean addRider(String username, String emailAddress, String password);
     Boolean addDriver(String username, String emailAddress, String password);
     Integer loginRider(Rider rider);
-    Integer loginDriver(Driver driver);
+    int loginDriver(Driver driver);
     boolean fetchRiderData(Rider rider);
     boolean fetchDriverData(Driver driver);
 

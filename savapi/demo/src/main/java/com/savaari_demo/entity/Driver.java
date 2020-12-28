@@ -104,9 +104,9 @@ public class Driver extends User
 	// Sign-UP
 
 	// Login
-	public Integer login()
+	public void login()
 	{
-		return DBHandlerFactory.getInstance().createDBHandler().loginDriver(this);
+		setUserID(DBHandlerFactory.getInstance().createDBHandler().loginDriver(this));
 	}
 
 	// Fetch Data

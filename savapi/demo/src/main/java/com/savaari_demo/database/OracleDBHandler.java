@@ -188,7 +188,7 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public Integer loginDriver(Driver driver) {
+    public int loginDriver(Driver driver) {
         Connection connect = null;
         ResultSet resultSet = null;
 
@@ -204,13 +204,14 @@ public class OracleDBHandler implements DBHandler {
                 return resultSet.getInt("USER_ID");
             }
             else {
-                return null;
+                System.out.println("Login failed");
+                return Driver.DEFAULT_ID;
             }
         }
         catch (Exception e) {
             System.out.println("Exception in DBHandler:loginDriver()");
             e.printStackTrace();
-            return null;
+            return Driver.DEFAULT_ID;
         }
         finally {
             closeAll(connect, null, resultSet);

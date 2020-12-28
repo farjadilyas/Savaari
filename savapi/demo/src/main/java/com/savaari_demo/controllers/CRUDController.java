@@ -11,8 +11,12 @@ public class CRUDController
 {
     // Main Attributes
     private static final String LOG_TAG = CRUDController.class.getSimpleName();
+    Driver driver;
+    Rider rider;
 
-    public CRUDController () {
+    public CRUDController ()
+    {
+
     }
 
     public Driver getDriver() {
@@ -34,7 +38,9 @@ public class CRUDController
 
     // Login Driver
     public Integer loginDriver(Driver driver) {
-        return driver.login();
+        driver.login();
+        this.driver = driver;
+        return this.driver.getUserID();
     }
 
     public void persistDriverLogin(Driver driver) {
@@ -67,9 +73,13 @@ public class CRUDController
         }
     }
 
-    public boolean driverData(Driver driver) {
-        return driver.fetchData();
+    public Driver driverData() {
+        if (driver.fetchData()) {
+            return driver;
+        }
+        return null;
     }
+
 
     // TODO Handle them in API
     public JSONObject updateRide() {

@@ -33,6 +33,7 @@ public class Ride {
 
     public Ride() {
         payment = new Payment();
+        rideParameters = new RideRequest();
     }
 
     public Ride(RideRequest rideRequest) {
@@ -76,18 +77,6 @@ public class Ride {
     }
     public void setPayment(Payment payment) {
         this.payment = payment;
-    }
-    public Location getPickupLocation() {
-        return pickupLocation;
-    }
-    public void setPickupLocation(Location pickupLocation) {
-        this.pickupLocation = pickupLocation;
-    }
-    public Location getDropoffLocation() {
-        return dropoffLocation;
-    }
-    public void setDropoffLocation(Location dropoffLocation) {
-        this.dropoffLocation = dropoffLocation;
     }
     public double getEstimatedFare() {
         return estimatedFare;
@@ -179,7 +168,7 @@ public class Ride {
     {
         //TODO: handle credit card payment
 
-        payment = new Payment(amountPaid, change, getPaymentMethod());
+        payment = new Payment(amountPaid, change, rideParameters.getPaymentMethod());
 
         // Add Payment to DB
         if (payment.record()) {
