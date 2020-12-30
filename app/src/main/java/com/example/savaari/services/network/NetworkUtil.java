@@ -363,8 +363,9 @@ public class NetworkUtil
         JSONObject jsonParam = new JSONObject();
 
         try {
+            /*
             jsonParam.put("RIDE_ID", rideID);
-            jsonParam.put("RIDER_ID", riderID);
+            jsonParam.put("RIDER_ID", riderID);*/
 
             String resultString = sendPost(url, jsonParam, true);
             return ((resultString != null) && new JSONObject(resultString).getInt("STATUS_CODE") == 200);

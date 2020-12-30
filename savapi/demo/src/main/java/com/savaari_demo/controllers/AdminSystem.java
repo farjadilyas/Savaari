@@ -9,13 +9,15 @@ import com.savaari_demo.entity.Vehicle;
 import java.util.ArrayList;
 
 public class AdminSystem {
+    private Administrator administrator;
 
     public boolean addAdmin(Administrator administrator) {
         administrator.setPassword(User.hashPassword(administrator.getPassword()));
         return DBHandlerFactory.getInstance().createDBHandler().addAdmin(administrator);
     }
     public boolean loginAdmin(Administrator administrator) {
-        return administrator.login();
+        this.administrator = administrator;
+        return this.administrator.login();
     }
 
     public ArrayList<Vehicle> getVehicleRequests() {

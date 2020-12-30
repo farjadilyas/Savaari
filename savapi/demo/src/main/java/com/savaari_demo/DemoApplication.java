@@ -8,7 +8,6 @@ import com.savaari_demo.controllers.AdminSystem;
 import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
-import com.savaari_demo.database.DBHandler;
 import com.savaari_demo.entity.*;
 import com.savaari_demo.entity.policy.PolicyFactory;
 import org.json.JSONObject;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
@@ -28,9 +26,7 @@ public class DemoApplication
 	// Main Attributes
 	private static MatchmakingController matchmakingController;
 	private static LocationController locationController;
-	private static AdminSystem adminSystem;
 	private static ObjectMapper objectMapper;
-	private static HashMap<String, DBHandler> databaseHandlers;
 
 	/* MAIN METHOD */
 	public static void main(String[] args)
@@ -44,9 +40,6 @@ public class DemoApplication
 
 		matchmakingController = new MatchmakingController();
 		locationController = new LocationController();
-		adminSystem = new AdminSystem();
-
-		//databaseHandlers = new HashMap<>();
 
 		SpringApplication.run(DemoApplication.class, args);
 	}
@@ -59,7 +52,6 @@ public class DemoApplication
      * If not, create and store
      */
     private <T> T getAttributeObject(HttpServletRequest request, Class<T> valueType, String className) {
-        @SuppressWarnings("unchecked")
         String msgs = (String) request.getSession().getAttribute(className);
         T object;
 
@@ -115,37 +107,9 @@ public class DemoApplication
         }
     }
 
-    /*
-     * PERSIST ANY OBJECT IN SESSION ATTRIBUTES
-     * matchmakingController = getAttributeObject(request, MatchmakingController.class, MatchmakingController.class.getName());
-     * storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
-     *
-    @RequestMapping(value = "/test", method = RequestMethod.POST)
-    public String test(@RequestBody String allParams, HttpServletRequest request)
-    {
-        if (request.getSession(false) == null) {
-            request.getSession(true);
-        }
-        JSONObject jsonObject = new JSONObject();
-
-        MatchmakingController matchmakingController;
-        TestJackson testJackson;
-
-        try {
-            testJackson = objectMapper.readValue(allParams, TestJackson.class);
-            matchmakingController = getAttributeObject(request, MatchmakingController.class, MatchmakingController.class.getName());
-            System.out.println("Persisted: " + (matchmakingController.getJacksonTest() != null));
-            matchmakingController.setTestJackson(testJackson);
-            storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
-            jsonObject.put("STATUS" ,200);
-            return jsonObject.toString();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            jsonObject.put("STATUS" ,404);
-            return jsonObject.toString();
-        }
-    }*/
+    private void deleteAttribute(HttpServletRequest request, String className) {
+    	request.getSession().removeAttribute(className);
+	}
 
 	/* Add new user methods */
 	@RequestMapping(value = "/add_rider", method = RequestMethod.POST)
@@ -195,7 +159,9 @@ public class DemoApplication
 		rider.setEmailAddress(allParams.get("username"));
 		rider.setPassword(allParams.get("password"));
 
-		CRUDController crudController = new CRUDController();
+		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+		if (crudController == null) { crudController = new CRUDController(); }
+
 		Integer userID = crudController.loginRider(rider);
 
 		// Package response
@@ -228,16 +194,12 @@ public class DemoApplication
 			Rider rider = new Rider();
 			rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
 
-			CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+            CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+            if (crudController == null) { crudController = new CRUDController(); }
 
-			if (crudController != null) {
-				crudController.persistRiderLogin(rider);
-				storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
-				return new JSONObject().put("STATUS_CODE", 200).toString();
-			}
-			else {
-				return new JSONObject().put("STATUS_CODE", 404).toString();
-			}
+            crudController.persistRiderLogin(rider);
+            storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
+            return new JSONObject().put("STATUS_CODE", 200).toString();
 		}
 
 		return new JSONObject().put("STATUS_CODE", 200).toString();
@@ -246,7 +208,8 @@ public class DemoApplication
 	@RequestMapping(value = "/login_driver", method = RequestMethod.POST)
 	public String loginDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		CRUDController crudController = new CRUDController();
+        CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        if (crudController == null) { crudController = new CRUDController(); }
 
 		Driver driver = new Driver();
 		driver.setEmailAddress(allParams.get("username"));
@@ -283,6 +246,7 @@ public class DemoApplication
 		}
 
 		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        if (crudController == null) { return null; }
 
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
@@ -356,28 +320,6 @@ public class DemoApplication
 	}
 	/* End of section*/
 
-
-	/* Fetch user data methods
-	@GetMapping("/rider_details")
-	public String riderDetails(Model model, HttpSession session)
-	{
-		List<String> messages = (List<String>) session.getAttribute("MY_SESSION_MESSAGES");
-
-		if (messages != null) {
-			System.out.println("Rider deets called");
-			return crudController.riderDetails().toString();
-		}
-		else {
-			return null;
-		}
-	}
-
-	@GetMapping("/driver_details")
-	public String driverDetails()
-	{
-		return crudController.driverDetails().toString();
-	}*/
-
 	@RequestMapping(value = "/rider_data", method = RequestMethod.POST)
 	public String riderData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
@@ -385,7 +327,9 @@ public class DemoApplication
 			System.out.println("Driver data: Invalid session");
 			return null;
 		}
-		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+
+        CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        if (crudController == null) { return null; }
 
 		String result = null;
 		Rider rider = crudController.riderData();
@@ -409,7 +353,9 @@ public class DemoApplication
 			System.out.println("Driver data: Invalid session");
 			return null;
 		}
-		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+
+        CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        if (crudController == null) { return null; }
 
 		String result = null;
 		Driver driver = crudController.driverData();
@@ -433,7 +379,8 @@ public class DemoApplication
 			return null;
 		}
 
-		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+        if (crudController == null) { return null; }
 
 		Vehicle vehicle = new Vehicle(Integer.parseInt(allParams.get("ACTIVE_VEHICLE_ID")));
 
@@ -459,6 +406,7 @@ public class DemoApplication
 
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
 				MatchmakingController.class.getName());
+		if (matchmakingController == null) { return null; }
 
 		Rider rider = new Rider();
 		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
@@ -499,6 +447,7 @@ public class DemoApplication
 		}
 
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class, MatchmakingController.class.getName());
+        if (matchmakingController == null) { return null; }
 
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
@@ -753,16 +702,21 @@ public class DemoApplication
 		if (request.getSession(false) == null) {
 			return null;
 		}
+		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
+				MatchmakingController.class.getName());
 
-		Ride ride = new Ride();
-		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
+		if (matchmakingController == null) {
+			return null;
+		}
 
 		matchmakingController.getRideStatus();
 
-		if (ride.getRideStatus() != RideRequest.DEFAULT) {
+		if (matchmakingController.getRide().getRideStatus() != RideRequest.DEFAULT) {
+
+			storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
 			JSONObject result = new JSONObject();
-			result.put("RIDE_STATUS", ride.getRideStatus());
-			result.put("FARE", ride.getFare());
+			result.put("RIDE_STATUS", matchmakingController.getRide().getRideStatus());
+			result.put("FARE", matchmakingController.getRide().getFare());
 			return result.toString();
 		}
 		else {
@@ -780,16 +734,10 @@ public class DemoApplication
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
 				MatchmakingController.class.getName());
 
-		Ride ride = new Ride();
-		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
-		ride.getRideParameters().setRider(new Rider());
-		ride.getRideParameters().getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
-
 		JSONObject result = new JSONObject();
 		result.put("STATUS_CODE", ((matchmakingController.acknowledgeEndOfRide())? 200 : 404));
 
-		//TODO: delete attribute
-		storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
+		deleteAttribute(request, MatchmakingController.class.getName());
 		return result.toString();
 	}
 
@@ -805,7 +753,7 @@ public class DemoApplication
 		ride.getRideParameters().getDriver().setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
 
 		JSONObject result = new JSONObject();
-		boolean feedbackSubmitted = matchmakingController.giveFeedbackForDriver(ride, Float.parseFloat(allParams.get("RATING")));
+		boolean feedbackSubmitted = new MatchmakingController().giveFeedbackForDriver(ride, Float.parseFloat(allParams.get("RATING")));
 
 		result.put("STATUS", ((feedbackSubmitted)? 200 : 404));
 		return result.toString();
@@ -823,7 +771,7 @@ public class DemoApplication
 		ride.getRideParameters().getRider().setUserID(Integer.parseInt(allParams.get("RIDER_ID")));
 
 		JSONObject result = new JSONObject();
-		boolean feedbackSubmitted = matchmakingController.giveFeedbackForRider(ride, Float.parseFloat(allParams.get("RATING")));
+		boolean feedbackSubmitted = new MatchmakingController().giveFeedbackForRider(ride, Float.parseFloat(allParams.get("RATING")));
 
 		result.put("STATUS", ((feedbackSubmitted)? 200 : 404));
 		return result.toString();
@@ -1024,10 +972,13 @@ public class DemoApplication
 	@CrossOrigin(origins = "*")
 	@RequestMapping(value = "/respondToVehicleRequest", method = RequestMethod.POST)
 	public String respondToVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
-		/* TODO: Admin login required?
+
 		if (request.getSession(false) == null) {
 			return null;
-		} */
+		}
+
+        AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
+        if (adminSystem == null) { return null; }
 
 		Vehicle vehicleRequest = new Vehicle();
 		vehicleRequest.setVehicleID(Integer.parseInt(allParams.get("REGISTRATION_REQ_ID")));
@@ -1044,10 +995,18 @@ public class DemoApplication
 	@RequestMapping(value = "/respondToDriverRequest", method = RequestMethod.POST)
 	public String respondToDriverRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-		/* */
+        if (request.getSession(false) == null) {
+            return null;
+        }
+
+		AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
+		if (adminSystem == null) { return null; }
+
 		Driver driver = new Driver();
 		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
 		driver.setStatus(Integer.parseInt(allParams.get("STATUS")));
+
+		Administrator administrator = getAttributeObject(request, Administrator.class, Administrator.class.getName());
 
 		boolean status = adminSystem.respondToDriverRegistrationRequest(driver);
 
@@ -1061,23 +1020,6 @@ public class DemoApplication
 		return jsonObject.toString();
 	}
 	/* End of section*/
-
-
-	// Test method
-    @RequestMapping(value = "/jacksonTest", method = RequestMethod.POST)
-    public String jacksonTest(@RequestBody String body, HttpServletRequest request) {
-        JSONObject jsonObject = new JSONObject();
-        try {
-            Driver driver = objectMapper.readValue(body, Driver.class);
-            jsonObject.put("STATUS", 200);
-            return jsonObject.toString();
-        }
-        catch (Exception e) {
-            System.out.println("jacksonTest: exception");
-            jsonObject.put("STATUS", 404);
-            return jsonObject.toString();
-        }
-    }
 
 	@CrossOrigin(origins = "*")
 	@GetMapping("/hello")
@@ -1094,7 +1036,7 @@ public class DemoApplication
 		try {
 			Administrator administrator = objectMapper.readValue(allParams, Administrator.class);
 
-			if (adminSystem.addAdmin(administrator)) {
+			if (new AdminSystem().addAdmin(administrator)) {
 				result.put("STATUS_CODE", 200);
 			}
 			else {
@@ -1113,16 +1055,17 @@ public class DemoApplication
 	@PostMapping("/login_admin")
 	public String loginAdmin(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+	    AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
+	    if (adminSystem == null) { return null; }
+
 		Administrator admin = new Administrator();
 		admin.setEmailAddress(allParams.get("username"));
 		admin.setPassword(allParams.get("password"));
 
-		boolean loggedIn = adminSystem.loginAdmin(admin);
-
 		// Package response
 		JSONObject result = new JSONObject();
 
-		if (admin.getUserID() == Administrator.DEFAULT_ID) {
+		if (adminSystem.loginAdmin(admin)) {
 			return null;
 		}
 		else {
@@ -1131,6 +1074,7 @@ public class DemoApplication
 			}
 
 			try {
+			    storeObjectAsAttribute(request, AdminSystem.class.getName(), adminSystem);
 				return objectMapper.writeValueAsString(admin);
 			}
 			catch (JsonProcessingException e) {
@@ -1143,8 +1087,15 @@ public class DemoApplication
 
 	@CrossOrigin(origins = "*")
 	@PostMapping("/driverRequests")
-	public String driverRequests(@RequestBody Map<String, String> allParams)
+	public String driverRequests(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+        if (request.getSession(false) == null) {
+            return null;
+        }
+
+        AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
+        if (adminSystem == null) { return null; }
+
 		try {
 			ArrayList<Driver> driverRequests = adminSystem.getDriverRequests();
 			if (driverRequests != null) {
@@ -1161,8 +1112,15 @@ public class DemoApplication
 
 	@CrossOrigin(origins = "*")
 	@PostMapping("/vehicleRequests")
-	public String vehicleRequests(@RequestBody Map<String, String> allParams)
+	public String vehicleRequests(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+        if (request.getSession(false) == null) {
+            return null;
+        }
+
+        AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
+        if (adminSystem == null) { return null; }
+
 		try {
 			ArrayList<Vehicle> vehicleRequests = adminSystem.getVehicleRequests();
 			if (vehicleRequests != null) {

@@ -13,6 +13,10 @@ public class MatchmakingController {
         // Empty
     }
 
+    public Ride getRide() {
+        return ride;
+    }
+
     /*
      * Rider-side matchmaking method
      * Shortlists potential drivers, sends request to ideal
