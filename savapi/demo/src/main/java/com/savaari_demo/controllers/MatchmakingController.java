@@ -7,6 +7,7 @@ public class MatchmakingController {
     // Main Attributes
     private static final String LOG_TAG = MatchmakingController.class.getSimpleName();
     Ride ride;
+    RideRequest rideRequest;
 
     // Main Constructor
     public MatchmakingController() {
@@ -57,27 +58,24 @@ public class MatchmakingController {
     /* Driver-side matchmaking methods */
     // Setting Driver as Active
     // TODO: Policy on how a ride is sent to driver, implemented in checkRideStatus()
-    public boolean setMarkActive(Driver driver)
-    {
-        return driver.setMarkActive();
-    }
     public RideRequest startMatchmaking(Driver driver)
     {
-        return driver.startMatchmaking();
+        ride.getRideParameters().setDriver(driver);
+        return ride.getRideParameters().getDriver().startMatchmaking();
     }
-    public RideRequest checkRideRequestStatus(Driver driver) { return driver.checkRideRequestStatus(); }
+    public RideRequest checkRideRequestStatus() {
+        return ride.getRideParameters().getDriver().checkRideRequestStatus();
+    }
 
-    public boolean confirmRideRequest(RideRequest rideRequest)
+    public boolean confirmRideRequest(int found_status)
     {
-        if (rideRequest.getFindStatus() == 1) {
-
-            Ride ride = new Ride(rideRequest);
+        if (found_status == 1) {
+            ride = new Ride(ride.getRideParameters());
             return DBHandlerFactory.getInstance().createDBHandler().confirmRideRequest(ride);
         }
         else {
             // Rider: FIND_STATUS = RideRequest.REJECTED
             // Driver: RIDE_STATUS = RideRequest.MS_DEFAULT
-
             return DBHandlerFactory.getInstance().createDBHandler().rejectRideRequest(rideRequest);
         }
     }
@@ -86,19 +84,21 @@ public class MatchmakingController {
         return ride.markDriverArrival();
     }
 
-    public boolean startRide(Ride ride) {
+    public boolean startRide() {
         return ride.startRide();
     }
 
-    public double markArrivalAtDestination(Ride ride) {
+    public double markArrivalAtDestination(long endTime, double distanceTravelled) {
+        ride.setEndTime(endTime);
+        ride.setDistanceTravelled(distanceTravelled);
         return ride.markArrivalAtDestination();
     }
 
-    public Ride getRideForDriver(RideRequest rideRequest){
-        return rideRequest.getDriver().getRideForDriver(rideRequest);
+    public Ride getRideForDriver() {
+        return ride.getRideParameters().getDriver().getRideForDriver(ride.getRideParameters());
     }
 
-    public boolean endRideWithPayment(Ride ride, Double amountPaid, Double change)
+    public boolean endRideWithPayment(Double amountPaid, Double change)
     {
         return ride.endRideWithPayment(amountPaid, change);
     }

@@ -80,6 +80,12 @@ public class CRUDController
         return null;
     }
 
+    public boolean setMarkActive(boolean activeStatus)
+    {
+        driver.setActive(activeStatus);
+        return driver.setMarkActive();
+    }
+
 
     // TODO Handle them in API
     public JSONObject updateRide() {
