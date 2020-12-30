@@ -9,7 +9,6 @@ import com.savaari_demo.controllers.CRUDController;
 import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
 import com.savaari_demo.entity.*;
-import com.savaari_demo.entity.policy.PolicyFactory;
 import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,7 +23,6 @@ import java.util.Map;
 public class DemoApplication
 {
 	// Main Attributes
-	private static MatchmakingController matchmakingController;
 	private static LocationController locationController;
 	private static ObjectMapper objectMapper;
 
@@ -38,7 +36,6 @@ public class DemoApplication
 				.withSetterVisibility(JsonAutoDetect.Visibility.NONE)
 				.withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
 
-		matchmakingController = new MatchmakingController();
 		locationController = new LocationController();
 
 		SpringApplication.run(DemoApplication.class, args);
@@ -237,39 +234,6 @@ public class DemoApplication
 
 			storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
 		}
-
-		return result.toString();
-	}
-
-	@RequestMapping(value = "/registerDriver", method = RequestMethod.POST)
-	public String registerDriver(@RequestBody Map<String, String> allParams, HttpServletRequest request)
-	{
-		if (request.getSession(false) == null) {
-			return null;
-		}
-
-		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
-        if (crudController == null) { return null; }
-
-		Driver driver = new Driver();
-		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
-		driver.setFirstName(allParams.get("FIRST_NAME"));
-		driver.setLastName(allParams.get("LAST_NAME"));
-		driver.setPhoneNo(allParams.get("PHONE_NO"));
-		driver.setCNIC(allParams.get("CNIC"));
-		driver.setLicenseNumber(allParams.get("LICENSE_NUMBER"));
-
-		boolean status = crudController.registerDriver(driver);
-
-		// Package response
-		JSONObject result = new JSONObject();
-		if (status) {
-			result.put("STATUS", 200);
-		} else {
-			result.put("STATUS", 400);
-		}
-
-		storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
 
 		return result.toString();
 	}
@@ -474,23 +438,6 @@ public class DemoApplication
 	}
 	/* End of section*/
 
-	/* Driver-side matchmaking methods */
-	@RequestMapping(value = "/setMarkActive", method = RequestMethod.POST)
-	public String setMarkActive(@RequestBody Map<String, String> allParams, HttpServletRequest request)
-	{
-		if (request.getSession(false) == null) {
-			return null;
-		}
-
-		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class, MatchmakingController.class.getName());
-        if (matchmakingController == null) { return null; }
-
-		Driver driver = new Driver();
-		driver.setUserID(Integer.parseInt(allParams.get("USER_ID")));
-		driver.setActive(Boolean.valueOf(allParams.get("ACTIVE_STATUS")));
-
-		JSONObject json = new JSONObject();
-
 	// Starting Matchmaking Service
 	@RequestMapping(value = "/startMatchmaking", method = RequestMethod.POST)
 	public String startMatchmaking(@RequestBody Map<String, String> allParams, HttpServletRequest request)
@@ -597,12 +544,17 @@ public class DemoApplication
 		Ride ride = new Ride();
 		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
 
+		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
+				MatchmakingController.class.getName());
+
 		JSONObject jsonObject = new JSONObject();
 		if (matchmakingController.markArrivalAtPickup(ride)) {
 			jsonObject.put("STATUS", 200);
 		} else {
 			jsonObject.put("STATUS", 404);
 		}
+
+		storeObjectAsAttribute(request, MatchmakingController.class.getName(), matchmakingController);
 		return jsonObject.toString();
 	}
 
