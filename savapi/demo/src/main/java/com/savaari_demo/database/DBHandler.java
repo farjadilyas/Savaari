@@ -14,7 +14,7 @@ public interface DBHandler {
     Boolean addRider(String username, String emailAddress, String password);
     Boolean addDriver(String username, String emailAddress, String password);
     Integer loginRider(Rider rider);
-    Integer loginDriver(Driver driver);
+    int loginDriver(Driver driver);
     boolean fetchRiderData(Rider rider);
     boolean fetchDriverData(Driver driver);
 
@@ -38,7 +38,7 @@ public interface DBHandler {
     RideRequest checkRideRequestStatus(Driver driver, int timeout);
     boolean rejectRideRequest(RideRequest rideRequest);
     boolean confirmRideRequest(Ride ride);
-    boolean markDriverArrival(Ride ride);
+    boolean markArrivalAtPickup(Ride ride);
     boolean startRide(Ride ride);
     boolean markArrivalAtDestination(Ride ride);
 
@@ -52,7 +52,7 @@ public interface DBHandler {
     /* In-ride DB calls */
     RideRequest checkRideRequestStatus(Rider rider);
     Ride getRide(RideRequest rideRequest);
-    void getRideStatus(Ride ride);
+    void fetchRideStatus(Ride ride);
     boolean endRideWithPayment(Ride ride);
     boolean acknowledgeEndOfRide(Ride ride);
     boolean resetDriver(Driver driver);

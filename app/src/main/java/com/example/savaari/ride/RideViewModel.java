@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 import com.example.savaari.Repository;
 import com.example.savaari.ride.entity.Location;
 import com.example.savaari.ride.entity.Ride;
+import com.example.savaari.ride.entity.RideRequest;
 import com.example.savaari.ride.entity.Rider;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -50,7 +51,7 @@ public class RideViewModel extends ViewModel {
         this.USER_ID = USER_ID;
         this.repository = repository;
         ride = new Ride();
-        ride.getRider().setUserID(USER_ID);
+        ride.getRideParameters().getRider().setUserID(USER_ID);
     }
 
     /* Get user data */
@@ -65,7 +66,7 @@ public class RideViewModel extends ViewModel {
     public void resetRide() {
         setPreviousRide(ride);
         ride = new Ride();
-        ride.getRider().setUserID(USER_ID);
+        ride.getRideParameters().getRider().setUserID(USER_ID);
     }
 
     /* Set USER_ID */
@@ -96,7 +97,7 @@ public class RideViewModel extends ViewModel {
                 }
                 else {
                     Rider fetchedRider = (Rider) object;
-                    ride.setRider(fetchedRider);
+                    ride.getRideParameters().setRider(fetchedRider);
                     userDataLoaded.postValue(true);
                 }
             }
@@ -152,16 +153,17 @@ public class RideViewModel extends ViewModel {
 
             if (object == null) {
                 Log.d(LOG_TAG, "findDriver(): NOT FOUND");
-                ride.setFindStatus(Ride.STATUS_ERROR);
+                ride.getRideParameters().setFindStatus(RideRequest.STATUS_ERROR);
             }
             else {
                 Log.d(LOG_TAG, "findDriver(): FOUND");
                 ride = (Ride) object;
-                ride.setFindStatus(Ride.PAIRED);
+                ride.getRideParameters().setFindStatus(RideRequest.PAIRED);
             }
             rideFound.postValue(ride);
 
-        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude, dropoffLocation.longitude, ride.getPaymentMethod(), ride.getRideType().getTypeID());
+        }, USER_ID, pickupLocation.latitude, pickupLocation.longitude, dropoffLocation.latitude,
+                dropoffLocation.longitude, ride.getRideParameters().getPaymentMethod(), ride.getRideParameters().getRideType().getTypeID());
     }
 
     public void getRideStatus() {
@@ -198,18 +200,18 @@ public class RideViewModel extends ViewModel {
         repository.acknowledgeEndOfRide(object -> {
             ride.setRideStatus(Ride.END_ACKED);
             endOfRideAcknowledged.postValue(true);
-        }, ride.getRideID(), ride.getRider().getUserID());
+        }, ride.getRideID(), ride.getRideParameters().getRider().getUserID());
     }
     
     public void giveFeedbackForDriver(float rating) {
         repository.giveFeedbackForDriver(object -> {
             Log.d(LOG_TAG, "giveFeedbackForDriver: success!");
-        }, previousRide.getRideID(), previousRide.getDriver().getUserID(), rating);
+        }, previousRide.getRideID(), previousRide.getRideParameters().getDriver().getUserID(), rating);
     }
 
     public void fetchDriverLocation() {
         Log.d(LOG_TAG, "fetchDriverLocation called!");
-        int driverID = ride.getDriver().getUserID();
+        int driverID = ride.getRideParameters().getDriver().getUserID();
 
         if (driverID > 0) {
             repository.getDriverLocation(object -> {
@@ -219,7 +221,7 @@ public class RideViewModel extends ViewModel {
                         if (result.getInt("STATUS_CODE") == 200) {
 
                             Log.d(LOG_TAG, " fetchDriverLocation: Got driver location!");
-                            ride.getDriver().setCurrentLocation(new Location(result.getDouble("LATITUDE"),
+                            ride.getRideParameters().getDriver().setCurrentLocation(new Location(result.getDouble("LATITUDE"),
                                     result.getDouble("LONGITUDE"), null));
                             driverLocationFetched.postValue(true);
 
@@ -248,13 +250,13 @@ public class RideViewModel extends ViewModel {
                 try {
                     if (object == null) {
                         Log.d(LOG_TAG, " getRide: Failed to fetch ride");
-                        ride.setFindStatus(Ride.RS_DEFAULT);
+                        ride.getRideParameters().setFindStatus(Ride.RS_DEFAULT);
                     }
                     else {
                         ride = (Ride) object;
 
                         Log.d(LOG_TAG, " getRide: Is taking a ride!");
-                        ride.setFindStatus(Ride.ALREADY_PAIRED);
+                        ride.getRideParameters().setFindStatus(RideRequest.ALREADY_PAIRED);
                     }
                     rideFound.postValue(ride);
                 }

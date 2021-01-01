@@ -6,7 +6,7 @@ import com.savaari_demo.entity.policy.PolicyFactory;
 
 import java.util.ArrayList;
 
-public class Ride extends RideRequest {
+public class Ride {
 
     // Main Attributes
     public static final int
@@ -20,6 +20,7 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
+    private RideRequest rideParameters;
     private Payment payment;
     private long startTime;
     private long endTime;
@@ -32,14 +33,14 @@ public class Ride extends RideRequest {
 
     public Ride() {
         payment = new Payment();
+        rideParameters = new RideRequest();
     }
 
     public Ride(RideRequest rideRequest) {
 
-        // TODO: consider composition
-        setDriver(rideRequest.getDriver());
-        setRider(rideRequest.getRider());
-        setFindStatus(RideRequest.FOUND);
+        rideParameters = rideRequest;
+        rideParameters.setFindStatus(RideRequest.FOUND);
+
         setRideStatus(RideRequest.MS_REQ_ACCEPTED);
         setPolicy(PolicyFactory.getInstance().determinePolicy(this));
         getPolicy().calculateEstimatedFare(this);
@@ -48,6 +49,15 @@ public class Ride extends RideRequest {
     // ---------------------------------------------------------------------------------
     //                          GETTER and SETTER
     // ---------------------------------------------------------------------------------
+
+    public RideRequest getRideParameters() {
+        return rideParameters;
+    }
+
+    public void setRideParameters(RideRequest rideParameters) {
+        this.rideParameters = rideParameters;
+    }
+
     public Long getStartTime() {
         return startTime;
     }
@@ -67,18 +77,6 @@ public class Ride extends RideRequest {
     }
     public void setPayment(Payment payment) {
         this.payment = payment;
-    }
-    public Location getPickupLocation() {
-        return pickupLocation;
-    }
-    public void setPickupLocation(Location pickupLocation) {
-        this.pickupLocation = pickupLocation;
-    }
-    public Location getDropoffLocation() {
-        return dropoffLocation;
-    }
-    public void setDropoffLocation(Location dropoffLocation) {
-        this.dropoffLocation = dropoffLocation;
     }
     public double getEstimatedFare() {
         return estimatedFare;
@@ -135,10 +133,10 @@ public class Ride extends RideRequest {
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
     public void fetchRideStatus() {
-        DBHandlerFactory.getInstance().createDBHandler().getRideStatus(this);
+        DBHandlerFactory.getInstance().createDBHandler().fetchRideStatus(this);
     }
-    public boolean markDriverArrival() {
-        return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
+    public boolean markArrivalAtPickup() {
+        return DBHandlerFactory.getInstance().createDBHandler().markArrivalAtPickup(this);
     }
     public boolean startRide() { return DBHandlerFactory.getInstance().createDBHandler().startRide(this); }
 
@@ -147,7 +145,7 @@ public class Ride extends RideRequest {
     public boolean acknowledgeEndOfRide() {
 
         if (DBHandlerFactory.getInstance().createDBHandler().acknowledgeEndOfRide(this)) {
-            return rider.reset(false);
+            return getRideParameters().getRider().reset(false);
         }
 
         return false;
@@ -157,7 +155,7 @@ public class Ride extends RideRequest {
 
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
-        policy.calculateFare(this);
+        setFare(policy.calculateFare(this));
 
         if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;
@@ -170,7 +168,7 @@ public class Ride extends RideRequest {
     {
         //TODO: handle credit card payment
 
-        payment = new Payment(amountPaid, change, getPaymentMethod());
+        payment = new Payment(amountPaid, change, rideParameters.getPaymentMethod());
 
         // Add Payment to DB
         if (payment.record()) {

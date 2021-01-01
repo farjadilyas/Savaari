@@ -3,29 +3,54 @@ package com.savaari_demo.controllers;
 import com.savaari_demo.database.DBHandlerFactory;
 import com.savaari_demo.entity.Driver;
 import com.savaari_demo.entity.Rider;
-
 import com.savaari_demo.entity.User;
-import org.json.JSONArray;
+import com.savaari_demo.entity.Vehicle;
 import org.json.JSONObject;
 
 public class CRUDController
 {
     // Main Attributes
     private static final String LOG_TAG = CRUDController.class.getSimpleName();
+    Driver driver;
+    Rider rider;
 
-    public CRUDController () {
+    public CRUDController ()
+    {
+
     }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
+    public void setDriver(Driver driver) {
+        this.driver = driver;
+    }
+
+    public Rider getRider() { return rider; }
 
     /* User CRUD methods */
 
     /* Login Rider */
     public Integer loginRider(Rider rider) {
-        return rider.login();
+        rider.login();
+        this.rider = rider;
+        return this.rider.getUserID();
     }
 
     // Login Driver
     public Integer loginDriver(Driver driver) {
-        return driver.login();
+        driver.login();
+        this.driver = driver;
+        return this.driver.getUserID();
+    }
+
+    public void persistDriverLogin(Driver driver) {
+        this.driver = driver;
+    }
+
+    public void persistRiderLogin(Rider rider) {
+        this.rider = rider;
     }
     // Adding a new Rider Account
     public boolean addRider(String username, String email_address, String password)
@@ -41,48 +66,28 @@ public class CRUDController
     }
 
 
-    public JSONArray riderDetails()
+    public Rider riderData() {
+        if (rider.fetchData()) {
+            return rider;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public Driver driverData() {
+        if (driver.fetchData()) {
+            return driver;
+        }
+        return null;
+    }
+
+    public boolean setMarkActive(boolean activeStatus)
     {
-        JSONArray jsonArray =  DBHandlerFactory.getInstance().createDBHandler().riderDetails();
-        if (jsonArray != null)
-        {
-            return jsonArray;
-        }
-        else
-        {
-            JSONArray temp = new JSONArray();
-            JSONObject temp1 = new JSONObject();
-            temp1.put("STATUS", 404);
-            temp.put(temp1);
-            return temp;
-        }
+        driver.setActive(activeStatus);
+        return driver.setMarkActive();
     }
 
-    public JSONArray driverDetails()
-    {
-        JSONArray jsonArray =  DBHandlerFactory.getInstance().createDBHandler().driverDetails();
-        if (jsonArray != null)
-        {
-            return jsonArray;
-        }
-        else
-        {
-            JSONArray temp = new JSONArray();
-            JSONObject temp1 = new JSONObject();
-            temp1.put("STATUS", 404);
-            temp.put(temp1);
-            return temp;
-        }
-    }
-
-
-    public boolean riderData(Rider rider) {
-        return rider.fetchData();
-    }
-
-    public boolean driverData(Driver driver) {
-        return driver.fetchData();
-    }
 
     // TODO Handle them in API
     public JSONObject updateRide() {
@@ -100,15 +105,21 @@ public class CRUDController
 
     /* Vehicle methods */
 
-    public boolean setActiveVehicle(Driver driver) {
-        return driver.selectActiveVehicle();
+    public boolean setActiveVehicle(Vehicle vehicle) {
+        return driver.selectActiveVehicle(vehicle);
     }
 
     public boolean registerDriver(Driver driver) {
+        this.driver.setRegistrationDetails(driver.getFirstName(),
+                driver.getLastName(),
+                driver.getPhoneNo(),
+                driver.getCNIC(),
+                driver.getLicenseNumber());
+
         return driver.sendRegistrationRequest();
     }
 
-    public boolean sendVehicleRegistrationRequest(Driver driver) {
-        return driver.sendVehicleRegistrationRequest();
+    public boolean sendVehicleRegistrationRequest(Vehicle vehicle) {
+        return driver.sendVehicleRegistrationRequest(vehicle);
     }
 }

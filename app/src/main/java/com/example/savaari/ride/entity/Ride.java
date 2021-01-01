@@ -4,7 +4,7 @@ import com.example.savaari.ride.entity.policy.Policy;
 
 import java.util.ArrayList;
 
-public class Ride extends RideRequest {
+public class Ride {
 
     // Main Attributes
     // Main Attributes
@@ -19,6 +19,7 @@ public class Ride extends RideRequest {
             END_ACKED = 20;
 
     int rideID;
+    private RideRequest rideParameters;
     private Payment payment;
     private long startTime;
     private long endTime;
@@ -35,7 +36,7 @@ public class Ride extends RideRequest {
         payment = new Payment();
         stops = new ArrayList<>();
         rideStatus = -1;
-        setPaymentMethod(1);
+        rideParameters = new RideRequest();
     }
 
     public int getRideID() {
@@ -44,6 +45,14 @@ public class Ride extends RideRequest {
 
     public void setRideID(int rideID) {
         this.rideID = rideID;
+    }
+
+    public RideRequest getRideParameters() {
+        return rideParameters;
+    }
+
+    public void setRideParameters(RideRequest rideParameters) {
+        this.rideParameters = rideParameters;
     }
 
     public Payment getPayment() {
@@ -55,8 +64,8 @@ public class Ride extends RideRequest {
     }
 
     public boolean closeToPickup() {
-        return (driver.getCurrentLocation().latitude - pickupLocation.getLatitude() < 0.2
-        && driver.getCurrentLocation().longitude - pickupLocation.getLongitude() < 0.2);
+        return (rideParameters.getDriver().getCurrentLocation().latitude - rideParameters.getPickupLocation().latitude < 0.2
+        && rideParameters.getDriver().getCurrentLocation().longitude - rideParameters.getPickupLocation().longitude < 0.2);
     }
 
     public long getStartTime() {

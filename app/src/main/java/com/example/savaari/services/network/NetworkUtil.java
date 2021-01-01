@@ -208,7 +208,9 @@ public class NetworkUtil
 
         try {
             String url = urlAddress + "persistRiderLogin";
-            String resultString = sendPost(url, new JSONObject(), true);
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("USER_ID" ,userID);
+            String resultString = sendPost(url, jsonParam, true);
             return ((resultString != null) && new JSONObject(resultString).getInt("STATUS_CODE") == 200);
         }
         catch (Exception e) {
@@ -361,8 +363,9 @@ public class NetworkUtil
         JSONObject jsonParam = new JSONObject();
 
         try {
+            /*
             jsonParam.put("RIDE_ID", rideID);
-            jsonParam.put("RIDER_ID", riderID);
+            jsonParam.put("RIDER_ID", riderID);*/
 
             String resultString = sendPost(url, jsonParam, true);
             return ((resultString != null) && new JSONObject(resultString).getInt("STATUS_CODE") == 200);

@@ -9,13 +9,15 @@ import com.savaari_demo.entity.Vehicle;
 import java.util.ArrayList;
 
 public class AdminSystem {
+    private Administrator administrator;
 
     public boolean addAdmin(Administrator administrator) {
         administrator.setPassword(User.hashPassword(administrator.getPassword()));
         return DBHandlerFactory.getInstance().createDBHandler().addAdmin(administrator);
     }
     public boolean loginAdmin(Administrator administrator) {
-        return administrator.login();
+        this.administrator = administrator;
+        return this.administrator.login();
     }
 
     public ArrayList<Vehicle> getVehicleRequests() {
@@ -30,7 +32,7 @@ public class AdminSystem {
         return DBHandlerFactory.getInstance().createDBHandler().respondToVehicleRegistrationRequest(vehicleRequest);
     }
 
-    public boolean respondToDriverRegistrationRequest(Driver driver) {
-        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRegistrationRequest(driver);
+    public boolean respondToDriverRegistrationRequest(Driver driverRequest) {
+        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRegistrationRequest(driverRequest);
     }
 }
