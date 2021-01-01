@@ -133,10 +133,10 @@ public class Ride {
     //                          System interaction methods
     // ---------------------------------------------------------------------------------
     public void fetchRideStatus() {
-        DBHandlerFactory.getInstance().createDBHandler().getRideStatus(this);
+        DBHandlerFactory.getInstance().createDBHandler().fetchRideStatus(this);
     }
-    public boolean markDriverArrival() {
-        return DBHandlerFactory.getInstance().createDBHandler().markDriverArrival(this);
+    public boolean markArrivalAtPickup() {
+        return DBHandlerFactory.getInstance().createDBHandler().markArrivalAtPickup(this);
     }
     public boolean startRide() { return DBHandlerFactory.getInstance().createDBHandler().startRide(this); }
 
@@ -155,7 +155,7 @@ public class Ride {
 
     // Main End Ride with Driver Method
     public double markArrivalAtDestination() {
-        policy.calculateFare(this);
+        setFare(policy.calculateFare(this));
 
         if (DBHandlerFactory.getInstance().createDBHandler().markArrivalAtDestination(this)) {
             return fare;

@@ -3,6 +3,7 @@ package com.savaari_demo.database;
 import com.mysql.cj.jdbc.Driver;
 import org.apache.commons.dbcp2.BasicDataSource;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -26,6 +27,10 @@ public class DBCPDataSource {
         }
 
         dataSource.setMaxOpenPreparedStatements(100);
+    }
+
+    public static DataSource getDataSource() {
+        return dataSource;
     }
     
     public synchronized static Connection getConnection() throws SQLException {

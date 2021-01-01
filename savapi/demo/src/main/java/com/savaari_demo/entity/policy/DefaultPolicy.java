@@ -21,18 +21,16 @@ public class DefaultPolicy implements Policy {
     // Functions
 
     @Override
-    public void calculateFare(Ride ride) {
+    public double calculateFare(Ride ride) {
         System.out.println("Dist travelled: " + (ride.getDistanceTravelled()/1000));
         System.out.println("Ride duration: " +((ride.getRideDuration()/1000.0)/60.0));
         System.out.println("Start time: " + ride.getStartTime());
         System.out.println("End time: " + ride.getEndTime());
 
-        double calculatedFare = Math.max(ride.getRideParameters().getRideType().getBaseFare()
+        return Math.max(ride.getRideParameters().getRideType().getBaseFare()
                 + ride.getRideParameters().getRideType().getPerKMCharge()*(ride.getDistanceTravelled()/1000)
                 + ((ride.getRideDuration()/1000.0)/60.0)*ride.getRideParameters().getRideType().getPerMinuteCharge(),
                 ride.getRideParameters().getRideType().getMinimumFare());
-
-        ride.setFare(calculatedFare);
     }
 
     @Override

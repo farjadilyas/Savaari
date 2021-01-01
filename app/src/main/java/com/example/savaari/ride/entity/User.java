@@ -2,7 +2,7 @@ package com.example.savaari.ride.entity;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class User {
+public abstract class User {
     public static final int DEFAULT_ID = -1;
 
     private int userID;

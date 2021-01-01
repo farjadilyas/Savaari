@@ -1,5 +1,5 @@
 
-package com.savaari_demo;
+package com.savaari_demo.api;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,24 +10,40 @@ import com.savaari_demo.controllers.LocationController;
 import com.savaari_demo.controllers.MatchmakingController;
 import com.savaari_demo.entity.*;
 import org.json.JSONObject;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Map;
 
-@SpringBootApplication
+import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
+
 @RestController
-public class DemoApplication
+@RequestMapping("")
+public class HomeResource
 {
+	@Autowired
+	AuthenticationManager authManager;
+
+	@Autowired
+	private MyUserDetailsService userDetailsService;
+
+	@Autowired
+	private JWTUtil jwtUtil;
+	
 	// Main Attributes
 	private static LocationController locationController;
 	private static ObjectMapper objectMapper;
 
 	/* MAIN METHOD */
-	public static void main(String[] args)
+	public HomeResource()
 	{
 		objectMapper = new ObjectMapper();
 		objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
@@ -37,9 +53,63 @@ public class DemoApplication
 				.withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
 
 		locationController = new LocationController();
-
-		SpringApplication.run(DemoApplication.class, args);
 	}
+
+	@GetMapping("/")
+	public String home() {
+		return ("<h1>Welcome</h1>");
+	}
+
+	@GetMapping("/user")
+	public String user() {
+		return ("<h1>Welcome User</h1>");
+	}
+
+	@GetMapping("/rider")
+	public String rider() {
+		return ("<h1>Welcome Rider</h1>");
+	}
+
+	@GetMapping("/driver")
+	public String driver() {
+		return ("<h1>Welcome Driver</h1>");
+	}
+
+	@GetMapping("/admin")
+	public String admin() {
+		return ("<h1>Welcome Admin</h1>");
+	}
+
+	/*
+	* Authentication method using JWT & Session - for reference
+	*
+	@RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+	public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest, HttpServletRequest request){
+
+		Authentication auth;
+		try {
+			auth = authManager.authenticate(new UsernamePasswordAuthenticationToken(
+					authenticationRequest.getUsername(), authenticationRequest.getPassword()));
+		}
+		catch (BadCredentialsException e) {
+			e.printStackTrace();
+			System.out.println("Incorrect User Credentials");
+			return null;
+		}
+
+		SecurityContext sc = SecurityContextHolder.getContext();
+		sc.setAuthentication(auth);
+		HttpSession session = request.getSession(true);
+		session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
+
+		final UserDetails userDetails = userDetailsService
+				.loadUserByUsername(authenticationRequest.getUsername());
+
+		//Generate and send back JWT
+		final String jwt = jwtUtil.generateToken(userDetails);
+		return ResponseEntity.ok(new AuthenticationResponse(jwt));
+	}
+	*/
 
 
 	//* API REQUESTS
@@ -153,6 +223,17 @@ public class DemoApplication
 	@RequestMapping(value = "/login_rider", method = RequestMethod.POST)
 	public String loginRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
+		System.out.println("LOGIN RIDER CALLED!");
+		UsernamePasswordAuthenticationToken authReq
+				= new UsernamePasswordAuthenticationToken(allParams.get("username"), allParams.get("password"));
+		Authentication auth = authManager.authenticate(authReq);
+
+		SecurityContext sc = SecurityContextHolder.getContext();
+		sc.setAuthentication(auth);
+		HttpSession session = request.getSession(true);
+		session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
+
+		/*
 		Rider rider = new Rider();
 		rider.setEmailAddress(allParams.get("username"));
 		rider.setPassword(allParams.get("password"));
@@ -180,7 +261,8 @@ public class DemoApplication
 			storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
 		}
 
-		return result.toString();
+		return result.toString();*/
+		return "hello";
 	}
 
 	// Persist Login for Rider
@@ -254,7 +336,7 @@ public class DemoApplication
 			if (crudController != null) {
 				crudController.persistDriverLogin(driver);
 				storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
-				result.put("STATUS", 200);
+				result.put("STATUS_CODE", 200);
 				result.put("USER_ID", driver.getUserID());
 			}
 			else {
@@ -405,16 +487,14 @@ public class DemoApplication
 			return null;
 		}
 
+		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
 				MatchmakingController.class.getName());
-		if (matchmakingController == null) { return null; }
-
-		Rider rider = new Rider();
-		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
+		if (crudController == null || matchmakingController == null) { return null; }
 
 		RideType rideType = new RideType(Integer.parseInt(allParams.get("RIDE_TYPE_ID")));
 
-		Ride fetchedRide = matchmakingController.searchForRide(rider,
+		Ride fetchedRide = matchmakingController.searchForRide(crudController.getRider(),
 				new Location(Double.parseDouble(allParams.get("SOURCE_LAT")),
 						Double.parseDouble(allParams.get("SOURCE_LONG")), null),
 				new Location(Double.parseDouble(allParams.get("DEST_LAT")),
@@ -541,14 +621,12 @@ public class DemoApplication
 			return null;
 		}
 
-		Ride ride = new Ride();
-		ride.setRideID(Integer.parseInt(allParams.get("RIDE_ID")));
-
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
 				MatchmakingController.class.getName());
+		if (matchmakingController == null) { return null; }
 
 		JSONObject jsonObject = new JSONObject();
-		if (matchmakingController.markArrivalAtPickup(ride)) {
+		if (matchmakingController.markArrivalAtPickup()) {
 			jsonObject.put("STATUS", 200);
 		} else {
 			jsonObject.put("STATUS", 404);
@@ -641,17 +719,15 @@ public class DemoApplication
 			return null;
 		}
 
+		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
 		MatchmakingController matchmakingController = getAttributeObject(request, MatchmakingController.class,
 				MatchmakingController.class.getName());
 
-		if (matchmakingController == null) {
+		if (crudController == null || matchmakingController == null) {
 			return null;
 		}
 
-		Rider rider = new Rider();
-		rider.setUserID(Integer.parseInt(allParams.get("USER_ID")));
-
-		Ride fetchedRide = matchmakingController.getRideForRider(rider);
+		Ride fetchedRide = matchmakingController.getRideForRider(crudController.getRider());
 
 		if (fetchedRide != null) {
 			try {
@@ -809,12 +885,10 @@ public class DemoApplication
 		}
 	}
 
-	@RequestMapping(value = "/getRiderLocations", method = RequestMethod.POST)
-	public String getRiderLocations(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+	@RequestMapping(value = "/rider/getRiderLocations", method = RequestMethod.GET)
+	@ResponseBody
+	public String getRiderLocations(HttpServletRequest request)
 	{
-		if (request.getSession(false) == null) {
-			return null;
-		}
 
 		try {
 			ArrayList<Location> locations = locationController.getRiderLocations();
@@ -974,10 +1048,6 @@ public class DemoApplication
 	@RequestMapping(value = "/respondToVehicleRequest", method = RequestMethod.POST)
 	public String respondToVehicleRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request) {
 
-		if (request.getSession(false) == null) {
-			return null;
-		}
-
         AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
         if (adminSystem == null) { return null; }
 
@@ -996,20 +1066,16 @@ public class DemoApplication
 	@RequestMapping(value = "/respondToDriverRequest", method = RequestMethod.POST)
 	public String respondToDriverRequest(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-        if (request.getSession(false) == null) {
-            return null;
-        }
-
 		AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
 		if (adminSystem == null) { return null; }
 
-		Driver driver = new Driver();
-		driver.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
-		driver.setStatus(Integer.parseInt(allParams.get("STATUS")));
+		Driver driverRequest = new Driver();
+		driverRequest.setUserID(Integer.parseInt(allParams.get("DRIVER_ID")));
+		driverRequest.setStatus(Integer.parseInt(allParams.get("STATUS")));
 
 		Administrator administrator = getAttributeObject(request, Administrator.class, Administrator.class.getName());
 
-		boolean status = adminSystem.respondToDriverRegistrationRequest(driver);
+		boolean status = adminSystem.respondToDriverRegistrationRequest(driverRequest);
 
 		// Packaging Response
 		JSONObject jsonObject = new JSONObject();
@@ -1090,16 +1156,13 @@ public class DemoApplication
 	@PostMapping("/driverRequests")
 	public String driverRequests(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-        if (request.getSession(false) == null) {
-            return null;
-        }
-
         AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
         if (adminSystem == null) { return null; }
 
 		try {
 			ArrayList<Driver> driverRequests = adminSystem.getDriverRequests();
 			if (driverRequests != null) {
+				System.out.println("Number of driver Requests: " + driverRequests.size());
 				return objectMapper.writeValueAsString(driverRequests);
 			}
 
@@ -1115,10 +1178,6 @@ public class DemoApplication
 	@PostMapping("/vehicleRequests")
 	public String vehicleRequests(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
-        if (request.getSession(false) == null) {
-            return null;
-        }
-
         AdminSystem adminSystem = getAttributeObject(request, AdminSystem.class, AdminSystem.class.getName());
         if (adminSystem == null) { return null; }
 

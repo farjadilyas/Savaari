@@ -22,7 +22,7 @@ public class Payment {
         paymentMode = Payment.CASH;
     }
 
-    public Payment(Double amountPaid, Double change, Integer paymentMode) {
+    public Payment(Double amountPaid, Double change, int paymentMode) {
         this.amountPaid = amountPaid;
         this.change = change;
         this.paymentMode = paymentMode;

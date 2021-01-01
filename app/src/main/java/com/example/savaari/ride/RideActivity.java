@@ -42,6 +42,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.savaari.BuildConfig;
 import com.example.savaari.R;
 import com.example.savaari.SavaariApplication;
 import com.example.savaari.ride.adapter.ItemClickListener;
@@ -607,7 +608,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
 
         if (geoApiContext == null) {
             geoApiContext = new GeoApiContext.Builder()
-                    .apiKey(getString(R.string.directions_api_key))
+                    .apiKey(BuildConfig.GAK_D)
                     .build();
         }
     }
@@ -696,7 +697,7 @@ public class RideActivity extends Util implements OnMapReadyCallback, Navigation
      */
     private void initializeAutocomplete() {
         if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), getString(R.string.google_maps_api_key), Locale.US);
+            Places.initialize(getApplicationContext(), BuildConfig.GAK_M, Locale.US);
         }
 
         // Initialize the AutocompleteSupportFragment.

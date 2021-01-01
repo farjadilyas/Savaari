@@ -32,7 +32,7 @@ public class AdminSystem {
         return DBHandlerFactory.getInstance().createDBHandler().respondToVehicleRegistrationRequest(vehicleRequest);
     }
 
-    public boolean respondToDriverRegistrationRequest(Driver driver) {
-        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRegistrationRequest(driver);
+    public boolean respondToDriverRegistrationRequest(Driver driverRequest) {
+        return DBHandlerFactory.getInstance().createDBHandler().respondToDriverRegistrationRequest(driverRequest);
     }
 }

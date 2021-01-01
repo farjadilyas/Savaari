@@ -14,10 +14,7 @@ public class Vehicle
 
     // Main Attributes
     private int vehicleID;
-    private int vehicleTypeID;
-    private String make;
-    private String model;
-    private String year;
+    private VehicleType vehicleType;
     private int rideTypeID;
     private String numberPlate;
     private int status;
@@ -27,18 +24,22 @@ public class Vehicle
     public Vehicle() {
         // Default Constructor
         vehicleID = DEFAULT_ID;
+        vehicleType = new VehicleType();
     }
 
     public Vehicle(int vehicleID) {
+        vehicleType = new VehicleType();
         this.vehicleID = vehicleID;
     }
 
     public Vehicle(int vehicleID, String make, String model, String year, int rideTypeID, String numberPlate,
                    int status, String color) {
+
+        vehicleType = new VehicleType();
         this.vehicleID = vehicleID;
-        this.make = make;
-        this.model = model;
-        this.year = year;
+        vehicleType.setMake(make);
+        vehicleType.setModel(model);
+        vehicleType.setYear(year);
         this.rideTypeID = rideTypeID;
         this.numberPlate = numberPlate;
         this.status = status;
@@ -53,28 +54,44 @@ public class Vehicle
         this.vehicleID = vehicleID;
     }
 
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
+    public int getVehicleTypeID() {
+        return vehicleType.getVehicleTypeID();
+    }
+
+    public void setVehicleTypeID(int vehicleTypeID) {
+        vehicleType.setVehicleTypeID(vehicleTypeID);
+    }
+
     public String getMake() {
-        return make;
+        return vehicleType.getMake();
     }
 
     public void setMake(String make) {
-        this.make = make;
+        vehicleType.setMake(make);
     }
 
     public String getModel() {
-        return model;
+        return vehicleType.getModel();
     }
 
     public void setModel(String model) {
-        this.model = model;
+        vehicleType.setModel(model);
     }
 
     public String getYear() {
-        return year;
+        return vehicleType.getYear();
     }
 
     public void setYear(String year) {
-        this.year = year;
+        vehicleType.setYear(year);
     }
 
     public int getRideTypeID() {
@@ -107,13 +124,5 @@ public class Vehicle
 
     public void setColor(String color) {
         this.color = color;
-    }
-
-    public int getVehicleTypeID() {
-        return vehicleTypeID;
-    }
-
-    public void setVehicleTypeID(int vehicleTypeID) {
-        this.vehicleTypeID = vehicleTypeID;
     }
 }

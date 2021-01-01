@@ -60,9 +60,10 @@ public class MatchmakingController {
     // TODO: Policy on how a ride is sent to driver, implemented in checkRideStatus()
     public RideRequest startMatchmaking(Driver driver)
     {
-        ride.getRideParameters().setDriver(driver);
-        return ride.getRideParameters().getDriver().startMatchmaking();
+        rideRequest = driver.startMatchmaking();
+        return rideRequest;
     }
+
     public RideRequest checkRideRequestStatus() {
         return ride.getRideParameters().getDriver().checkRideRequestStatus();
     }
@@ -70,7 +71,10 @@ public class MatchmakingController {
     public boolean confirmRideRequest(int found_status)
     {
         if (found_status == 1) {
-            ride = new Ride(ride.getRideParameters());
+            ride = new Ride(rideRequest);
+            System.out.println("Rider ID: " + ride.getRideParameters().getRider().getUserID()
+            + ", Driver ID: " + ride.getRideParameters().getDriver().getUserID()
+            + ", Payment mode: " + ride.getRideParameters().getPaymentMethod());
             return DBHandlerFactory.getInstance().createDBHandler().confirmRideRequest(ride);
         }
         else {
@@ -80,8 +84,8 @@ public class MatchmakingController {
         }
     }
 
-    public boolean markArrivalAtPickup(Ride ride) {
-        return ride.markDriverArrival();
+    public boolean markArrivalAtPickup() {
+        return ride.markArrivalAtPickup();
     }
 
     public boolean startRide() {
@@ -95,7 +99,8 @@ public class MatchmakingController {
     }
 
     public Ride getRideForDriver() {
-        return ride.getRideParameters().getDriver().getRideForDriver(ride.getRideParameters());
+        ride = ride.getRideParameters().getDriver().getRideForDriver(ride.getRideParameters());
+        return ride;
     }
 
     public boolean endRideWithPayment(Double amountPaid, Double change)

@@ -32,7 +32,7 @@ public class RideRequest {
     protected Location dropoffLocation;
     private String dropoffTitle;
     private int findStatus;
-    private Integer paymentMethod;
+    private int paymentMethod;
     private RideType rideType;
     private boolean splittingFare;
 
@@ -103,11 +103,11 @@ public class RideRequest {
     }
 
 
-    public Integer getPaymentMethod() {
+    public int getPaymentMethod() {
         return paymentMethod;
     }
 
-    public void setPaymentMethod(Integer paymentMethod) {
+    public void setPaymentMethod(int paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
 

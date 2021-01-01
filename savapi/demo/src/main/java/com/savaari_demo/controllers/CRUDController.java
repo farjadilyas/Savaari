@@ -27,6 +27,8 @@ public class CRUDController
         this.driver = driver;
     }
 
+    public Rider getRider() { return rider; }
+
     /* User CRUD methods */
 
     /* Login Rider */

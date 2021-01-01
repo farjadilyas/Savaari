@@ -14,7 +14,7 @@ import com.savaari_demo.entity.Ride;
 
 public interface Policy {
     // Abstract methods
-    void calculateFare(Ride ride);
+    double calculateFare(Ride ride);
     void calculateEstimatedFare(Ride ride);
     int getPolicyID();
 }

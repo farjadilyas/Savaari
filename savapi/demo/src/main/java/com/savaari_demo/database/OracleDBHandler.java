@@ -682,9 +682,11 @@ public class OracleDBHandler implements DBHandler {
                         rideRequest.setRideType(new RideType(resultSet.getInt(9)));
                         rideRequest.setSplittingFare(resultSet.getBoolean(10));
 
-                        rideRequest.setRider(rider);
                         rideRequest.setPickupLocation(pickLocation);
                         rideRequest.setDropoffLocation(destLocation);
+
+                        rideRequest.setRider(rider);
+                        rideRequest.setDriver(driver);
                         return rideRequest;
                     }
                 } // End if: Rows found
@@ -773,7 +775,7 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public boolean markDriverArrival(Ride ride) {
+    public boolean markArrivalAtPickup(Ride ride) {
         return (executeUpdate(String.format("UPDATE RIDES SET STATUS = " + Ride.DRIVER_ARRIVED + " WHERE RIDE_ID = %d",
                 ride.getRideID())) > 0);
     }
@@ -904,8 +906,8 @@ public class OracleDBHandler implements DBHandler {
         String sqlQuery = "SELECT RD.RIDE_ID, R.USER_NAME, D.USER_NAME, RD.PAYMENT_ID, RD.SOURCE_LAT, RD.SOURCE_LONG, " +
                 "RD.DEST_LAT, RD.DEST_LONG, RD.START_TIME, RD.RIDE_TYPE, RD.ESTIMATED_FARE, RD.STATUS, D.LATITUDE, D.LONGITUDE, " +
                 "RD.FARE, D.ACTIVE_VEHICLE_ID, V.MAKE, V.MODEL, V.YEAR, DV.NUMBER_PLATE, DV.COLOR, R.RATING, D.RATING," +
-                " D.FIRST_NAME, D.LAST_NAME, D.PHONE_NO, RD.POLICY_ID, " +
-                " RT.NAME, RT.MAX_PASSENGERS, RT.BASE_FARE, RT.PER_KM_CHARGE, RT.PER_MIN_CHARGE, RT.MIN_FARE\n" +
+                " D.FIRST_NAME, D.LAST_NAME, D.PHONE_NO, RD.POLICY_ID," +
+                " RT.NAME, RT.MAX_PASSENGERS, RT.BASE_FARE, RT.PER_KM_CHARGE, RT.PER_MIN_CHARGE, RT.MIN_FARE, D.PAYMENT_MODE" +
                 " FROM RIDES RD\n" +
                 " INNER JOIN RIDER_DETAILS R ON RD.RIDER_ID = R.USER_ID" +
                 " INNER JOIN DRIVER_DETAILS D ON RD.DRIVER_ID = D.USER_ID" +
@@ -953,6 +955,7 @@ public class OracleDBHandler implements DBHandler {
                         resultSet.getDouble(33)));
 
                 ride.getPayment().setPaymentID(resultSet.getInt(4));
+                ride.getRideParameters().setPaymentMethod(resultSet.getInt(34));
 
                 ride.getRideParameters().setPickupLocation(new Location(resultSet.getDouble(5), resultSet.getDouble(6)));
                 ride.getRideParameters().setDropoffLocation(new Location(resultSet.getDouble(7), resultSet.getDouble(8)));
@@ -994,7 +997,7 @@ public class OracleDBHandler implements DBHandler {
     }
 
     @Override
-    public void getRideStatus(Ride ride) {
+    public void fetchRideStatus(Ride ride) {
 
         Connection connect = null;
         ResultSet resultSet = null;
