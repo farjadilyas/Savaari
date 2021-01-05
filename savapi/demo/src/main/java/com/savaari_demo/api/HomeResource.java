@@ -224,45 +224,41 @@ public class HomeResource
 	public String loginRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		System.out.println("LOGIN RIDER CALLED!");
-		UsernamePasswordAuthenticationToken authReq
-				= new UsernamePasswordAuthenticationToken(allParams.get("username"), allParams.get("password"));
-		Authentication auth = authManager.authenticate(authReq);
 
-		SecurityContext sc = SecurityContextHolder.getContext();
-		sc.setAuthentication(auth);
-		HttpSession session = request.getSession(true);
-		session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
-
-		/*
-		Rider rider = new Rider();
-		rider.setEmailAddress(allParams.get("username"));
-		rider.setPassword(allParams.get("password"));
-
-		CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
-		if (crudController == null) { crudController = new CRUDController(); }
-
-		Integer userID = crudController.loginRider(rider);
-
-		// Package response
 		JSONObject result = new JSONObject();
 
-		if (userID == null) {
-			result.put("STATUS_CODE", 404);
-			result.put("USER_ID", -1);
-		}
-		else {
-			result.put("STATUS_CODE", 200);
-			result.put("USER_ID", userID);
+		try {
+			/* Spring boot Authentication*/
+            UsernamePasswordAuthenticationToken authReq
+                    = new UsernamePasswordAuthenticationToken(allParams.get("username"), allParams.get("password"));
+            Authentication auth = authManager.authenticate(authReq);
 
-			if (request.getSession(false) == null) {
-				request.getSession(true);
-			}
+            SecurityContext sc = SecurityContextHolder.getContext();
+            sc.setAuthentication(auth);
+            HttpSession session = request.getSession(true);
+            session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
 
+            /* Manual Authentication, TODO: change this to a fetch data section*/
+			Rider rider = new Rider();
+			rider.setEmailAddress(allParams.get("username"));
+			rider.setPassword(allParams.get("password"));
+
+			CRUDController crudController = getAttributeObject(request, CRUDController.class, CRUDController.class.getName());
+			if (crudController == null) { crudController = new CRUDController(); }
+
+			Integer userID = crudController.loginRider(rider);
 			storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
-		}
 
-		return result.toString();*/
-		return "hello";
+            result.put("STATUS_CODE", 200);
+            result.put("USER_ID", userID);
+            return result.toString();
+        }
+		catch (Exception e) {
+		    e.printStackTrace();
+            result.put("STATUS_CODE", 404);
+            result.put("USER_ID", -1);
+            return result.toString();
+        }
 	}
 
 	// Persist Login for Rider
@@ -372,11 +368,11 @@ public class HomeResource
 	}
 	/* End of section*/
 
-	@RequestMapping(value = "/rider_data", method = RequestMethod.POST)
+	@RequestMapping(value = "/rider/rider_data", method = RequestMethod.POST)
 	public String riderData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {
-			System.out.println("Driver data: Invalid session");
+			System.out.println("Rider data: Invalid session");
 			return null;
 		}
 
@@ -398,6 +394,25 @@ public class HomeResource
 		storeObjectAsAttribute(request, CRUDController.class.getName(), crudController);
 		return result;
 	}
+
+    @RequestMapping(value = "/user_data", method = RequestMethod.POST)
+    public String userData(@RequestBody Map<String, String> allParams, HttpServletRequest request)
+    {
+        System.out.println("user_data called!");
+        if (request.getSession(false) == null) {
+            System.out.println("User data: Invalid session");
+            return null;
+        }
+
+        JSONObject result = new JSONObject();
+        result.put("userID", 1);
+        result.put("username", "farjad");
+        result.put("firstName", "Test");
+        result.put("lastName", "Last");
+        result.put("emailAddress", "ilyasfarjad@hotmail.com");
+        result.put("lastUpdate", System.currentTimeMillis());
+        return result.toString();
+    }
 
 	// Fetching Driver Data
 	@RequestMapping(value = "/driver_data", method = RequestMethod.POST)
@@ -712,7 +727,7 @@ public class HomeResource
 
 	/* Ride system calls */
 
-	@RequestMapping(value = "/getRideForRider", method = RequestMethod.POST)
+	@RequestMapping(value = "/rider/getRideForRider", method = RequestMethod.POST)
 	public String getRideForRider(@RequestBody Map<String, String> allParams, HttpServletRequest request)
 	{
 		if (request.getSession(false) == null) {

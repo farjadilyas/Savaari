@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.savaari">
+    package="com.farjad.savaari">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -17,7 +19,6 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <application
-        android:name = "com.example.savaari.SavaariApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -33,18 +34,18 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${GAK_M}" />
 
-        <activity android:name=".ride.RideActivity" />
+        <activity android:name="com.farjad.savaari.ride.RideActivity" />
 
         <activity
-            android:name=".settings.SettingsActivity"
+            android:name="com.farjad.savaari.settings.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".ride.RideActivity"/>
+            android:parentActivityName="com.farjad.savaari.ride.RideActivity"/>
 
-        <activity android:name=".auth.login.LoginActivity" />
+        <activity android:name="com.farjad.savaari.auth.login.LoginActivity" />
         <activity
-            android:name=".auth.signup.SignUpActivity"
-            android:parentActivityName=".auth.login.LoginActivity" />
-        <activity android:name=".MainActivity">
+            android:name="com.farjad.savaari.auth.signup.SignUpActivity"
+            android:parentActivityName="com.farjad.savaari.auth.login.LoginActivity" />
+        <activity android:name="com.farjad.savaari.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -53,7 +54,7 @@
         </activity>
 
         <service
-            android:name=".services.location.LocationUpdateService"
+            android:name="com.farjad.savaari.services.location.LocationUpdateService"
             android:stopWithTask="true" />
     </application>
 
