@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 
 
 android {
@@ -12,6 +14,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders = [GAK_M : "AIzaSyCUTRgtUcFQ8-ShUacER-f3rs45EsvHfcQ", GAK_D : "AIzaSyCKNsD2ETZcHtQIo4KhEaI5ysSQfsFh2Hc"]
+        buildConfigField "String", "GAK_M", "\"$project.GAK_M\""
+        buildConfigField "String", "GAK_D", "\"$project.GAK_D\""
     }
 
     compileOptions {
@@ -35,6 +41,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    kapt "android.arch.lifecycle:compiler:2.2.0"
 
     implementation "com.google.android.gms:play-services-location:17.1.0"
 
@@ -55,4 +62,23 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.11.3'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.11.3'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
+    implementation "androidx.core:core-ktx:+"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // Room Data Persistence Library
+    def room_version = "2.2.6"
+
+    // Retrofit Dependency
+    implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+
+    // Jackson Converter for Retrofit
+    implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+}
+repositories {
+    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+    mavenCentral()
 }
