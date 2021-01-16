@@ -14,7 +14,7 @@ An android application for drivers using our ride-hailing system
 The ride-hailing system itself!
 - Spring Boot Application for REST API
 - Java project for Core Management Information System
-- MySQL backend
+- MySQL DB
 
 ## Roadmap
 We have the following next steps planned:
